@@ -14,8 +14,10 @@
   
   <!-- Backend URL Configuration -->
   <script>
-    // Backend URL - yerelde otomatik olarak window.location.origin kullanır
-    const BACKEND_URL = window.location.origin;
+    // Localhost ortamındaysa yerel sunucuyu, canlı ortamda (CrazyGames) Render sunucusunu kullanır
+    const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? window.location.origin
+      : 'https://soldareio.onrender.com';
   </script>
   
   <!-- CrazyGames SDK v3 -->
