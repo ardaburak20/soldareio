@@ -500,7 +500,7 @@ io.on('connection', (socket) => {
     room.lastActivity = Date.now();
 
     console.log(`👤 Player ${name} joined room ${room.code} (${room.playerCount}/${MAX_PLAYERS})`);
-    io.to(socket.id).emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code });
+    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code });
   });
 
   // Join with bots - private offline room
@@ -527,7 +527,7 @@ io.on('connection', (socket) => {
     addBotsToRoom(room);
 
     console.log(`🤖 Player ${name} started bot game in private room ${code}`);
-    io.to(socket.id).emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: null }); // Don't show room code
+    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: null }); // Don't show room code
   });
 
   // Join specific room by code
@@ -557,7 +557,7 @@ io.on('connection', (socket) => {
     room.lastActivity = Date.now();
 
     console.log(`👤 Player ${name} joined room ${roomCode} (${room.playerCount}/${MAX_PLAYERS})`);
-    io.to(socket.id).emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code });
+    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code });
   });
 
   socket.on('mouseMove', (data) => {
