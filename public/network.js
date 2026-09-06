@@ -17,12 +17,11 @@ const Network = (() => {
     const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
     console.log('🔌 Connecting to backend:', backendUrl);
     socket = io(backendUrl, { 
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-      upgrade: false,
-      rememberUpgrade: true
+      reconnectionAttempts: 25,
+      timeout: 20000
     });
 
     socket.on('joined', (data) => {
