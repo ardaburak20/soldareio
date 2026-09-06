@@ -1619,28 +1619,38 @@
 
   // === CrazyGames SDK v3 Integration ===
   let crazySDK = null;
+  let isCrazySDKActive = false;
 
   async function initCrazyGamesSDK() {
     try {
-      if (window.CrazyGames && window.CrazyGames.SDK) {
+      const host = window.location.hostname;
+      const isAllowedHost = host.includes('crazygames.com') || host.includes('localhost') || host === '127.0.0.1';
+      
+      if (isAllowedHost && window.CrazyGames && window.CrazyGames.SDK) {
         crazySDK = window.CrazyGames.SDK;
         await crazySDK.init();
+        isCrazySDKActive = true;
         console.log("🎮 CrazyGames SDK v3 initialized successfully");
+      } else {
+        isCrazySDKActive = false;
+        console.log("ℹ️ CrazyGames SDK disabled on this domain (running standalone)");
       }
     } catch (e) {
-      console.log("CrazyGames SDK dev environment mode");
+      isCrazySDKActive = false;
+      crazySDK = null;
+      console.log("ℹ️ CrazyGames SDK notice: Running standalone on custom domain");
     }
   }
   initCrazyGamesSDK();
 
   function crazyGameplayStart() {
-    if (crazySDK && crazySDK.game) {
+    if (isCrazySDKActive && crazySDK && crazySDK.game) {
       try { crazySDK.game.gameplayStart(); } catch(e){}
     }
   }
 
   function crazyGameplayStop() {
-    if (crazySDK && crazySDK.game) {
+    if (isCrazySDKActive && crazySDK && crazySDK.game) {
       try { crazySDK.game.gameplayStop(); } catch(e){}
     }
   }
@@ -1648,12 +1658,16 @@
   let deathAdCounter = 0;
   function requestMidrollAd(onComplete) {
     deathAdCounter++;
-    if (deathAdCounter % 2 === 0 && crazySDK && crazySDK.ad) {
-      crazySDK.ad.requestAd('midroll', {
-        adStarted: () => { SoundManager.stopAllWeaponSounds(); },
-        adFinished: () => { if (onComplete) onComplete(); },
-        adError: (error) => { console.log('Midroll ad info:', error); if (onComplete) onComplete(); }
-      });
+    if (isCrazySDKActive && deathAdCounter % 2 === 0 && crazySDK && crazySDK.ad) {
+      try {
+        crazySDK.ad.requestAd('midroll', {
+          adStarted: () => { SoundManager.stopAllWeaponSounds(); },
+          adFinished: () => { if (onComplete) onComplete(); },
+          adError: (error) => { console.log('Midroll ad info:', error); if (onComplete) onComplete(); }
+        });
+      } catch(e) {
+        if (onComplete) onComplete();
+      }
     } else {
       if (onComplete) onComplete();
     }
@@ -1677,19 +1691,26 @@
   if (rewardedAdBtn) {
     rewardedAdBtn.addEventListener('click', () => {
       if (hasAdBonus) return;
-      if (crazySDK && crazySDK.ad) {
-        crazySDK.ad.requestAd('rewarded', {
-          adStarted: () => { SoundManager.stopAllWeaponSounds(); },
-          adFinished: () => {
-            hasAdBonus = true;
-            rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
-            const dict = I18N[currentLang] || I18N.tr;
-            if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
-          },
-          adError: (error) => {
-            alert('Reklam şu an gösterilemiyor. Lütfen tekrar deneyin.');
-          }
-        });
+      if (isCrazySDKActive && crazySDK && crazySDK.ad) {
+        try {
+          crazySDK.ad.requestAd('rewarded', {
+            adStarted: () => { SoundManager.stopAllWeaponSounds(); },
+            adFinished: () => {
+              hasAdBonus = true;
+              rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+              const dict = I18N[currentLang] || I18N.tr;
+              if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
+            },
+            adError: (error) => {
+              alert('Reklam şu an gösterilemiyor. Lütfen tekrar deneyin.');
+            }
+          });
+        } catch(e) {
+          hasAdBonus = true;
+          rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+          const dict = I18N[currentLang] || I18N.tr;
+          if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
+        }
       } else {
         hasAdBonus = true;
         rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
