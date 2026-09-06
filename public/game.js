@@ -1,5 +1,5 @@
 // ==========================================
-//  SOLDARE.IO - Game Client (v3.0)
+//  SOLDARE.IO - Game Client (v4.0 - Simplified)
 // ==========================================
 (() => {
   // === Constants ===
@@ -9,12 +9,12 @@
   const GRID_COLOR = '#1c1c32';
   
   // === Performance Optimization Settings ===
-  const MAX_PARTICLES = 30; // Azaltıldı: 50 → 30
-  const MAX_VISIBLE_ENTITIES = 150; // Azaltıldı: 200 → 150
-  const CULLING_MARGIN = 300; // Artırıldı: daha erken cull et
-  const SKIN_CACHE_LIMIT = 50; // Azaltıldı: 100 → 50
-  const MAX_RENDER_FPS = 60; // FPS limiti
-  const INTERPOLATION_SMOOTHING = 0.2; // Client-side prediction
+  const MAX_PARTICLES = 30;
+  const MAX_VISIBLE_ENTITIES = 150;
+  const CULLING_MARGIN = 300;
+  const SKIN_CACHE_LIMIT = 50;
+  const MAX_RENDER_FPS = 60;
+  const INTERPOLATION_SMOOTHING = 0.2;
   
   // Frame throttling
   let lastRenderTime = 0;
@@ -74,98 +74,50 @@
     ak47: `
       <svg viewBox="0 0 48 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <!-- Realistic AK-47 -->
-        <!-- Barrel -->
         <rect x="29" y="15.5" width="15" height="2.5" rx="1.2" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.7"/>
         <rect x="30" y="16" width="13" height="1.5" rx="0.8" fill="#3a3a3a"/>
-        
-        <!-- Muzzle brake (distinctive AK feature) -->
         <rect x="43" y="14.5" width="3" height="4.5" rx="0.5" fill="#1a1a1a"/>
         <line x1="44" y1="15.5" x2="44" y2="18.5" stroke="#3a3a3a" stroke-width="0.5"/>
         <line x1="45" y1="15.5" x2="45" y2="18.5" stroke="#3a3a3a" stroke-width="0.5"/>
-        
-        <!-- Gas tube (top of barrel) -->
         <rect x="28" y="14" width="12" height="1.2" rx="0.6" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.5"/>
-        
-        <!-- Receiver -->
-        <rect x="17" y="14" width="15" height="6" rx="1.5" fill="url(#ak47Gradient)" stroke="#1a1a1a" stroke-width="0.7"/>
+        <rect x="17" y="14" width="15" height="6" rx="1.5" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
         <rect x="18" y="15.5" width="12" height="3" rx="1" fill="#3a3a3a"/>
-        
-        <!-- Ejection port cover -->
         <rect x="23" y="14.5" width="5" height="2.5" rx="0.5" fill="#2a2a2a"/>
-        
-        <!-- Wood handguard (distinctive AK wood) -->
         <rect x="25" y="18" width="9" height="4" rx="1.5" fill="#8B4513" stroke="#654321" stroke-width="0.7"/>
-        <!-- Wood grain details -->
         <line x1="26" y1="19.5" x2="33" y2="19.5" stroke="#654321" stroke-width="0.4" opacity="0.6"/>
         <line x1="26" y1="20.5" x2="33" y2="20.5" stroke="#654321" stroke-width="0.4" opacity="0.6"/>
         <path d="M26 19 Q28 20 26 21" stroke="#543311" stroke-width="0.5" fill="none"/>
-        
-        <!-- Wood stock -->
         <rect x="7" y="16" width="11" height="4" rx="2" fill="#8B4513" stroke="#654321" stroke-width="0.7"/>
         <rect x="8" y="17" width="8" height="2" rx="1" fill="#654321" opacity="0.6"/>
         <line x1="8.5" y1="17.5" x2="15" y2="17.5" stroke="#543311" stroke-width="0.5"/>
-        
-        <!-- Pistol grip (wood) -->
         <path d="M15 20 L15 28 L17.5 30 L20 28 L20 22 Z" fill="#8B4513" stroke="#654321" stroke-width="0.7"/>
         <rect x="16" y="24" width="3" height="1" rx="0.5" fill="#654321"/>
         <rect x="16" y="26" width="3" height="0.8" rx="0.4" fill="#543311"/>
-        
-        <!-- Trigger -->
         <path d="M17 26 Q16 27.5 17 28" stroke="#2a2a2a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        
-        <!-- Trigger guard -->
         <path d="M16 24 Q14 26 16 28" stroke="#2a2a2a" stroke-width="1.2" fill="none"/>
-        
-        <!-- Magazine (curved banana mag) -->
         <path d="M18 20 L17 28 Q17 30 19 30.5 L20 30.5 Q22 30 22 28 L21 21 Z" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
         <path d="M18.5 22 L18 28 Q18 29 19.5 29.5 L20 29.5 Q21 29 21 28 L20.5 22 Z" fill="#2a2a2a"/>
-        
-        <!-- Front sight post -->
         <rect x="37" y="13" width="1.5" height="2.5" rx="0.4" fill="#2a2a2a"/>
         <circle cx="37.8" cy="13.5" r="0.5" fill="#3a3a3a"/>
-        
-        <!-- Rear sight -->
         <rect x="28" y="13" width="2" height="2" rx="0.5" fill="#2a2a2a"/>
-        
-        <defs>
-          <linearGradient id="ak47Gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#4a4a4a;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
-          </linearGradient>
-        </defs>
       </svg>
     `,
     
     smg: `
       <svg viewBox="0 0 60 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Simplified SMG Icon based on reference image -->
-        <!-- Stock (left triangle) -->
+        <!-- Simplified SMG Icon -->
         <path d="M4 16 L12 12 L12 28 L4 32 Z" fill="#7a7a7a" stroke="#5a5a5a" stroke-width="1"/>
         <path d="M6 18 L10 16 L10 26 L6 28 Z" fill="#9a9a9a"/>
-        
-        <!-- Main body/receiver (black) -->
         <rect x="12" y="15" width="32" height="10" rx="2" fill="#1a1a1a" stroke="#000000" stroke-width="1"/>
         <rect x="13" y="16" width="30" height="8" rx="1.5" fill="#2a2a2a"/>
-        
-        <!-- Barrel -->
         <rect x="44" y="17" width="14" height="6" rx="3" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.8"/>
         <rect x="45" y="18" width="12" height="4" rx="2" fill="#4a4a4a"/>
-        
-        <!-- Magazine (vertical black rectangle) -->
         <rect x="24" y="25" width="6" height="14" rx="1.5" fill="#1a1a1a" stroke="#000000" stroke-width="0.8"/>
         <rect x="25" y="26" width="4" height="12" rx="1" fill="#2a2a2a"/>
-        
-        <!-- Pistol grip -->
         <path d="M18 25 L18 34 L20 36 L22 34 L22 27 Z" fill="#1a1a1a" stroke="#000000" stroke-width="0.8"/>
         <rect x="19" y="29" width="2" height="1" rx="0.5" fill="#2a2a2a"/>
-        
-        <!-- Trigger -->
         <ellipse cx="20" cy="30" rx="1" ry="1.5" fill="#3a3a3a"/>
-        
-        <!-- Trigger guard -->
         <path d="M19 27 Q17 30 19 33" stroke="#1a1a1a" stroke-width="1" fill="none"/>
-        
-        <!-- Foregrip detail -->
         <rect x="36" y="25" width="3" height="6" rx="1.5" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.6"/>
       </svg>
     `,
@@ -173,96 +125,54 @@
     m4: `
       <svg viewBox="0 0 48 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <!-- Realistic M4 Carbine -->
-        <!-- Barrel -->
         <rect x="27" y="15.5" width="15" height="2.5" rx="1.2" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.7"/>
         <rect x="28" y="16" width="13" height="1.5" rx="0.8" fill="#3a3a3a"/>
-        
-        <!-- Flash hider -->
         <rect x="41" y="14.5" width="3.5" height="4.5" rx="0.5" fill="#1a1a1a"/>
         <rect x="41.5" y="15.5" width="2.5" height="2.5" rx="0.3" fill="#333"/>
         <line x1="42" y1="16" x2="43.5" y2="16" stroke="#2a2a2a" stroke-width="0.4"/>
-        
-        <!-- Receiver - Angular AR-15 style -->
-        <rect x="16" y="14" width="14" height="6" rx="1.5" fill="url(#m4Gradient)" stroke="#1a1a1a" stroke-width="0.7"/>
+        <rect x="16" y="14" width="14" height="6" rx="1.5" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
         <rect x="17" y="15.5" width="11" height="3" rx="1" fill="#3a3a3a"/>
-        
-        <!-- Ejection port -->
         <rect x="23" y="14.5" width="4" height="3" rx="0.5" fill="#1a1a1a" opacity="0.9"/>
         <circle cx="25" cy="16" r="0.4" fill="#3a3a3a"/>
-        
-        <!-- Handguard with rail system -->
         <rect x="24" y="15" width="7" height="5" rx="1" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.6"/>
-        <!-- Picatinny rails -->
         <line x1="25" y1="16" x2="30" y2="16" stroke="#2a2a2a" stroke-width="0.4"/>
         <line x1="25" y1="17" x2="30" y2="17" stroke="#2a2a2a" stroke-width="0.4"/>
         <line x1="25" y1="18" x2="30" y2="18" stroke="#2a2a2a" stroke-width="0.4"/>
-        
-        <!-- Telescopic stock (collapsed) -->
         <rect x="7" y="15.5" width="10" height="3" rx="1.5" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.6"/>
         <rect x="8" y="16" width="7" height="2" rx="1" fill="#1a1a1a"/>
-        <!-- Buffer tube -->
         <rect x="5" y="16" width="4" height="1.5" rx="0.8" fill="#3a3a3a"/>
         <circle cx="5.5" cy="16.8" r="0.6" fill="#2a2a2a"/>
-        
-        <!-- Pistol grip -->
         <path d="M14 20 L14 27.5 L16.5 29.5 L19 27.5 L19 21.5 Z" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.7"/>
         <rect x="15" y="23" width="3" height="1" rx="0.5" fill="#1a1a1a"/>
         <rect x="15" y="25" width="3" height="0.8" rx="0.4" fill="#1a1a1a"/>
-        
-        <!-- Trigger -->
         <path d="M16 25 Q15 26.5 16 27" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        
-        <!-- Trigger guard -->
         <path d="M15 23 Q13 25.5 15 28" stroke="#2a2a2a" stroke-width="1.2" fill="none"/>
-        
-        <!-- Magazine - STANAG style -->
         <rect x="17" y="20" width="4" height="9" rx="1.5" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
         <rect x="18" y="22" width="2" height="6" rx="0.8" fill="#2a2a2a"/>
-        
-        <!-- ACOG scope -->
         <rect x="27" y="12" width="6" height="2.5" rx="1" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.6"/>
         <circle cx="30" cy="13.2" r="0.8" fill="#4a9eff" opacity="0.8"/>
         <rect x="28" y="12.5" width="4" height="1.5" rx="0.5" fill="#3a3a3a"/>
-        
-        <!-- Front sight -->
         <rect x="36" y="13.5" width="1.5" height="2.5" rx="0.4" fill="#2a2a2a"/>
-        
-        <!-- Rear flip sight -->
         <rect x="27" y="13.5" width="1" height="1.5" rx="0.3" fill="#3a3a3a"/>
-        
-        <defs>
-          <linearGradient id="m4Gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#4a4a4a;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
-          </linearGradient>
-        </defs>
       </svg>
     `,
     
     minigun: `
       <svg viewBox="0 0 80 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Simplified Minigun Icon based on reference image -->
-        <!-- Support triangle (left) -->
+        <!-- Simplified Minigun Icon -->
         <path d="M8 12 L20 12 L20 36 L8 36 Z" fill="#a8a8a8" stroke="#888888" stroke-width="1"/>
         <path d="M10 16 L18 24 L10 32 Z" fill="#c8c8c8"/>
-        
-        <!-- Motor/ammo box (center gray box) -->
         <rect x="20" y="12" width="18" height="24" rx="2" fill="#8a8a8a" stroke="#6a6a6a" stroke-width="1.2"/>
         <rect x="22" y="14" width="14" height="20" rx="1.5" fill="#6a6a6a"/>
-        <!-- Wire/cable details -->
         <path d="M24 16 Q26 20 24 24 Q26 28 24 32" stroke="#c8c8c8" stroke-width="0.8" fill="none"/>
         <path d="M28 16 Q30 20 28 24 Q30 28 28 32" stroke="#c8c8c8" stroke-width="0.8" fill="none"/>
         <path d="M32 16 Q34 20 32 24 Q34 28 32 32" stroke="#c8c8c8" stroke-width="0.8" fill="none"/>
-        
-        <!-- 6 barrels (horizontal lines) -->
         <rect x="38" y="14" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
         <rect x="38" y="18" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
         <rect x="38" y="22" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
         <rect x="38" y="26" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
         <rect x="38" y="30" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
         <rect x="38" y="34" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
-        
-        <!-- Barrel ends (darker) -->
         <circle cx="72" cy="15" r="1" fill="#5a5a5a"/>
         <circle cx="72" cy="19" r="1" fill="#5a5a5a"/>
         <circle cx="72" cy="23" r="1" fill="#5a5a5a"/>
@@ -270,170 +180,107 @@
         <circle cx="72" cy="31" r="1" fill="#5a5a5a"/>
         <circle cx="72" cy="35" r="1" fill="#5a5a5a"/>
       </svg>
-    `,
-    
-    missile: `
-      <svg viewBox="0 0 100 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Simplified RPG Icon based on reference image -->
-        <!-- Stock (left brown triangle) -->
-        <path d="M4 14 L16 10 L16 30 L4 34 Z" fill="#b87850" stroke="#8a5a38" stroke-width="1"/>
-        <path d="M6 16 L14 13 L14 27 L6 30 Z" fill="#c88860"/>
-        
-        <!-- Main tube (gray horizontal cylinder) -->
-        <rect x="16" y="14" width="54" height="16" rx="8" fill="#b8b8b8" stroke="#888888" stroke-width="1.2"/>
-        <rect x="17" y="15" width="52" height="14" rx="7" fill="#d8d8d8"/>
-        <!-- Tube inner shadow -->
-        <rect x="18" y="22" width="50" height="6" rx="3" fill="#7a7a7a" opacity="0.4"/>
-        
-        <!-- Warhead (right green diamond/cone) -->
-        <path d="M70 20 L86 11 L94 20 L86 29 Z" fill="#4CAF50" stroke="#2d7a2d" stroke-width="1.2"/>
-        <path d="M72 20 L86 13 L90 20 L86 27 Z" fill="#66BB6A"/>
-        
-        <!-- Warhead tip (orange) -->
-        <path d="M86 15 L96 20 L86 25 Z" fill="#ff8844" stroke="#dd6622" stroke-width="0.8"/>
-        <path d="M88 18 L94 20 L88 22 Z" fill="#ffaa66"/>
-        
-        <!-- Grip under tube (gray) -->
-        <rect x="32" y="30" width="6" height="10" rx="3" fill="#8a8a8a" stroke="#6a6a6a" stroke-width="0.8"/>
-        <rect x="33" y="31" width="4" height="8" rx="2" fill="#9a9a9a"/>
-        
-        <!-- Trigger -->
-        <path d="M35 35 Q34 37 35 38" stroke="#5a5a5a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        
-        <!-- Small details on tube -->
-        <rect x="24" y="18" width="2" height="8" rx="1" fill="#7a7a7a" opacity="0.6"/>
-        <rect x="32" y="18" width="2" height="8" rx="1" fill="#7a7a7a" opacity="0.6"/>
-      </svg>
     `
   };
   
+  let lastRenderedWeaponIcon = null;
   function updateWeaponIcon(weapon) {
+    const displayWeapon = weapon || 'revolver';
+    if (displayWeapon === lastRenderedWeaponIcon) return;
+    lastRenderedWeaponIcon = displayWeapon;
+
     const iconContainer = document.getElementById('currentWeaponIcon');
-    if (iconContainer) {
-      // Display the specified weapon icon
-      const displayWeapon = weapon || 'revolver';
-      
-      if (WEAPON_ICONS[displayWeapon]) {
-        iconContainer.innerHTML = WEAPON_ICONS[displayWeapon];
-      }
+    if (iconContainer && WEAPON_ICONS[displayWeapon]) {
+      iconContainer.innerHTML = WEAPON_ICONS[displayWeapon];
     }
     
-    // Update tooltip - always show what's actually in this slot
     const btn = document.getElementById('equipRevolverBtn');
     if (btn) {
       const weaponNames = {
-        revolver: 'Revolver',
-        ak47: 'AK-47',
-        smg: 'SMG', 
-        m4: 'M4 Carbine',
-        minigun: 'Minigun',
-        missile: 'RPG'
+        revolver: 'Revolver', ak47: 'AK-47', smg: 'SMG', m4: 'M4 Carbine', minigun: 'Minigun'
       };
-      // For the revolver slot, always show appropriate weapon name
       btn.title = weaponNames[weapon] || 'Current Weapon';
     }
   }
+
   const I18N = {
     tr: {
-      subtitle: "Ordunu kur. Haritaya hükmet.", placeholder: "İsmini gir...", play: "OYNA",
+      subtitle: "Ordunu kur. Haritaya hükmet.", placeholder: "İsmini gir...", play: "OYNA", playBots: "BOTLARLA OYNA",
       mouse: "Fare", moveAim: "Hareket et & Nişan al", click: "Tıkla", shoot: "Ateş et",
       leaderboard: "🏆 SIRALAMA", reloading: "YENİDEN DOLDUR...", eliminated: "ELENDİN!", soldiers: "asker",
       color: "Renk Seç:", drawSkin: "Askerini Boya (8x8):", clear: "Temizle", eraser: "Silgi",
-      customizeBtn: "Skin & Renk Özelleştir", reloadKey: "Şarjör doldurma", killCount: "Öldürme", soldierCountDeath: "Asker Sayısı", playersAlive: "Hayatta",
-      newHighScore: "En Yüksek Skor!", emailLogin: "📧 E-posta Girişi", guestLogin: "👤 Misafir Girişi",
-      loginBtn: "GİRİŞ", back: "← Geri", justColor: "Sadece Renk", drawSkinRadio: "Skin Çiz", signOut: "Çıkış Yap",
-      store: "Mağaza", rpgName: "RPG", rpgDesc: "5 tek kullanımlık roket. Geniş alan hasarı.", buyRpgPack: "Satın Al (100 🪙 · x5)", 
-      bonusDurationName: "+10 Süre", bonusDurationDesc: "Kalkan ve silahlara +10sn ek süre.", buyBonusDuration1h: "1 Saatlik (100 🪙)", buyBonusDurationPerm: "Kalıcı",
-      goldMultiplierName: "x2 Altın", goldMultiplierDesc: "Oyun sonunda 2 kat altın.", buyGoldMultiplier1h: "1 Saatlik (50 🪙)", buyGoldMultiplierPerm: "Kalıcı",
-      permanent: "Kalıcı",
-      buy: "Satın Al", notEnoughGold: "Yetersiz altın!",
-      backToMenu: "Ana Menüye Dön", signIn: "Giriş Yap", logIn: "Log In", maxSoldiers: "En Yüksek Asker", yourSoldiers: "Askerlerin", purchased: "✓ Satın Alındı!",
+      customizeBtn: "Skin & Renk Özelleştir", reloadKey: "Şarjör doldurma", killCount: "Öldürme", playersAlive: "Hayatta",
+      justColor: "Sadece Renk", drawSkinRadio: "Skin Çiz",
+      backToMenu: "Ana Menüye Dön", yourSoldiers: "Askerlerin", yourScore: "Skorun",
       joinRoom: "ODAYA GİR", joinRoomTitle: "ODAYA GİR", roomCodePrompt: "Oda kodunu girin (6 haneli sayı)", 
-      roomCodePlaceholder: "000000", joinRoomBtnText: "GİR", cancel: "İPTAL", roomCode: "Oda Kodu"
+      roomCodePlaceholder: "000000", joinRoomBtnText: "GİR", cancel: "İPTAL",
+      muteMusic: "Müziği Kapat", unmuteMusic: "Müziği Aç",
+      watchAdBonus: "🎬 REKLAM İZLE: Ödül Al!", adBonusActive: "⚡ REKLAM ÖDÜLÜ AKTİF!"
     },
     en: {
-      subtitle: "Build your army. Dominate the map.", placeholder: "Enter name...", play: "PLAY",
+      subtitle: "Build your army. Dominate the map.", placeholder: "Enter name...", play: "PLAY", playBots: "PLAY WITH BOTS",
       mouse: "Mouse", moveAim: "Move & Aim", click: "Click", shoot: "Shoot",
       leaderboard: "🏆 LEADERBOARD", reloading: "RELOADING...", eliminated: "ELIMINATED!", soldiers: "soldiers",
       color: "Color:", drawSkin: "Draw Skin (8x8):", clear: "Clear", eraser: "Eraser",
-      customizeBtn: "Customize Skin & Color", reloadKey: "Reload", killCount: "Kills", soldierCountDeath: "Soldiers", playersAlive: "Alive",
-      newHighScore: "New High Score!", emailLogin: "📧 Email Login", guestLogin: "👤 Guest Login",
-      loginBtn: "LOGIN", back: "← Back", justColor: "Just Color", drawSkinRadio: "Draw Skin", signOut: "Log Out",
-      store: "Store", rpgName: "RPG", rpgDesc: "5 single-use rockets. Area damage.", buyRpgPack: "Buy (100 🪙 · x5)",
-      bonusDurationName: "+10 Duration", bonusDurationDesc: "+10s bonus for shields and weapons.", buyBonusDuration1h: "1 Hour (100 🪙)", buyBonusDurationPerm: "Permanent",
-      goldMultiplierName: "x2 Gold", goldMultiplierDesc: "Double gold at game end.", buyGoldMultiplier1h: "1 Hour (50 🪙)", buyGoldMultiplierPerm: "Permanent",
-      permanent: "Permanent",
-      buy: "Buy", notEnoughGold: "Not enough gold!",
-      backToMenu: "Back to Menu", signIn: "Sign In", logIn: "Log In", maxSoldiers: "Max Soldiers", yourSoldiers: "Your Soldiers", purchased: "✓ Purchased!",
+      customizeBtn: "Customize Skin & Color", reloadKey: "Reload", killCount: "Kills", playersAlive: "Alive",
+      justColor: "Just Color", drawSkinRadio: "Draw Skin",
+      backToMenu: "Back to Menu", yourSoldiers: "Your Soldiers", yourScore: "Your Score",
       joinRoom: "JOIN ROOM", joinRoomTitle: "JOIN ROOM", roomCodePrompt: "Enter room code (6 digits)", 
-      roomCodePlaceholder: "000000", joinRoomBtnText: "JOIN", cancel: "CANCEL", roomCode: "Room Code"
+      roomCodePlaceholder: "000000", joinRoomBtnText: "JOIN", cancel: "CANCEL",
+      muteMusic: "Mute Music", unmuteMusic: "Unmute Music",
+      watchAdBonus: "🎬 WATCH AD: Get Bonus!", adBonusActive: "⚡ AD BONUS ACTIVE!"
     },
     ru: {
-      subtitle: "Создай армию. Доминируй на карте.", placeholder: "Введите имя...", play: "ИГРАТЬ",
+      subtitle: "Создай армию. Доминируй на карте.", placeholder: "Введите имя...", play: "ИГРАТЬ", playBots: "ИГРАТЬ С БОТАМИ",
       mouse: "Мышь", moveAim: "Движение и Прицел", click: "Клик", shoot: "Стрелять",
       leaderboard: "🏆 РЕЙТИНГ", reloading: "ПЕРЕЗАРЯДКА...", eliminated: "ВЫБЫЛ!", soldiers: "солдат",
       color: "Цвет:", drawSkin: "Рисовать скин:", clear: "Очистить", eraser: "Ластик",
-      customizeBtn: "Настроить скин и цвет", reloadKey: "Перезарядка", killCount: "Убийства", soldierCountDeath: "Солдаты", playersAlive: "Живы",
-      newHighScore: "Новый рекорд!", emailLogin: "📧 Вход по Email", guestLogin: "👤 Гостевой вход",
-      loginBtn: "ВОЙТИ", back: "← Назад", justColor: "Только цвет", drawSkinRadio: "Рисовать скин", signOut: "Выйти",
-      store: "Магазин", rpgName: "РПГ", rpgDesc: "5 одноразовых ракет. Урон по площади.", buyRpgPack: "Купить (100 🪙 · x5)",
-      bonusDurationName: "+10 Длительность", bonusDurationDesc: "+10с бонус для щитов и оружия.", buyBonusDuration1h: "1 Час (100 🪙)", buyBonusDurationPerm: "Постоянно",
-      goldMultiplierName: "x2 Золото", goldMultiplierDesc: "Удвоенное золото в конце игры.", buyGoldMultiplier1h: "1 Час (50 🪙)", buyGoldMultiplierPerm: "Постоянно",
-      permanent: "Постоянно",
-      buy: "Купить", notEnoughGold: "Недостаточно золота!",
-      backToMenu: "В меню", signIn: "Войти", logIn: "Log In", maxSoldiers: "Макс. солдат", yourSoldiers: "Ваши солдаты", purchased: "✓ Куплено!",
+      customizeBtn: "Настроить скин и цвет", reloadKey: "Перезарядка", killCount: "Убийства", playersAlive: "Живы",
+      justColor: "Только цвет", drawSkinRadio: "Рисовать скин",
+      backToMenu: "В меню", yourSoldiers: "Ваши солдаты", yourScore: "Ваш счет",
       joinRoom: "ВОЙТИ В КОМНАТУ", joinRoomTitle: "ВОЙТИ В КОМНАТУ", roomCodePrompt: "Введите код комнаты (6 цифр)", 
-      roomCodePlaceholder: "000000", joinRoomBtnText: "ВОЙТИ", cancel: "ОТМЕНА", roomCode: "Код Комнаты"
+      roomCodePlaceholder: "000000", joinRoomBtnText: "ВОЙТИ", cancel: "ОТМЕНА",
+      muteMusic: "Выкл. музыку", unmuteMusic: "Вкл. музыку",
+      watchAdBonus: "🎬 СМОТРЕТЬ РЕКЛАМУ: Бонус!", adBonusActive: "⚡ БОНУС АКТИВЕН!"
     },
     zh: {
-      subtitle: "建立你的军队。统治地图。", placeholder: "输入名字...", play: "开始游戏",
+      subtitle: "建立你的军队。统治地图。", placeholder: "输入名字...", play: "开始游戏", playBots: "与机器人玩",
       mouse: "鼠标", moveAim: "移动与瞄准", click: "点击", shoot: "射击",
       leaderboard: "🏆 排行榜", reloading: "重新装弹...", eliminated: "被淘汰！", soldiers: "士兵",
       color: "颜色:", drawSkin: "画皮肤(8x8):", clear: "清除", eraser: "橡皮擦",
-      customizeBtn: "自定义皮肤和颜色", reloadKey: "重新装弹", killCount: "击杀", soldierCountDeath: "士兵数", playersAlive: "存活",
-      newHighScore: "新最高分！", emailLogin: "📧 邮箱登录", guestLogin: "👤 游客登录",
-      loginBtn: "登录", back: "← 返回", justColor: "仅颜色", drawSkinRadio: "画皮肤", signOut: "登出",
-      store: "商店", rpgName: "RPG", rpgDesc: "5 枚一次性火箭弹，范围伤害。", buyRpgPack: "购买 (100 🪙 · x5)",
-      bonusDurationName: "+10 持续时间", bonusDurationDesc: "护盾和武器+10秒加成。", buyBonusDuration1h: "1 小时 (100 🪙)", buyBonusDurationPerm: "永久",
-      goldMultiplierName: "x2 金币", goldMultiplierDesc: "游戏结束时双倍金币。", buyGoldMultiplier1h: "1 小时 (50 🪙)", buyGoldMultiplierPerm: "永久",
-      permanent: "永久",
-      buy: "购买", notEnoughGold: "金币不足！",
-      backToMenu: "返回菜单", signIn: "登录", logIn: "Log In", maxSoldiers: "最高士兵", yourSoldiers: "你的士兵", purchased: "✓ 已购买！",
+      customizeBtn: "自定义皮肤和颜色", reloadKey: "重新装弹", killCount: "击杀", playersAlive: "存活",
+      justColor: "仅颜色", drawSkinRadio: "画皮肤",
+      backToMenu: "返回菜单", yourSoldiers: "你的士兵", yourScore: "你的得分",
       joinRoom: "加入房间", joinRoomTitle: "加入房间", roomCodePrompt: "输入房间代码 (6位数字)", 
-      roomCodePlaceholder: "000000", joinRoomBtnText: "加入", cancel: "取消", roomCode: "房间代码"
+      roomCodePlaceholder: "000000", joinRoomBtnText: "加入", cancel: "取消",
+      muteMusic: "静音音乐", unmuteMusic: "开启音乐",
+      watchAdBonus: "🎬 观看广告: 获得奖励!", adBonusActive: "⚡ 奖励已激活!"
     },
     de: {
-      subtitle: "Baue deine Armee auf. Beherrsche die Karte.", placeholder: "Name eingeben...", play: "SPIELEN",
+      subtitle: "Baue deine Armee auf. Beherrsche die Karte.", placeholder: "Name eingeben...", play: "SPIELEN", playBots: "MIT BOTS SPIELEN",
       mouse: "Maus", moveAim: "Bewegen & Zielen", click: "Klick", shoot: "Schießen",
       leaderboard: "🏆 BESTENLISTE", reloading: "NACHLADEN...", eliminated: "ELIMINIERT!", soldiers: "Soldaten",
       color: "Farbe:", drawSkin: "Skin zeichnen:", clear: "Klar", eraser: "Radiergummi",
-      customizeBtn: "Skin & Farbe anpassen", reloadKey: "Nachladen", killCount: "Kills", soldierCountDeath: "Soldaten", playersAlive: "Lebend",
-      newHighScore: "Neuer Rekord!", emailLogin: "📧 E-Mail Login", guestLogin: "👤 Gast Login",
-      loginBtn: "EINLOGGEN", back: "← Zurück", justColor: "Nur Farbe", drawSkinRadio: "Skin zeichnen", signOut: "Abmelden",
-      store: "Geschäft", rpgName: "RPG", rpgDesc: "5 Einweg-Raketen. Flächenschaden.", buyRpgPack: "Kaufen (100 🪙 · x5)",
-      bonusDurationName: "+10 Dauer", bonusDurationDesc: "+10s Bonus für Schilde und Waffen.", buyBonusDuration1h: "1 Stunde (100 🪙)", buyBonusDurationPerm: "Permanent",
-      goldMultiplierName: "x2 Gold", goldMultiplierDesc: "Doppeltes Gold am Spielende.", buyGoldMultiplier1h: "1 Stunde (50 🪙)", buyGoldMultiplierPerm: "Permanent",
-      permanent: "Permanent",
-      buy: "Kaufen", notEnoughGold: "Nicht genug Gold!",
-      backToMenu: "Zurück zum Menü", signIn: "Anmelden", logIn: "Log In", maxSoldiers: "Max. Soldaten", yourSoldiers: "Deine Soldaten", purchased: "✓ Gekauft!",
+      customizeBtn: "Skin & Farbe anpassen", reloadKey: "Nachladen", killCount: "Kills", playersAlive: "Lebend",
+      justColor: "Nur Farbe", drawSkinRadio: "Skin zeichnen",
+      backToMenu: "Zurück zum Menü", yourSoldiers: "Deine Soldaten", yourScore: "Dein Punktestand",
       joinRoom: "RAUM BEITRETEN", joinRoomTitle: "RAUM BEITRETEN", roomCodePrompt: "Raumcode eingeben (6 Ziffern)", 
-      roomCodePlaceholder: "000000", joinRoomBtnText: "BEITRETEN", cancel: "ABBRECHEN", roomCode: "Raumcode"
+      roomCodePlaceholder: "000000", joinRoomBtnText: "BEITRETEN", cancel: "ABBRECHEN",
+      muteMusic: "Musik aus", unmuteMusic: "Musik an",
+      watchAdBonus: "🎬 WERBUNG ANSEHEN: Bonus!", adBonusActive: "⚡ BONUS AKTIV!"
     },
     fr: {
-      subtitle: "Construisez votre armée. Dominez la carte.", placeholder: "Entrez votre nom...", play: "JOUER",
+      subtitle: "Construisez votre armée. Dominez la carte.", placeholder: "Entrez votre nom...", play: "JOUER", playBots: "JOUER AVEC BOTS",
       mouse: "Souris", moveAim: "Bouger & Viser", click: "Clic", shoot: "Tirer",
       leaderboard: "🏆 CLASSEMENT", reloading: "RECHARGEMENT...", eliminated: "ÉLIMINÉ!", soldiers: "soldats",
       color: "Couleur:", drawSkin: "Dessiner la peau:", clear: "Effacer", eraser: "Gomme",
-      customizeBtn: "Personnaliser la peau et la couleur", reloadKey: "Recharger", killCount: "Tués", soldierCountDeath: "Soldats", playersAlive: "En vie",
-      newHighScore: "Nouveau record !", emailLogin: "📧 Connexion Email", guestLogin: "👤 Mode Invité",
-      loginBtn: "CONNEXION", back: "← Retour", justColor: "Juste couleur", drawSkinRadio: "Dessiner la peau", signOut: "Déconnexion",
-      store: "Boutique", rpgName: "RPG", rpgDesc: "5 roquettes à usage unique. Dégâts de zone.", buyRpgPack: "Acheter (100 🪙 · x5)",
-      bonusDurationName: "+10 Durée", bonusDurationDesc: "+10s bonus pour boucliers et armes.", buyBonusDuration1h: "1 Heure (100 🪙)", buyBonusDurationPerm: "Permanent ($2.99)",
-      goldMultiplierName: "x2 Or", goldMultiplierDesc: "Double or en fin de partie.", buyGoldMultiplier1h: "1 Heure (50 🪙)", buyGoldMultiplierPerm: "Permanent ($2.99)",
-      buy: "Acheter", notEnoughGold: "Pas assez d'or!",
-      backToMenu: "Retour au menu", signIn: "Se connecter", logIn: "Log In", maxSoldiers: "Max. soldats", yourSoldiers: "Vos soldats", purchased: "✓ Acheté!",
+      customizeBtn: "Personnaliser la peau et la couleur", reloadKey: "Recharger", killCount: "Tués", playersAlive: "En vie",
+      justColor: "Juste couleur", drawSkinRadio: "Dessiner la peau",
+      backToMenu: "Retour au menu", yourSoldiers: "Vos soldats", yourScore: "Votre score",
       joinRoom: "REJOINDRE SALLE", joinRoomTitle: "REJOINDRE SALLE", roomCodePrompt: "Entrez le code de la salle (6 chiffres)", 
-      roomCodePlaceholder: "000000", joinRoomBtnText: "REJOINDRE", cancel: "ANNULER", roomCode: "Code de Salle"
+      roomCodePlaceholder: "000000", joinRoomBtnText: "REJOINDRE", cancel: "ANNULER",
+      muteMusic: "Couper musique", unmuteMusic: "Activer musique",
+      watchAdBonus: "🎬 REGARDER PUB: Bonus!", adBonusActive: "⚡ BONUS ACTIF!"
     }
   };
 
@@ -456,7 +303,6 @@
   const weaponHud = document.getElementById('weaponHud');
   const bottomRightHud = document.getElementById('bottomRightHud');
   const weaponSlotsHud = document.getElementById('weaponSlotsHud');
-  const missileSlotWrap = document.getElementById('missileSlotWrap');
   const weaponNameEl = document.getElementById('weaponName');
   const ammoFill = document.getElementById('ammoFill');
   const ammoText = document.getElementById('ammoText');
@@ -472,11 +318,6 @@
   const colorBtns = document.querySelectorAll('.color-btn');
   const toggleCustomBtn = document.getElementById('toggleCustomBtn');
   const customizationPanel = document.getElementById('customizationPanel');
-  const toggleStoreBtn = document.getElementById('toggleStoreBtn');
-  const storePanel = document.getElementById('storePanel');
-  const buyMissileBtn = document.getElementById('buyMissileBtn');
-  const missileCountVal = document.getElementById('missileCountVal');
-  const equipMissileBtn = document.getElementById('equipMissileBtn');
   const equipRevolverBtn = document.getElementById('equipRevolverBtn');
   const storedPickupBadge = document.getElementById('storedPickupBadge');
   
@@ -484,22 +325,8 @@
   const topKillsVal = document.getElementById('topKillsVal');
   const topAliveVal = document.getElementById('topAliveVal');
   const deathKillsVal = document.getElementById('deathKillsVal');
-  const deathSoldierVal = document.getElementById('deathSoldierVal');
   const deathMaxSoldiersVal = document.getElementById('deathMaxSoldiersVal');
-  const deathHighScore = document.getElementById('deathHighScore');
-
-  // Login elements
-  const loginScreen = document.getElementById('loginScreen');
-  const guestLoginBtn = document.getElementById('guestLoginBtn');
-  const loginButtonsSection = document.getElementById('loginButtonsSection');
-  const loginError = document.getElementById('loginError');
-
-  let userEmail = null;
-  let userHighScore = 0;
-  let isGuest = false;
-  let previousMissileCount = 0;
-  
-  let activeExplosions = [];
+  const deathSoldierScoreVal = document.getElementById('deathSoldierScoreVal');
   
   const deathScreen = document.getElementById('deathScreen');
   const respawnBtn = document.getElementById('respawnBtn');
@@ -521,183 +348,15 @@
 
   toggleCustomBtn.addEventListener('click', () => {
     customizationPanel.classList.toggle('hidden');
-    storePanel.classList.add('hidden');
-  });
-
-  toggleStoreBtn.addEventListener('click', () => {
-    storePanel.classList.toggle('hidden');
-    customizationPanel.classList.add('hidden');
-    
-    // Update prices when store opens
-    if (!storePanel.classList.contains('hidden')) {
-      updateRegionalPrices();
-    }
-  });
-
-  buyMissileBtn.addEventListener('click', () => {
-    console.log('💰 Buy missile button clicked');
-    Network.buyItem('missile');
-  });
-
-  const buyBonusDurationBtn = document.getElementById('buyBonusDurationBtn');
-  const buyGoldMultiplierBtn = document.getElementById('buyGoldMultiplierBtn');
-  const buyBonusDurationPermBtn = document.getElementById('buyBonusDurationPermBtn');
-  const buyGoldMultiplierPermBtn = document.getElementById('buyGoldMultiplierPermBtn');
-  
-  console.log('🔍 Button elements:', {
-    buyBonusDurationPermBtn: buyBonusDurationPermBtn,
-    buyGoldMultiplierPermBtn: buyGoldMultiplierPermBtn
-  });
-
-  if (buyBonusDurationBtn) {
-    buyBonusDurationBtn.addEventListener('click', () => {
-      console.log('💰 Buy bonus duration button clicked');
-      Network.buyItem('bonusDuration10s');
-    });
-  }
-
-  if (buyGoldMultiplierBtn) {
-    buyGoldMultiplierBtn.addEventListener('click', () => {
-      console.log('💰 Buy gold multiplier button clicked');
-      Network.buyItem('goldMultiplier');
-    });
-  }
-
-  if (buyBonusDurationPermBtn) {
-    buyBonusDurationPermBtn.addEventListener('click', () => {
-      console.log('💰 Buy permanent bonus duration button clicked');
-      if (!userEmail || isGuest) {
-        alert('Kalıcı satın almalar için Google hesabıyla giriş yapmalısınız!');
-        return;
-      }
-      openXsollaPayment('bonusDuration');
-    });
-  }
-
-  if (buyGoldMultiplierPermBtn) {
-    buyGoldMultiplierPermBtn.addEventListener('click', () => {
-      console.log('💰 Buy permanent gold multiplier button clicked');
-      if (!userEmail || isGuest) {
-        alert('Kalıcı satın almalar için Google hesabıyla giriş yapmalısınız!');
-        return;
-      }
-      openXsollaPayment('goldMultiplier');
-    });
-  }
-
-  // Regional Pricing Update Function
-  let regionalPriceData = null;
-  
-  function updateRegionalPrices() {
-    console.log('💰 Fetching regional prices...');
-    
-    const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
-    
-    fetch(`${backendUrl}/api/get-regional-price`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          regionalPriceData = data;
-          console.log(`🌍 Regional pricing loaded: ${data.formattedPrice}`);
-          
-          // Update price spans only (keep translations intact)
-          const bonusPriceText = document.getElementById('bonusPriceText');
-          const goldPriceText = document.getElementById('goldPriceText');
-          
-          if (bonusPriceText) {
-            bonusPriceText.textContent = ` (${data.formattedPrice})`;
-          }
-          if (goldPriceText) {
-            goldPriceText.textContent = ` (${data.formattedPrice})`;
-          }
-        }
-      })
-      .catch(err => {
-        console.error('❌ Failed to load regional prices:', err);
-      });
-  }
-
-  // Xsolla Payment Function
-  function openXsollaPayment(itemType) {
-    console.log('💳 Opening Xsolla payment for:', itemType);
-    
-    // Check if XPayStationWidget is available
-    if (typeof XPayStationWidget === 'undefined') {
-      console.error('❌ Xsolla widget not loaded');
-      alert('Ödeme sistemi yüklenemedi. Lütfen sayfayı yenileyin.');
-      return;
-    }
-    
-    // Backend URL
-    const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
-    
-    // Create order on server first (server will determine price from IP)
-    fetch(`${backendUrl}/api/create-xsolla-payment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: userEmail,
-        itemType: itemType
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.token) {
-        console.log('✅ Payment token received:', data.token);
-        
-        // Open Xsolla Pay Station
-        const options = {
-          access_token: data.token,
-          sandbox: true, // Test mode - production'da false yapın
-          lightbox: {
-            width: '740px',
-            height: '760px',
-            closeByClick: true,
-            closeByKeyboard: true,
-            spinner: 'round'
-          }
-        };
-        
-        const s = new XPayStationWidget();
-        s.open(options);
-        
-        // Listen for payment completion
-        s.on(XPayStationWidget.eventTypes.STATUS, function (event, data) {
-          console.log('💳 Payment status:', event, data);
-          if (event === 'done') {
-            console.log('✅ Payment successful!');
-            // Notify server about successful payment
-            Network.buyItem('permanent' + itemType.charAt(0).toUpperCase() + itemType.slice(1));
-            alert('✅ Ödeme başarılı! Satın alımınız hesabınıza tanımlandı.');
-          } else if (event === 'close') {
-            console.log('❌ Payment window closed');
-          }
-        });
-      } else {
-        console.error('❌ Failed to create payment token:', data);
-        alert('Ödeme başlatılamadı: ' + (data.error || 'Bilinmeyen hata'));
-      }
-    })
-    .catch(err => {
-      console.error('❌ Payment error:', err);
-      alert('Ödeme sistemi hatası. Lütfen daha sonra tekrar deneyin.');
-    });
-  }
-
-  equipMissileBtn.addEventListener('click', () => {
-    Network.equipMissile();
   });
 
   let lastEquipRevolverTime = 0;
   equipRevolverBtn.addEventListener('click', () => {
     const now = Date.now();
-    // Prevent rapid clicking (300ms debounce)
     if (now - lastEquipRevolverTime < 300) {
-      console.log('🚫 equipRevolver: Too rapid clicking, ignored');
       return;
     }
     lastEquipRevolverTime = now;
-    console.log('🔫 equipRevolver: Button clicked');
     Network.equipRevolver();
   });
 
@@ -779,20 +438,18 @@
   
   const PIXEL_RES = 8;
   const PIXEL_SIZE = pEditCanvas.width / PIXEL_RES;
-  let skinData = new Array(PIXEL_RES * PIXEL_RES).fill('#ffffff'); // Default white
+  let skinData = new Array(PIXEL_RES * PIXEL_RES).fill('#ffffff');
   let isDrawingSkin = false;
   let useEraser = false;
 
   function drawPixelEditor() {
     [ {ctx: pEditCtx, canvas: pEditCanvas}, {ctx: deathPEditCtx, canvas: deathPEditCanvas} ].forEach(({ctx, canvas}) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Draw Grid
       ctx.strokeStyle = 'rgba(0,0,0,0.1)';
       for(let i=0; i<=PIXEL_RES; i++) {
         ctx.beginPath(); ctx.moveTo(i*PIXEL_SIZE, 0); ctx.lineTo(i*PIXEL_SIZE, canvas.height); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, i*PIXEL_SIZE); ctx.lineTo(canvas.width, i*PIXEL_SIZE); ctx.stroke();
       }
-      // Draw Pixels
       for(let i=0; i<skinData.length; i++) {
         if(skinData[i]) {
           const x = (i % PIXEL_RES) * PIXEL_SIZE;
@@ -852,22 +509,29 @@
     if(!skinArray || skinArray.every(p => p === null)) return null;
     if(skinCanvasCache[playerId]) return skinCanvasCache[playerId];
     
-    // Limit cache size for memory optimization
     if (skinCacheSize >= SKIN_CACHE_LIMIT) {
       const oldestKey = Object.keys(skinCanvasCache)[0];
       delete skinCanvasCache[oldestKey];
       skinCacheSize--;
     }
     
+    const size = 32;
     const c = document.createElement('canvas');
-    c.width = PIXEL_RES; c.height = PIXEL_RES;
+    c.width = size; c.height = size;
     const cx = c.getContext('2d', { alpha: true, willReadFrequently: false });
+
+    // Apply circular mask once during creation
+    cx.beginPath();
+    cx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
+    cx.clip();
+
+    const pSize = size / PIXEL_RES;
     for(let i=0; i<skinArray.length; i++) {
       if(skinArray[i]) {
-        const x = i % PIXEL_RES;
-        const y = Math.floor(i / PIXEL_RES);
+        const x = (i % PIXEL_RES) * pSize;
+        const y = Math.floor(i / PIXEL_RES) * pSize;
         cx.fillStyle = skinArray[i];
-        cx.fillRect(x, y, 1, 1);
+        cx.fillRect(x, y, pSize, pSize);
       }
     }
     skinCanvasCache[playerId] = c;
@@ -879,12 +543,193 @@
   let playing = false;
   let gameState = null;
   let camera = { x: 5000, y: 5000 };
+  let isCameraSnapped = false;
+  let isCurrentGameBotMatch = false;
   let zoom = 1.0;
   let mouseScreen = { x: 0, y: 0 };
   let smoothPositions = {};
   let lastTime = 0;
   let eliminatedTimer = 0;
   let isMouseDown = false;
+  let isMobileFireActive = false;
+  let lastRevolverAmmo = undefined;
+
+  // === Sound Manager ===
+  const SoundManager = (() => {
+    const mainThemeAudio = new Audio(encodeURI('/sounds/soldare io main theme.mp3'));
+    mainThemeAudio.loop = true;
+    mainThemeAudio.volume = 0.45;
+
+    const revolverAudio = new Audio(encodeURI('/sounds/revolver.wav'));
+    revolverAudio.volume = 0.6;
+
+    const autoFireAudio = new Audio(encodeURI('/sounds/smg m4 ak47 fire.wav'));
+    autoFireAudio.loop = true;
+    autoFireAudio.volume = 0.6;
+
+    const autoEndAudio = new Audio(encodeURI('/sounds/smg m4 ak47 end.wav'));
+    autoEndAudio.volume = 0.6;
+
+    const minigunFireAudio = new Audio(encodeURI('/sounds/minigun fire.wav'));
+    minigunFireAudio.loop = true;
+    minigunFireAudio.volume = 0.6;
+
+    const minigunEndAudio = new Audio(encodeURI('/sounds/minigun end.wav'));
+    minigunEndAudio.volume = 0.6;
+
+    let isAutoFiring = false;
+    let isMinigunFiring = false;
+    let isMainThemePlaying = false;
+    let hasInteracted = false;
+    let isMuted = false;
+
+    function initInteraction() {
+      if (!hasInteracted) {
+        hasInteracted = true;
+        if (!playing && !isMainThemePlaying && !isMuted) {
+          playMainTheme();
+        }
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      if (isMuted) {
+        mainThemeAudio.pause();
+        isMainThemePlaying = false;
+      } else {
+        if (!playing) {
+          playMainTheme();
+        }
+      }
+      updateMuteButtonUI();
+      return isMuted;
+    }
+
+    function updateMuteButtonUI() {
+      const muteIcon = document.getElementById('muteIcon');
+      const muteText = document.getElementById('muteText');
+      const dict = I18N[currentLang] || I18N.tr;
+      if (isMuted) {
+        if (muteIcon) muteIcon.textContent = '🔇';
+        if (muteText) muteText.textContent = dict.unmuteMusic || 'Müziği Aç';
+      } else {
+        if (muteIcon) muteIcon.textContent = '🔊';
+        if (muteText) muteText.textContent = dict.muteMusic || 'Müziği Kapat';
+      }
+    }
+
+    function playMainTheme() {
+      if (isMuted) return;
+      mainThemeAudio.currentTime = 0;
+      mainThemeAudio.play().then(() => {
+        isMainThemePlaying = true;
+      }).catch(() => {
+        isMainThemePlaying = false;
+      });
+    }
+
+    function stopMainTheme() {
+      mainThemeAudio.pause();
+      mainThemeAudio.currentTime = 0;
+      isMainThemePlaying = false;
+    }
+
+    function playRevolver() {
+      try {
+        const clone = revolverAudio.cloneNode();
+        clone.volume = 0.6;
+        clone.play().catch(() => {});
+      } catch (e) {}
+    }
+
+    function updateWeaponSounds(myPlayer, isShootingRequested) {
+      if (!myPlayer || !myPlayer.alive || !playing) {
+        stopAutoFire(false);
+        stopMinigunFire(false);
+        return;
+      }
+
+      const weapon = myPlayer.weapon;
+      const isReloading = myPlayer.isReloading;
+      const ammo = myPlayer.ammo;
+      const canShoot = !isReloading && ammo > 0 && isShootingRequested;
+
+      const isAutoWeapon = (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47');
+      if (isAutoWeapon && canShoot) {
+        if (!isAutoFiring) {
+          isAutoFiring = true;
+          autoFireAudio.currentTime = 0;
+          autoFireAudio.play().catch(() => {});
+        }
+      } else {
+        if (isAutoFiring) {
+          stopAutoFire(true);
+        }
+      }
+
+      const isMinigunWeapon = (weapon === 'minigun');
+      if (isMinigunWeapon && canShoot) {
+        if (!isMinigunFiring) {
+          isMinigunFiring = true;
+          minigunFireAudio.currentTime = 0;
+          minigunFireAudio.play().catch(() => {});
+        }
+      } else {
+        if (isMinigunFiring) {
+          stopMinigunFire(true);
+        }
+      }
+    }
+
+    function stopAutoFire(playEndSound = false) {
+      if (isAutoFiring) {
+        isAutoFiring = false;
+        autoFireAudio.pause();
+        autoFireAudio.currentTime = 0;
+        if (playEndSound) {
+          try {
+            autoEndAudio.currentTime = 0;
+            autoEndAudio.play().catch(() => {});
+          } catch (e) {}
+        }
+      }
+    }
+
+    function stopMinigunFire(playEndSound = false) {
+      if (isMinigunFiring) {
+        isMinigunFiring = false;
+        minigunFireAudio.pause();
+        minigunFireAudio.currentTime = 0;
+        if (playEndSound) {
+          try {
+            minigunEndAudio.currentTime = 0;
+            minigunEndAudio.play().catch(() => {});
+          } catch (e) {}
+        }
+      }
+    }
+
+    function stopAllWeaponSounds() {
+      stopAutoFire(false);
+      stopMinigunFire(false);
+    }
+
+    window.addEventListener('click', initInteraction);
+    window.addEventListener('keydown', initInteraction);
+    window.addEventListener('touchstart', initInteraction);
+
+    return {
+      playMainTheme,
+      stopMainTheme,
+      playRevolver,
+      updateWeaponSounds,
+      stopAllWeaponSounds,
+      initInteraction,
+      toggleMute,
+      updateMuteButtonUI
+    };
+  })();
   
   // Viewport culling cache
   let viewportBounds = { left: 0, right: 0, top: 0, bottom: 0 };
@@ -902,10 +747,6 @@
     return x >= viewportBounds.left && x <= viewportBounds.right &&
            y >= viewportBounds.top && y <= viewportBounds.bottom;
   }
-  
-  // Purchase notification
-  let purchaseNotification = null;
-  let purchaseNotificationTimer = 0;
 
   // === Update Language ===
   function updateLang() {
@@ -916,12 +757,21 @@
     document.querySelectorAll('[data-i18n-ph]').forEach(el => {
       if (dict[el.getAttribute('data-i18n-ph')]) el.placeholder = dict[el.getAttribute('data-i18n-ph')];
     });
+    SoundManager.updateMuteButtonUI();
   }
   langSelect.addEventListener('change', (e) => {
     currentLang = e.target.value;
     updateLang();
   });
-  updateLang(); // Init
+  
+  const muteBtn = document.getElementById('muteBtn');
+  if (muteBtn) {
+    muteBtn.addEventListener('click', () => {
+      SoundManager.toggleMute();
+    });
+  }
+  
+  updateLang();
 
   // === Pickup / Weapon visuals ===
   const PICKUP_STYLES = {
@@ -987,10 +837,18 @@
   window.addEventListener('resize', resize);
   resize();
 
+  let smoothPositionsCount = 0;
   function smooth(key, tx, ty, factor) {
-    if (!smoothPositions[key]) smoothPositions[key] = { x: tx, y: ty };
+    if (!smoothPositions[key]) {
+      smoothPositionsCount++;
+      if (smoothPositionsCount > 1500) {
+        smoothPositions = {};
+        smoothPositionsCount = 0;
+      }
+      smoothPositions[key] = { x: tx, y: ty };
+    }
     const p = smoothPositions[key];
-    p.x += (tx - p.x) * (factor * 1.5); // Daha hızlı interpolation (daha responsive)
+    p.x += (tx - p.x) * (factor * 1.5);
     p.y += (ty - p.y) * (factor * 1.5);
     return p;
   }
@@ -1081,7 +939,6 @@
     if (!gameState) return;
     const time = Date.now() / 1000;
     
-    // Scale Pickups for me visually based on score
     const myId = Network.getId();
     const me = gameState.players[myId];
     let pickupScale = 1.0;
@@ -1090,19 +947,13 @@
     }
 
     for (const pk of gameState.pickups) {
-      // Viewport culling
       if (!isInViewport(pk.x, pk.y)) continue;
       
       const style = PICKUP_STYLES[pk.type] || PICKUP_STYLES.smg;
       const pulse = 1 + Math.sin(time * 3 + pk.id) * 0.12;
       const finalScale = pulse * pickupScale;
 
-      const grad = ctx.createRadialGradient(pk.x, pk.y, 0, pk.x, pk.y, 40 * finalScale);
-      grad.addColorStop(0, hexToRgba(style.color, 0.25));
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.fillRect(pk.x - 50 * pickupScale, pk.y - 50 * pickupScale, 100 * pickupScale, 100 * pickupScale);
-
+      drawCircle(pk.x, pk.y, 35 * finalScale, hexToRgba(style.color, 0.15), null);
       drawCircle(pk.x, pk.y, 22 * finalScale, hexToRgba(style.color, 0.3), style.color, 2 * pickupScale);
       drawWeaponIcon(ctx, pk.type, pk.x, pk.y, 20 * finalScale);
 
@@ -1116,7 +967,6 @@
   function drawNeutrals() {
     if (!gameState) return;
     for (const ns of gameState.neutrals) {
-      // Viewport culling
       if (!isInViewport(ns.x, ns.y)) continue;
       
       const pos = smooth(`n_${ns.id}`, ns.x, ns.y, 0.3);
@@ -1133,41 +983,29 @@
   }
 
   function drawSoldierUnit(sx, sy, color, canShoot, isMain, angle, skinCanvas) {
-    const r = SOLDIER_RADIUS; // Same size for all
+    const r = SOLDIER_RADIUS;
 
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.beginPath();
-    ctx.ellipse(sx, sy + r * 0.6, r * 0.8, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.arc(sx, sy + r * 0.5, r * 0.7, 0, Math.PI * 2);
     ctx.fill();
 
-    // Body
     drawCircle(sx, sy, r, color, isMain ? '#fff' : hexToRgba('#000', 0.4), isMain ? 2 : 1.5);
 
-    // Skin overlay
     if (skinCanvas) {
       ctx.save();
       ctx.translate(sx, sy);
-      ctx.rotate(angle); // Rotate skin with aim
-      // Draw pixel art stretched over the circle
-      ctx.beginPath();
-      ctx.arc(0, 0, r - 1, 0, Math.PI * 2);
-      ctx.clip();
+      ctx.rotate(angle);
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(skinCanvas, -r, -r, r*2, r*2);
+      ctx.drawImage(skinCanvas, -r, -r, r * 2, r * 2);
       ctx.restore();
     } else {
-      // Default Highlight if no skin
-      const hlGrad = ctx.createRadialGradient(sx - r * 0.25, sy - r * 0.3, 0, sx, sy, r);
-      hlGrad.addColorStop(0, 'rgba(255,255,255,0.3)');
-      hlGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = hlGrad;
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
       ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.arc(sx - r * 0.2, sy - r * 0.2, r * 0.45, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Gun
     if (canShoot || isMain) {
       const a = angle || 0;
       ctx.strokeStyle = '#555';
@@ -1204,7 +1042,7 @@
       if (!p.alive) continue;
 
       const isMe = id === myId;
-      const pos = smooth(`p_${id}`, p.x, p.y, isMe ? 0.35 : 0.2); // Main body
+      const pos = smooth(`p_${id}`, p.x, p.y, isMe ? 0.35 : 0.2);
       const angle = p.angle || 0;
       const skinCnv = getSkinCanvas(id, p.skin);
 
@@ -1230,16 +1068,20 @@
         ctx.restore();
       }
 
-      // Draw swarm soldiers
+      // Draw swarm soldiers with Viewport Culling
       for (let i = 0; i < p.soldiers.length; i++) {
         const sol = p.soldiers[i];
+        if (!isInViewport(sol.x, sol.y)) continue;
+
         const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.25);
         const solAngle = Math.atan2(pos.y - sol.y, pos.x - sol.x);
         drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, sol.cs ? angle : solAngle, skinCnv);
       }
 
       // Draw main soldier
-      drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv);
+      if (isInViewport(pos.x, pos.y)) {
+        drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv);
+      }
 
       // Name tag
       ctx.font = '800 16px Montserrat, sans-serif';
@@ -1258,20 +1100,26 @@
   }
 
   function drawBullets() {
-    if (!gameState) return;
-    for (const b of gameState.bullets) {
-      // Viewport culling
+    if (!gameState || !gameState.bullets || gameState.bullets.length === 0) return;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    for (let i = 0; i < gameState.bullets.length; i++) {
+      const b = gameState.bullets[i];
       if (!isInViewport(b.x, b.y)) continue;
-      
-      const pos = smooth(`b_${b.id}`, b.x, b.y, 0.4); 
+      ctx.moveTo(b.x + 3.5, b.y);
+      ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
+    }
+    ctx.fill();
 
-      const trailGrad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 12);
-      trailGrad.addColorStop(0, hexToRgba(b.c, 0.7));
-      trailGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = trailGrad;
-      ctx.fillRect(pos.x - 15, pos.y - 15, 30, 30);
-
-      drawCircle(pos.x, pos.y, 4, '#fff', b.c, 1.5);
+    for (let i = 0; i < gameState.bullets.length; i++) {
+      const b = gameState.bullets[i];
+      if (!isInViewport(b.x, b.y)) continue;
+      ctx.strokeStyle = b.c || '#4fc3f7';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
+      ctx.stroke();
     }
   }
 
@@ -1282,8 +1130,18 @@
     if (!me || !me.alive) return;
 
     const pos = smooth(`p_${myId}`, me.x, me.y, 0.35);
-    const wx = (mouseScreen.x - canvas.width / 2) / zoom + camera.x;
-    const wy = (mouseScreen.y - canvas.height / 2) / zoom + camera.y;
+    
+    let wx, wy;
+    
+    if (isMobile) {
+      // Use virtual mouse position from joystick
+      wx = virtualMouseWorld.x;
+      wy = virtualMouseWorld.y;
+    } else {
+      // Use actual mouse position
+      wx = (mouseScreen.x - canvas.width / 2) / zoom + camera.x;
+      wy = (mouseScreen.y - canvas.height / 2) / zoom + camera.y;
+    }
 
     ctx.save();
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
@@ -1310,141 +1168,114 @@
     ctx.stroke();
   }
 
-  function drawExplosions(dt) {
-    // Limit active explosions for performance
-    if (activeExplosions.length > MAX_PARTICLES) {
-      activeExplosions = activeExplosions.slice(-MAX_PARTICLES);
-    }
-    
-    for (let i = activeExplosions.length - 1; i >= 0; i--) {
-      const ex = activeExplosions[i];
-      
-      // Viewport culling
-      if (!isInViewport(ex.x, ex.y)) {
-        continue;
-      }
-      
-      ex.time += dt;
-      const duration = 0.5; // half second explosion
-      if (ex.time >= duration) {
-        activeExplosions.splice(i, 1);
-        continue;
-      }
-      const progress = ex.time / duration;
-      const currentRadius = ex.r * (0.2 + progress * 0.8);
-      const alpha = 1 - progress;
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      const grad = ctx.createRadialGradient(ex.x, ex.y, 0, ex.x, ex.y, currentRadius);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.2, '#ffea00');
-      grad.addColorStop(0.5, '#ff5722');
-      grad.addColorStop(1, 'transparent');
-      
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(ex.x, ex.y, currentRadius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
   // === HUD Update ===
+  let lastLbCache = '';
+  const hudCache = {};
   function updateHUD() {
     if (!gameState) return;
     const myId = Network.getId();
     const me = gameState.players[myId];
     if (!me) return;
 
-    lbList.innerHTML = '';
-    for (let i = 0; i < gameState.leaderboard.length; i++) {
-      const entry = gameState.leaderboard[i];
-      const row = document.createElement('div');
-      row.className = 'lb-row' + (entry.name === me.name ? ' me' : '');
-      row.innerHTML = `
-        <span class="lb-rank">${i + 1}.</span>
-        <span class="lb-color" style="background:${entry.color}"></span>
-        <span class="lb-name">${entry.name}</span>
-        <span class="lb-score">${entry.score}</span>
-      `;
-      lbList.appendChild(row);
+    const lbCacheKey = JSON.stringify(gameState.leaderboard) + '_' + me.name;
+    if (lbCacheKey !== lastLbCache) {
+      lastLbCache = lbCacheKey;
+      lbList.innerHTML = '';
+      for (let i = 0; i < gameState.leaderboard.length; i++) {
+        const entry = gameState.leaderboard[i];
+        const row = document.createElement('div');
+        row.className = 'lb-row' + (entry.name === me.name ? ' me' : '');
+        row.innerHTML = `
+          <span class="lb-rank">${i + 1}.</span>
+          <span class="lb-color" style="background:${entry.color}"></span>
+          <span class="lb-name">${entry.name}</span>
+          <span class="lb-score">${entry.score}</span>
+        `;
+        lbList.appendChild(row);
+      }
     }
 
-    weaponNameEl.textContent = me.weaponName || 'REVOLVER';
+    const wName = me.weaponName || 'REVOLVER';
+    if (hudCache.weaponName !== wName) {
+      hudCache.weaponName = wName;
+      weaponNameEl.textContent = wName;
+    }
     
-    // Update weapon icon based on current weapon
-    // IMPORTANT: Revolver slot should ALWAYS show revolver icon, never RPG!
-    // RPG has its own separate slot (missileSlotWrap)
-    const iconWeapon = (me.weapon === 'missile') ? 'revolver' : (me.weapon || 'revolver');
-    updateWeaponIcon(iconWeapon);
+    // Update weapon icon
+    updateWeaponIcon(me.weapon || 'revolver');
     
-    const pct = (me.ammo / me.maxAmmo) * 100;
-    ammoFill.style.width = `${pct}%`;
+    const pct = Math.round((me.ammo / me.maxAmmo) * 100);
+    if (hudCache.ammoPct !== pct) {
+      hudCache.ammoPct = pct;
+      ammoFill.style.width = `${pct}%`;
+      if (pct > 50) ammoFill.style.background = 'linear-gradient(90deg, #4fc3f7, #00e676)';
+      else if (pct > 20) ammoFill.style.background = 'linear-gradient(90deg, #ffd740, #ff9800)';
+      else ammoFill.style.background = 'linear-gradient(90deg, #ff5252, #ff1744)';
+    }
 
-    if (pct > 50) ammoFill.style.background = 'linear-gradient(90deg, #4fc3f7, #00e676)';
-    else if (pct > 20) ammoFill.style.background = 'linear-gradient(90deg, #ffd740, #ff9800)';
-    else ammoFill.style.background = 'linear-gradient(90deg, #ff5252, #ff1744)';
+    const aText = `${me.ammo} / ${me.maxAmmo}`;
+    if (hudCache.ammoText !== aText) {
+      hudCache.ammoText = aText;
+      ammoText.textContent = aText;
+    }
 
-    ammoText.textContent = `${me.ammo} / ${me.maxAmmo}`;
+    const isRel = me.isReloading;
+    if (hudCache.isReloading !== isRel) {
+      hudCache.isReloading = isRel;
+      if (isRel) reloadIndicator.classList.remove('hidden');
+      else reloadIndicator.classList.add('hidden');
+    }
 
-    if (me.isReloading) reloadIndicator.classList.remove('hidden');
-    else reloadIndicator.classList.add('hidden');
-
-    if (me.weaponTimer > 0 && me.weapon !== 'revolver' && me.weapon !== 'missile') {
-      weaponTimerEl.classList.remove('hidden');
-      weaponTimerEl.textContent = `⏱ ${me.weaponTimer.toFixed(1)}s`;
-    } else {
+    if (me.weaponTimer > 0 && me.weapon !== 'revolver') {
+      const wTimerText = `⏱ ${me.weaponTimer.toFixed(1)}s`;
+      if (hudCache.weaponTimerText !== wTimerText) {
+        hudCache.weaponTimerText = wTimerText;
+        weaponTimerEl.classList.remove('hidden');
+        weaponTimerEl.textContent = wTimerText;
+      }
+    } else if (hudCache.weaponTimerText !== 'hidden') {
+      hudCache.weaponTimerText = 'hidden';
       weaponTimerEl.classList.add('hidden');
     }
 
     if (me.shieldActive) {
-      shieldHud.classList.remove('hidden');
-      shieldTimerEl.textContent = `${me.shieldTimer.toFixed(1)}s`;
-    } else {
+      const sTimerText = `${me.shieldTimer.toFixed(1)}s`;
+      if (hudCache.shieldTimerText !== sTimerText) {
+        hudCache.shieldTimerText = sTimerText;
+        shieldHud.classList.remove('hidden');
+        shieldTimerEl.textContent = sTimerText;
+      }
+    } else if (hudCache.shieldTimerText !== 'hidden') {
+      hudCache.shieldTimerText = 'hidden';
       shieldHud.classList.add('hidden');
     }
 
-    myCountEl.textContent = me.score;
-    topKillsVal.textContent = me.kills || 0;
-    topAliveVal.textContent = gameState.totalPlayers || 0;
+    if (hudCache.myCount !== me.score) {
+      hudCache.myCount = me.score;
+      myCountEl.textContent = me.score;
+    }
+    const kills = me.kills || 0;
+    if (hudCache.topKills !== kills) {
+      hudCache.topKills = kills;
+      topKillsVal.textContent = kills;
+    }
+    const totPlayers = gameState.totalPlayers || 0;
+    if (hudCache.topAlive !== totPlayers) {
+      hudCache.topAlive = totPlayers;
+      topAliveVal.textContent = totPlayers;
+    }
 
-    const totalMissiles = me.totalMissiles !== undefined
-      ? me.totalMissiles
-      : (me.missiles || 0) + (me.isMissile ? 1 : 0);
-
-    if (totalMissiles > 0 || me.isMissile) {
-      missileSlotWrap.classList.remove('hidden');
-      missileCountVal.textContent = totalMissiles;
-      if (me.isMissile) {
-        equipMissileBtn.classList.add('equipped');
+    const hasStored = me.hasStoredPickup;
+    if (hudCache.hasStored !== hasStored) {
+      hudCache.hasStored = hasStored;
+      if (hasStored) {
+        equipRevolverBtn.classList.add('has-stored');
+        storedPickupBadge.classList.remove('hidden');
+        storedPickupBadge.textContent = '!';
       } else {
-        equipMissileBtn.classList.remove('equipped');
+        equipRevolverBtn.classList.remove('has-stored');
+        storedPickupBadge.classList.add('hidden');
       }
-    } else {
-      missileSlotWrap.classList.add('hidden');
-      equipMissileBtn.classList.remove('equipped');
-    }
-
-    // Revolver slot is equipped when:
-    // 1. Current weapon is revolver
-    // 2. Current weapon is other weapons (SMG, AK47, M4, Minigun) but NOT missile
-    const isRevolverSlotActive = me.weapon === 'revolver' ||
-      (me.weapon !== 'missile' && me.weapon !== 'revolver');
-    if (isRevolverSlotActive) {
-      equipRevolverBtn.classList.add('equipped');
-    } else {
-      // When using RPG, revolver slot should NOT be equipped
-      equipRevolverBtn.classList.remove('equipped');
-    }
-
-    if (me.hasStoredPickup) {
-      equipRevolverBtn.classList.add('has-stored');
-      storedPickupBadge.classList.remove('hidden');
-      storedPickupBadge.textContent = '!'; // Just show exclamation mark, no weapon names
-    } else {
-      equipRevolverBtn.classList.remove('has-stored');
-      storedPickupBadge.classList.add('hidden');
     }
   }
 
@@ -1458,6 +1289,7 @@
     const mmY = canvas.height - mmSize - mmPad;
     const scale = mmSize / mapSize;
 
+    ctx.save();
     ctx.fillStyle = 'rgba(10,10,30,0.85)';
     roundRect(ctx, mmX, mmY, mmSize, mmSize, 8);
     ctx.fill();
@@ -1491,6 +1323,7 @@
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(vpX, vpY, vpW, vpH);
+    ctx.restore();
   }
 
   // === Main Render Loop ===
@@ -1505,7 +1338,7 @@
 
     frameCounter++;
     
-    // Memory cleanup every 2 seconds (120 frames at 60fps)
+    // Memory cleanup every 2 seconds
     if (frameCounter - lastCleanupFrame >= 120) {
       const activeKeys = new Set();
       for (const id in gameState.players) {
@@ -1528,20 +1361,39 @@
     lastTime = timestamp;
 
     const myId = Network.getId();
-    const me = gameState.players[myId];
+    const me = gameState ? gameState.players[myId] : null;
 
-    if (me && me.alive) {
-      // Camera follows main body
-      camera.x += (me.x - camera.x) * 0.1;
-      camera.y += (me.y - camera.y) * 0.1;
+    if (playing && me && me.alive) {
+      if (!isCameraSnapped) {
+        camera.x = me.x;
+        camera.y = me.y;
+        isCameraSnapped = true;
+      } else {
+        camera.x += (me.x - camera.x) * 0.1;
+        camera.y += (me.y - camera.y) * 0.1;
+      }
       
-      // Dynamic Zoom based on custom scale levels
       const scaleLevel = calculateScaleLevel(me.score);
       const targetZoom = 1.0 / Math.pow(1.1, scaleLevel);
       zoom += (targetZoom - zoom) * 0.05;
+
+      const isShootingRequested = isMouseDown || isMobileFireActive;
+
+      if (me.weapon === 'revolver') {
+        if (lastRevolverAmmo !== undefined && me.ammo < lastRevolverAmmo) {
+          SoundManager.playRevolver();
+        }
+        lastRevolverAmmo = me.ammo;
+      } else {
+        lastRevolverAmmo = undefined;
+      }
+
+      SoundManager.updateWeaponSounds(me, isShootingRequested);
+    } else {
+      lastRevolverAmmo = undefined;
+      SoundManager.stopAllWeaponSounds();
     }
     
-    // Update viewport bounds for culling
     updateViewportBounds();
 
     if (eliminatedTimer > 0) {
@@ -1557,72 +1409,173 @@
       drawBullets();
       drawPlayers();
       drawAimLine();
-      drawExplosions(dt);
     });
 
     drawMinimap();
     updateHUD();
-    
-    // Draw purchase notification
-    if (purchaseNotification && purchaseNotificationTimer > 0) {
-      purchaseNotificationTimer -= dt;
-      purchaseNotification.offsetY += dt * 30; // Float upwards
-      purchaseNotification.alpha = purchaseNotificationTimer / 2; // Fade out
-      
-      const notifX = purchaseNotification.x;
-      const notifY = purchaseNotification.y - purchaseNotification.offsetY;
-      
-      ctx.save();
-      ctx.globalAlpha = purchaseNotification.alpha;
-      ctx.font = 'bold 20px Russo One, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      const text = purchaseNotification.text;
-      const metrics = ctx.measureText(text);
-      const padding = 12;
-      const boxW = metrics.width + padding * 2;
-      const boxH = 30;
-      
-      // Green box
-      ctx.fillStyle = 'rgba(0, 200, 0, 0.9)';
-      ctx.beginPath();
-      // Use roundRect with fallback
-      if (ctx.roundRect) {
-        ctx.roundRect(notifX - boxW/2, notifY - boxH/2, boxW, boxH, 8);
-      } else {
-        roundRect(ctx, notifX - boxW/2, notifY - boxH/2, boxW, boxH, 8);
-      }
-      ctx.fill();
-      
-      // White border
-      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      // Text
-      ctx.fillStyle = '#fff';
-      ctx.fillText(text, notifX, notifY);
-      ctx.restore();
-      
-      if (purchaseNotificationTimer <= 0) {
-        purchaseNotification = null;
-      }
-    }
 
     requestAnimationFrame(render);
+  }
+
+  // === Mobile Detection & Controls ===
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   ('ontouchstart' in window) || 
+                   (navigator.maxTouchPoints > 0);
+  
+  const mobileControls = document.getElementById('mobileControls');
+  const joystickArea = document.getElementById('joystickArea');
+  const joystickStick = document.getElementById('joystickStick');
+  const fireButton = document.getElementById('fireButton');
+  const reloadButton = document.getElementById('reloadButton');
+  
+  let joystickActive = false;
+  let joystickId = null;
+  let joystickStartPos = { x: 0, y: 0 };
+  let joystickDelta = { x: 0, y: 0 };
+  
+  // Virtual mouse position for mobile (follows joystick direction)
+  let virtualMouseWorld = { x: 5000, y: 5000 };
+  
+  if (isMobile) {
+    console.log('📱 Mobile device detected - touch controls enabled');
+  } else {
+    console.log('🖥️ Desktop detected - mouse controls enabled');
+  }
+
+  // === Dynamic Joystick Logic ===
+  function showJoystickAt(x, y) {
+    joystickArea.style.left = (x - 70) + 'px';
+    joystickArea.style.top = (y - 70) + 'px';
+    joystickArea.classList.add('active');
+  }
+  
+  function hideJoystick() {
+    joystickArea.classList.remove('active');
+  }
+
+  function handleJoystickStart(e) {
+    if (!playing) return;
+    
+    // Only handle touches on the left half of the screen
+    const touch = e.touches[0];
+    if (touch.clientX > canvas.width / 2) return;
+    
+    e.preventDefault();
+    joystickActive = true;
+    joystickId = touch.identifier;
+    joystickStartPos = { x: touch.clientX, y: touch.clientY };
+    showJoystickAt(touch.clientX, touch.clientY);
+    joystickStick.classList.add('active');
+  }
+
+  function handleJoystickMove(e) {
+    if (!joystickActive || !playing) return;
+    
+    for (let i = 0; i < e.touches.length; i++) {
+      const touch = e.touches[i];
+      if (touch.identifier === joystickId) {
+        e.preventDefault();
+        const dx = touch.clientX - joystickStartPos.x;
+        const dy = touch.clientY - joystickStartPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const maxDistance = 40;
+        
+        if (distance > maxDistance) {
+          const angle = Math.atan2(dy, dx);
+          joystickDelta.x = Math.cos(angle) * maxDistance;
+          joystickDelta.y = Math.sin(angle) * maxDistance;
+        } else {
+          joystickDelta.x = dx;
+          joystickDelta.y = dy;
+        }
+        
+        joystickStick.style.transform = `translate(-50%, -50%) translate(${joystickDelta.x}px, ${joystickDelta.y}px)`;
+        
+        // Update virtual mouse position based on joystick
+        if (gameState) {
+          const myId = Network.getId();
+          const me = gameState.players[myId];
+          if (me && me.alive) {
+            const magnitude = Math.sqrt(joystickDelta.x * joystickDelta.x + joystickDelta.y * joystickDelta.y);
+            if (magnitude > 5) {
+              const angle = Math.atan2(joystickDelta.y, joystickDelta.x);
+              const distance = 300;
+              virtualMouseWorld.x = me.x + Math.cos(angle) * distance;
+              virtualMouseWorld.y = me.y + Math.sin(angle) * distance;
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  function handleJoystickEnd(e) {
+    if (!joystickActive) return;
+    
+    let touchStillActive = false;
+    for (let i = 0; i < e.touches.length; i++) {
+      if (e.touches[i].identifier === joystickId) {
+        touchStillActive = true;
+        break;
+      }
+    }
+    
+    if (!touchStillActive) {
+      joystickActive = false;
+      joystickId = null;
+      joystickDelta = { x: 0, y: 0 };
+      joystickStick.style.transform = 'translate(-50%, -50%)';
+      joystickStick.classList.remove('active');
+      hideJoystick();
+    }
+  }
+
+  if (isMobile) {
+    // Listen for touches on canvas (left half) for joystick
+    canvas.addEventListener('touchstart', handleJoystickStart, { passive: false });
+    canvas.addEventListener('touchmove', handleJoystickMove, { passive: false });
+    canvas.addEventListener('touchend', handleJoystickEnd, { passive: false });
+    
+    // Fire button
+    fireButton.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (!playing) return;
+      isMobileFireActive = true;
+      fireButton.classList.add('active');
+      Network.clickShoot();
+      Network.startShooting();
+    });
+    
+    fireButton.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      isMobileFireActive = false;
+      fireButton.classList.remove('active');
+      Network.stopShooting();
+    });
+    
+    // Reload button
+    reloadButton.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (!playing) return;
+      reloadButton.classList.add('active');
+      Network.manualReload();
+      setTimeout(() => reloadButton.classList.remove('active'), 200);
+    });
   }
 
   // === Input Handling ===
   let mouseSendInterval = null;
 
   canvas.addEventListener('mousemove', (e) => {
-    mouseScreen.x = e.clientX;
-    mouseScreen.y = e.clientY;
+    if (!isMobile) {
+      mouseScreen.x = e.clientX;
+      mouseScreen.y = e.clientY;
+    }
   });
 
   canvas.addEventListener('mousedown', (e) => {
-    if (e.button === 0 && playing) {
+    if (!isMobile && e.button === 0 && playing) {
       isMouseDown = true;
       Network.clickShoot();
       Network.startShooting();
@@ -1630,167 +1583,158 @@
   });
 
   canvas.addEventListener('mouseup', (e) => {
-    if (e.button === 0 && playing) {
+    if (!isMobile && e.button === 0 && playing) {
       isMouseDown = false;
       Network.stopShooting();
     }
   });
 
   window.addEventListener('keydown', (e) => {
-    if (playing && (e.key === 'r' || e.key === 'R')) {
+    if (!isMobile && playing && (e.key === 'r' || e.key === 'R')) {
       Network.manualReload();
     }
   });
 
   function sendMousePosition() {
     if (!playing) return;
-    const wx = (mouseScreen.x - canvas.width / 2) / zoom + camera.x;
-    const wy = (mouseScreen.y - canvas.height / 2) / zoom + camera.y;
+    
+    let wx, wy;
+    
+    if (isMobile) {
+      // Use virtual mouse position from joystick
+      wx = virtualMouseWorld.x;
+      wy = virtualMouseWorld.y;
+    } else {
+      // Use actual mouse position
+      wx = (mouseScreen.x - canvas.width / 2) / zoom + camera.x;
+      wy = (mouseScreen.y - canvas.height / 2) / zoom + camera.y;
+    }
+    
     Network.sendMouse(wx, wy);
   }
 
-  // === Login Flow ===
-  Network.connect(); // Connect socket immediately for login
-  
-  // Register purchase success callback AFTER connect
-  Network.onPurchaseSuccess((data) => {
-    console.log('🎉 Purchase success event received!', data);
-    
-    // Show HTML notification at mouse position
-    const notificationEl = document.getElementById('purchaseNotification');
-    const currentMouseX = mouseScreen.x || window.innerWidth / 2;
-    const currentMouseY = mouseScreen.y || window.innerHeight / 2;
-    
-    notificationEl.textContent = I18N[currentLang].purchased;
-    notificationEl.style.left = currentMouseX + 'px';
-    notificationEl.style.top = currentMouseY + 'px';
-    notificationEl.classList.add('visible');
-    
-    // Hide after 2 seconds
-    setTimeout(() => {
-      notificationEl.classList.remove('visible');
-    }, 2000);
-    
-    console.log('✅ Purchase notification shown at:', currentMouseX, currentMouseY);
-  });
+  // === Connect and Setup ===
+  Network.connect();
 
-  // Register require Google login callback
-  Network.onRequireGoogleLogin(() => {
-    console.log('🔐 Google login required for permanent purchase');
-    // Show login screen
-    loginScreen.classList.remove('hidden');
-    // Hide store panel
-    storePanel.classList.add('hidden');
-    // Show message
-    alert('Kalıcı satın almak için Google ile giriş yapmalısınız.');
-  });
+  // === CrazyGames SDK v3 Integration ===
+  let crazySDK = null;
 
-  // Google Sign-In Callback
-  window.handleCredentialResponse = (response) => {
-    if (response.credential) {
-      loginButtonsSection.classList.add('hidden');
-      // Save token to localStorage for auto-login
-      localStorage.setItem('soldierIOGoogleToken', response.credential);
-      Network.googleLogin(response.credential);
+  async function initCrazyGamesSDK() {
+    try {
+      if (window.CrazyGames && window.CrazyGames.SDK) {
+        crazySDK = window.CrazyGames.SDK;
+        await crazySDK.init();
+        console.log("🎮 CrazyGames SDK v3 initialized successfully");
+      }
+    } catch (e) {
+      console.log("CrazyGames SDK dev environment mode");
     }
-  };
-
-  // Auto-login if token exists
-  const savedToken = localStorage.getItem('soldierIOGoogleToken');
-  const savedGuestId = sessionStorage.getItem('soldierIOGuestId');
-  
-  if (savedToken) {
-    loginButtonsSection.classList.add('hidden');
-    Network.googleLogin(savedToken);
-  } else if (savedGuestId) {
-    // Auto-login guest with stored session
-    loginButtonsSection.classList.add('hidden');
-    Network.guestLogin();
   }
-  // DON'T auto-login as guest if no saved data
-  // Let users choose: Google login, Guest login, or Sign In
+  initCrazyGamesSDK();
 
-  function renderGoogleButton() {
-    if (typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.initialize({
-        client_id: typeof GOOGLE_CLIENT_ID !== 'undefined' && GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID : 'invalid-client-id',
-        callback: window.handleCredentialResponse
+  function crazyGameplayStart() {
+    if (crazySDK && crazySDK.game) {
+      try { crazySDK.game.gameplayStart(); } catch(e){}
+    }
+  }
+
+  function crazyGameplayStop() {
+    if (crazySDK && crazySDK.game) {
+      try { crazySDK.game.gameplayStop(); } catch(e){}
+    }
+  }
+
+  let deathAdCounter = 0;
+  function requestMidrollAd(onComplete) {
+    deathAdCounter++;
+    if (deathAdCounter % 2 === 0 && crazySDK && crazySDK.ad) {
+      crazySDK.ad.requestAd('midroll', {
+        adStarted: () => { SoundManager.stopAllWeaponSounds(); },
+        adFinished: () => { if (onComplete) onComplete(); },
+        adError: (error) => { console.log('Midroll ad info:', error); if (onComplete) onComplete(); }
       });
-      google.accounts.id.renderButton(
-        document.getElementById("googleSignInBtn"),
-        { 
-          theme: "filled_blue", 
-          size: "large", 
-          type: "standard", 
-          shape: "rectangular", 
-          text: "signin_with", 
-          logo_alignment: "left",
-          width: 280
-        }
-      );
     } else {
-      setTimeout(renderGoogleButton, 100);
+      if (onComplete) onComplete();
     }
   }
-  renderGoogleButton();
 
-  guestLoginBtn.addEventListener('click', () => {
-    Network.guestLogin();
-  });
+  let hasAdBonus = false;
+  const rewardedAdBtn = document.getElementById('rewardedAdBtn');
+  const rewardedAdText = document.getElementById('rewardedAdText');
 
-  const signOutBtn = document.getElementById('signOutBtn');
-  const signInBtn = document.getElementById('signInBtn');
-  const emailDropdown = document.getElementById('emailDropdown');
-  const emailDisplay = document.getElementById('emailDisplay');
-  const emailDropdownMenu = document.getElementById('emailDropdownMenu');
+  function resetRewardedAdUI() {
+    hasAdBonus = false;
+    if (rewardedAdBtn) {
+      rewardedAdBtn.style.background = 'linear-gradient(135deg, #ff9800, #f57c00)';
+      if (rewardedAdText) {
+        const dict = I18N[currentLang] || I18N.tr;
+        rewardedAdText.textContent = dict.watchAdBonus || '🎬 REKLAM İZLE: +10 Askerle Başla!';
+      }
+    }
+  }
+
+  if (rewardedAdBtn) {
+    rewardedAdBtn.addEventListener('click', () => {
+      if (hasAdBonus) return;
+      if (crazySDK && crazySDK.ad) {
+        crazySDK.ad.requestAd('rewarded', {
+          adStarted: () => { SoundManager.stopAllWeaponSounds(); },
+          adFinished: () => {
+            hasAdBonus = true;
+            rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+            const dict = I18N[currentLang] || I18N.tr;
+            if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
+          },
+          adError: (error) => {
+            alert('Reklam şu an gösterilemiyor. Lütfen tekrar deneyin.');
+          }
+        });
+      } else {
+        hasAdBonus = true;
+        rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+        const dict = I18N[currentLang] || I18N.tr;
+        if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
+      }
+    });
+  }
+
+  // Room modal elements
   const openRoomModalBtn = document.getElementById('openRoomModalBtn');
   const roomModal = document.getElementById('roomModal');
   const closeRoomModalBtn = document.getElementById('closeRoomModalBtn');
   const joinRoomBtn = document.getElementById('joinRoomBtn');
   const roomCodeInput = document.getElementById('roomCodeInput');
 
-  // Room code input validation - only numbers
+  // Room code input validation
   roomCodeInput.addEventListener('input', (e) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    if (value.length > 6) value = value.slice(0, 6); // Limit to 6 digits
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 6) value = value.slice(0, 6);
     e.target.value = value;
   });
 
-  // Room code input - auto-join on Enter key
   roomCodeInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       joinRoomBtn.click();
     }
   });
 
-  // Sign In button click
-  signInBtn.addEventListener('click', () => {
-    startScreen.classList.add('hidden');
-    loginScreen.classList.remove('hidden');
-  });
-
-  // Open Room Modal button click
   openRoomModalBtn.addEventListener('click', () => {
     roomModal.classList.remove('hidden');
   });
 
-  // Close Room Modal button click
   closeRoomModalBtn.addEventListener('click', () => {
     roomModal.classList.add('hidden');
   });
 
-  // Join Room button click (inside modal)
   joinRoomBtn.addEventListener('click', () => {
     const roomCode = roomCodeInput.value.trim();
     
-    // Validate room code
     if (roomCode.length !== 6) {
       alert(I18N[currentLang].roomCodePrompt || 'Oda kodu 6 haneli olmalıdır');
       roomCodeInput.focus();
       return;
     }
     
-    // Check if room code contains only numbers
     if (!/^\d{6}$/.test(roomCode)) {
       alert('Oda kodu sadece sayılardan oluşmalıdır');
       roomCodeInput.focus();
@@ -1809,81 +1753,11 @@
     const mode = document.querySelector(modeSelector).value;
     const finalSkinData = mode === 'skin' ? skinData : null;
 
+    const adBonusUsed = hasAdBonus;
+    resetRewardedAdUI();
+
     roomModal.classList.add('hidden');
-    Network.joinRoom(roomCode, name, color, finalSkinData);
-  });
-
-  // Email dropdown toggle
-  emailDisplay.addEventListener('click', (e) => {
-    e.stopPropagation();
-    emailDropdownMenu.classList.toggle('hidden');
-  });
-
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!emailDropdown.contains(e.target)) {
-      emailDropdownMenu.classList.add('hidden');
-    }
-  });
-
-  signOutBtn.addEventListener('click', () => {
-    // Clear localStorage token
-    localStorage.removeItem('soldierIOGoogleToken');
-    
-    // Stop playing if in game
-    playing = false;
-    
-    // Reload page to reset everything
-    window.location.reload();
-  });
-
-  Network.onLoginSuccess((data) => {
-    userEmail = data.email;
-    userHighScore = data.highScore || 0;
-    isGuest = data.isGuest || false;
-    
-    // Initialize previousMissileCount on login
-    previousMissileCount = data.missiles || 0;
-    
-    // Store guest session data in sessionStorage
-    if (isGuest && userEmail) {
-      sessionStorage.setItem('soldierIOGuestId', userEmail);
-      sessionStorage.setItem('soldierIOGuestGold', data.gold || 0);
-      sessionStorage.setItem('soldierIOGuestMissiles', data.missiles || 0);
-    }
-    
-    if (data.gold !== undefined) {
-      document.getElementById('goldVal').textContent = data.gold;
-      // Update sessionStorage for guests (live update during gameplay)
-      if (isGuest && userEmail) {
-        sessionStorage.setItem('soldierIOGuestGold', data.gold);
-      }
-    }
-    
-    loginScreen.classList.add('hidden');
-    startScreen.classList.remove('hidden');
-    
-    // Show email dropdown if logged in with email, otherwise show Sign In button
-    if (userEmail && !isGuest) {
-      emailDropdown.classList.remove('hidden');
-      signInBtn.classList.add('hidden');
-      emailDisplay.textContent = userEmail;
-    } else {
-      emailDropdown.classList.add('hidden');
-      signInBtn.classList.remove('hidden');
-    }
-    
-    nameInput.focus();
-    updateLang();
-  });
-
-  Network.onLoginError((data) => {
-    // If auto-login failed, clear the invalid token
-    localStorage.removeItem('soldierIOGoogleToken');
-    
-    loginError.textContent = data.message || 'Giriş başarısız.';
-    loginError.classList.remove('hidden');
-    loginButtonsSection.classList.remove('hidden');
+    Network.joinRoom(roomCode, name, color, finalSkinData, adBonusUsed);
   });
 
   Network.onRoomNotFound(() => {
@@ -1894,9 +1768,14 @@
     alert('Bu oda dolu. Başka bir oda kodu deneyin veya normal oyna butonuna tıklayın.');
   });
 
-  // === Start Game ===
-  // Register onJoined callback BEFORE any join/joinRoom calls
+  // === Game Events ===
   Network.onJoined((data) => {
+    crazyGameplayStart();
+    gameState = null;
+    smoothPositions = {};
+    isCameraSnapped = false;
+    SoundManager.stopMainTheme();
+    SoundManager.stopAllWeaponSounds();
     startScreen.classList.add('hidden');
     deathScreen.classList.add('hidden');
     leaderboardEl.classList.remove('hidden');
@@ -1906,7 +1785,11 @@
     eliminatedOverlay.classList.add('hidden');
     playing = true;
 
-    // Show room code HUD if in a room
+    // Show mobile controls if on mobile
+    if (isMobile) {
+      mobileControls.classList.add('active');
+    }
+
     if (data.roomCode) {
       document.getElementById('roomCodeDisplay').textContent = '#' + data.roomCode;
       document.getElementById('roomCodeHud').classList.remove('hidden');
@@ -1915,53 +1798,50 @@
     }
 
     if (mouseSendInterval) clearInterval(mouseSendInterval);
-    mouseSendInterval = setInterval(sendMousePosition, 150); // 100ms → 150ms (daha az network)
+    mouseSendInterval = setInterval(sendMousePosition, 150);
   });
 
   Network.onState((state) => {
-    gameState = state;
-    if (state.explosions && state.explosions.length > 0) {
-      for (const ex of state.explosions) {
-        activeExplosions.push({ x: ex.x, y: ex.y, r: ex.r, c: ex.c, time: 0 });
+    const myId = Network.getId();
+    if (playing && myId && state.players) {
+      const meInState = state.players[myId];
+      // Ignore stale state packets received immediately after joining a new game
+      if (!gameState && (!meInState || !meInState.alive)) {
+        return;
       }
     }
+    gameState = state;
   });
 
   Network.onEliminated((data) => {
+    crazyGameplayStop();
+    requestMidrollAd();
+    SoundManager.stopAllWeaponSounds();
     deathScreen.classList.remove('hidden');
+    if (deathNameInput && nameInput) {
+      deathNameInput.value = nameInput.value;
+    }
     const score = data && data.score ? data.score : 0;
     const kills = data && data.kills !== undefined ? data.kills : 0;
     const maxSoldiers = data && data.maxSoldiers !== undefined ? data.maxSoldiers : score;
+    const totalScore = maxSoldiers + (kills * 50);
     
     deathKillsVal.textContent = kills;
     deathMaxSoldiersVal.textContent = maxSoldiers;
-
-    if (data && data.earnedGold !== undefined) {
-      document.getElementById('deathEarnedGoldVal').textContent = data.earnedGold;
-    }
-    if (data && data.totalGold !== undefined) {
-      document.getElementById('goldVal').textContent = data.totalGold;
-      
-      // Update sessionStorage for guests
-      if (isGuest && userEmail) {
-        sessionStorage.setItem('soldierIOGuestGold', data.totalGold);
-      }
-    }
-
-    // High score check
-    if (data && data.isNewHighScore) {
-      deathHighScore.classList.remove('hidden');
-      userHighScore = data.highScore;
-    } else {
-      deathHighScore.classList.add('hidden');
+    if (deathSoldierScoreVal) {
+      deathSoldierScoreVal.textContent = totalScore;
     }
     
     leaderboardEl.classList.add('hidden');
     topCenterHud.classList.add('hidden');
     bottomRightHud.classList.add('hidden');
-    missileSlotWrap.classList.add('hidden');
     soldierCountEl.classList.add('hidden');
     document.getElementById('roomCodeHud').classList.add('hidden');
+    
+    // Hide mobile controls
+    if (isMobile) {
+      mobileControls.classList.remove('active');
+    }
 
     Network.stopShooting();
     isMouseDown = false;
@@ -1973,65 +1853,58 @@
     alert("Sunucu dolu! / Server full!");
   });
 
-  Network.onNotEnoughGold(() => {
-    alert(I18N[currentLang].notEnoughGold);
-  });
-
-  Network.onPurchaseSuccess((data) => {
-    console.log('✅ Purchase successful!', data);
-    
-    // Show success message
-    alert(I18N[currentLang].purchased || '✓ Satın Alındı!');
-    
-    // Update gold display
-    if (data.gold !== undefined) {
-      document.getElementById('goldVal').textContent = data.gold;
-      
-      // Update sessionStorage for guests
-      if (isGuest && userEmail) {
-        sessionStorage.setItem('soldierIOGuestGold', data.gold);
-      }
-    }
-    
-    // Update missiles display
-    if (data.missiles !== undefined) {
-      missileCountVal.textContent = data.missiles;
-      if (data.missiles > 0) {
-        missileSlotWrap.classList.remove('hidden');
-      }
-    }
-  });
-
-  function startGame(isRespawn = false) {
+  // === Start Game ===
+  function getPlayerConfig(isRespawn) {
     const inputEl = isRespawn ? deathNameInput : nameInput;
-    const name = inputEl.value.trim() || 'Soldier';
+    const rawName = (inputEl.value || nameInput.value || 'Soldier').trim();
+    const name = rawName || 'Soldier';
     let color = selectedColor;
-    
-    // Pick random color if none selected
     if (!color) {
       const colors = ['#ff3333', '#ffeb3b', '#ff9800', '#4caf50', '#2196f3', '#ff99cc', '#00bcd4', '#ffffff'];
       color = colors[Math.floor(Math.random() * colors.length)];
     }
-    
     const modeSelector = isRespawn ? 'input[name="deathCustomMode"]:checked' : 'input[name="customMode"]:checked';
-    const mode = document.querySelector(modeSelector).value;
+    const modeEl = document.querySelector(modeSelector);
+    const mode = modeEl ? modeEl.value : 'color';
     const finalSkinData = mode === 'skin' ? skinData : null;
+    const adBonusUsed = hasAdBonus;
+    resetRewardedAdUI();
+    return { name, color, finalSkinData, adBonusUsed };
+  }
 
-    Network.join(name, color, finalSkinData);
+  function startGame(isRespawn = false) {
+    isCurrentGameBotMatch = false;
+    const { name, color, finalSkinData, adBonusUsed } = getPlayerConfig(isRespawn);
+    Network.join(name, color, finalSkinData, adBonusUsed);
+  }
+
+  function startBotGame(isRespawn = false) {
+    isCurrentGameBotMatch = true;
+    const { name, color, finalSkinData, adBonusUsed } = getPlayerConfig(isRespawn);
+    Network.joinWithBots(name, color, finalSkinData, adBonusUsed);
   }
 
   playBtn.addEventListener('click', () => startGame(false));
-  respawnBtn.addEventListener('click', () => startGame(true));
+  playBotsBtn.addEventListener('click', () => startBotGame(false));
+  respawnBtn.addEventListener('click', () => {
+    if (isCurrentGameBotMatch) startBotGame(true);
+    else startGame(true);
+  });
   
   backToMenuBtn.addEventListener('click', () => {
-    // Hide death screen, show start screen
+    crazyGameplayStop();
     deathScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
-    
-    // Reset playing state
     playing = false;
+    isCurrentGameBotMatch = false;
+    SoundManager.stopAllWeaponSounds();
+    SoundManager.playMainTheme();
     
-    // Stop mouse sending
+    // Hide mobile controls
+    if (isMobile) {
+      mobileControls.classList.remove('active');
+    }
+    
     if (mouseSendInterval) clearInterval(mouseSendInterval);
   });
 
@@ -2039,10 +1912,23 @@
     if (e.key === 'Enter') startGame(false);
   });
   deathNameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') startGame(true);
+    if (e.key === 'Enter') {
+      if (isCurrentGameBotMatch) startBotGame(true);
+      else startGame(true);
+    }
   });
+
+  nameInput.addEventListener('input', () => {
+    if (deathNameInput) deathNameInput.value = nameInput.value;
+  });
+  deathNameInput.addEventListener('input', () => {
+    if (nameInput) nameInput.value = deathNameInput.value;
+  });
+
+  // Focus name input on load
+  nameInput.focus();
+  updateLang();
 
   requestAnimationFrame(render);
 
 })();
-

@@ -77,8 +77,7 @@ Tam liste için aşağıdaki tabloya bakın.
 
 ### 3. Ödeme
 - Kullanıcı "Kalıcı" butonuna basar
-- `/api/create-xsolla-payment` endpoint'i IP'den ülkeyi belirler
-- Xsolla'ya doğru para birimi ve fiyat gönderilir
+- IP'den ülke belirlenip bölgesal fiyat gösterilir
 
 ---
 
@@ -153,7 +152,7 @@ Listede olmayan ülkeler için **DEFAULT (USD $2.99)** fiyat gösterilir.
 1. Mağazayı açar (ESC tuşu)
 2. Otomatik olarak kendi ülkesinin fiyatını görür
 3. "Kalıcı (₺30)" veya "Kalıcı (€2.99)" gibi kendi para biriminde fiyat
-4. Ödeme yaparken Xsolla otomatik doğru para birimini gösterir
+4. Ödeme yaparken otomatik doğru para birimi gösterilir
 
 ### Örnek Görünümler
 - Türkiye'den: **"Kalıcı (₺30)"**
@@ -193,9 +192,7 @@ Client console'da:
 
 3. **Localhost**: Test için otomatik Türkiye seçilir
 
-4. **Xsolla Kurulumu**: Xsolla'da tüm para birimlerini aktif etmeyi unutmayın
-
-5. **Para Birimi Desteği**: Xsolla otomatik para birimi dönüşümü yapar
+4. **Para Birimi Desteği**: Otomatik para birimi dönüşümü yapılır
 
 ---
 

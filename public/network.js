@@ -1,5 +1,5 @@
 // ==========================================
-//  SOLDARE.IO - Network Layer
+//  SOLDARE.IO - Network Layer (v4.0 - Simplified)
 // ==========================================
 const Network = (() => {
   let socket = null;
@@ -9,24 +9,19 @@ const Network = (() => {
   let onJoinedCallback = null;
   let onEliminatedCallback = null;
   let onServerFullCallback = null;
-  let onLoginSuccessCallback = null;
-  let onLoginErrorCallback = null;
-  let onNotEnoughGoldCallback = null;
-  let onPurchaseSuccessCallback = null;
-  let onRequireGoogleLoginCallback = null;
   let onRoomNotFoundCallback = null;
   let onRoomFullCallback = null;
 
   function connect() {
-    if (socket) return; // Don't reconnect
-    const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'http://YOUR_DROPLET_IP:3000'; // IP'ni buraya yaz!
+    if (socket) return;
+    const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
     console.log('🔌 Connecting to backend:', backendUrl);
     socket = io(backendUrl, { 
-      transports: ['websocket', 'polling'], // WebSocket öncelikli (polling fallback)
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
-      upgrade: false, // Direkt websocket kullan, upgrade yapma
+      upgrade: false,
       rememberUpgrade: true
     });
 
@@ -48,28 +43,6 @@ const Network = (() => {
       if (onServerFullCallback) onServerFullCallback();
     });
 
-    socket.on('loginSuccess', (data) => {
-      if (onLoginSuccessCallback) onLoginSuccessCallback(data);
-    });
-
-    socket.on('loginError', (data) => {
-      if (onLoginErrorCallback) onLoginErrorCallback(data);
-    });
-
-    socket.on('notEnoughGold', () => {
-      if (onNotEnoughGoldCallback) onNotEnoughGoldCallback();
-    });
-
-    socket.on('purchaseSuccess', (data) => {
-      if (onPurchaseSuccessCallback) onPurchaseSuccessCallback(data);
-      // Also trigger loginSuccess to update gold/missiles/bonus display
-      if (onLoginSuccessCallback) onLoginSuccessCallback(data);
-    });
-
-    socket.on('requireGoogleLogin', () => {
-      if (onRequireGoogleLoginCallback) onRequireGoogleLoginCallback();
-    });
-
     socket.on('roomNotFound', () => {
       if (onRoomNotFoundCallback) onRoomNotFoundCallback();
     });
@@ -77,42 +50,28 @@ const Network = (() => {
     socket.on('roomFull', () => {
       if (onRoomFullCallback) onRoomFullCallback();
     });
-
-    socket.on('goldUpdate', (data) => {
-      // Live gold update during gameplay
-      if (onLoginSuccessCallback) {
-        onLoginSuccessCallback({
-          email: data.email || null,
-          highScore: data.highScore,
-          gold: data.totalGold,
-          missiles: data.missiles || 0
-        });
-      }
-    });
   }
 
-  function googleLogin(credential) {
-    if (socket) socket.emit('googleLogin', { credential });
-  }
-
-  function guestLogin() {
-    if (socket) socket.emit('guestLogin');
-  }
-
-  function join(name, color, skin) {
+  function join(name, color, skin, hasAdBonus) {
     if (socket) {
-      socket.emit('join', { name, color, skin });
+      socket.emit('join', { name, color, skin, hasAdBonus });
     }
   }
 
-  function joinRoom(roomCode, name, color, skin) {
+  function joinWithBots(name, color, skin, hasAdBonus) {
     if (socket) {
-      socket.emit('joinRoom', { roomCode, name, color, skin });
+      socket.emit('joinWithBots', { name, color, skin, hasAdBonus });
+    }
+  }
+
+  function joinRoom(roomCode, name, color, skin, hasAdBonus) {
+    if (socket) {
+      socket.emit('joinRoom', { roomCode, name, color, skin, hasAdBonus });
     }
   }
 
   function sendMouse(x, y) {
-    if (socket) socket.volatile.emit('mouseMove', { x, y }); // volatile = skip if busy
+    if (socket) socket.volatile.emit('mouseMove', { x, y });
   }
 
   function startShooting() {
@@ -125,14 +84,6 @@ const Network = (() => {
 
   function clickShoot() {
     if (socket) socket.emit('clickShoot');
-  }
-
-  function buyItem(item) {
-    if (socket) socket.emit('buyItem', { item });
-  }
-
-  function equipMissile() {
-    if (socket) socket.emit('equipMissile');
   }
 
   function equipRevolver() {
@@ -150,19 +101,14 @@ const Network = (() => {
   function onJoined(cb) { onJoinedCallback = cb; }
   function onEliminated(cb) { onEliminatedCallback = cb; }
   function onServerFull(cb) { onServerFullCallback = cb; }
-  function onLoginSuccess(cb) { onLoginSuccessCallback = cb; }
-  function onLoginError(cb) { onLoginErrorCallback = cb; }
-  function onNotEnoughGold(cb) { onNotEnoughGoldCallback = cb; }
-  function onPurchaseSuccess(cb) { onPurchaseSuccessCallback = cb; }
-  function onRequireGoogleLogin(cb) { onRequireGoogleLoginCallback = cb; }
   function onRoomNotFound(cb) { onRoomNotFoundCallback = cb; }
   function onRoomFull(cb) { onRoomFullCallback = cb; }
 
   return {
-    connect, googleLogin, guestLogin, join, joinRoom, sendMouse, 
+    connect, join, joinWithBots, joinRoom, sendMouse, 
     startShooting, stopShooting, clickShoot, manualReload,
-    buyItem, equipMissile, equipRevolver,
+    equipRevolver,
     getId, getMapSize,
-    onState, onJoined, onEliminated, onServerFull, onLoginSuccess, onLoginError, onNotEnoughGold, onPurchaseSuccess, onRequireGoogleLogin, onRoomNotFound, onRoomFull
+    onState, onJoined, onEliminated, onServerFull, onRoomNotFound, onRoomFull
   };
 })();
