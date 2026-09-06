@@ -51,22 +51,35 @@ const Network = (() => {
     });
   }
 
-  function join(name, color, skin, hasAdBonus) {
-    if (socket) {
-      socket.emit('join', { name, color, skin, hasAdBonus });
+  let pendingJoin = null;
+
+  function sendJoinEvent(event, payload) {
+    connect();
+    if (socket && socket.connected) {
+      socket.emit(event, payload);
+    } else {
+      pendingJoin = { event, payload };
+      if (socket) {
+        socket.once('connect', () => {
+          if (pendingJoin) {
+            socket.emit(pendingJoin.event, pendingJoin.payload);
+            pendingJoin = null;
+          }
+        });
+      }
     }
+  }
+
+  function join(name, color, skin, hasAdBonus) {
+    sendJoinEvent('join', { name, color, skin, hasAdBonus });
   }
 
   function joinWithBots(name, color, skin, hasAdBonus) {
-    if (socket) {
-      socket.emit('joinWithBots', { name, color, skin, hasAdBonus });
-    }
+    sendJoinEvent('joinWithBots', { name, color, skin, hasAdBonus });
   }
 
   function joinRoom(roomCode, name, color, skin, hasAdBonus) {
-    if (socket) {
-      socket.emit('joinRoom', { roomCode, name, color, skin, hasAdBonus });
-    }
+    sendJoinEvent('joinRoom', { roomCode, name, color, skin, hasAdBonus });
   }
 
   function sendMouse(x, y) {
