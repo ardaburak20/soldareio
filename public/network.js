@@ -24,6 +24,14 @@ const Network = (() => {
       timeout: 20000
     });
 
+    socket.on('connect', () => {
+      console.log('⚡ Socket connected to backend!');
+      if (pendingJoin) {
+        socket.emit(pendingJoin.event, pendingJoin.payload);
+        pendingJoin = null;
+      }
+    });
+
     socket.on('joined', (data) => {
       myId = data.id;
       mapSize = data.mapSize;
@@ -55,17 +63,13 @@ const Network = (() => {
 
   function sendJoinEvent(event, payload) {
     connect();
-    if (socket && socket.connected) {
-      socket.emit(event, payload);
-    } else {
-      pendingJoin = { event, payload };
-      if (socket) {
-        socket.once('connect', () => {
-          if (pendingJoin) {
-            socket.emit(pendingJoin.event, pendingJoin.payload);
-            pendingJoin = null;
-          }
-        });
+    if (socket) {
+      if (socket.connected) {
+        socket.emit(event, payload);
+        pendingJoin = null;
+      } else {
+        pendingJoin = { event, payload };
+        try { socket.connect(); } catch(e){}
       }
     }
   }

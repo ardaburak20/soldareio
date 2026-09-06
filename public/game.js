@@ -298,6 +298,7 @@
   const startScreen = document.getElementById('startScreen');
   const nameInput = document.getElementById('nameInput');
   const playBtn = document.getElementById('playBtn');
+  const playBotsBtn = document.getElementById('playBotsBtn');
   const leaderboardEl = document.getElementById('leaderboard');
   const lbList = document.getElementById('lbList');
   const weaponHud = document.getElementById('weaponHud');
