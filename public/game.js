@@ -582,7 +582,7 @@
     autoEndAudio.volume = 0.6;
 
     const minigunEndAudio = new Audio(encodeURI('/sounds/minigun end.wav'));
-    minigunEndAudio.volume = 0.6;
+    minigunEndAudio.volume = 0.48;
 
     // Web Audio API for continuous gapless looping
     let audioCtx = null;
@@ -644,7 +644,7 @@
 
     const minigunFireAudio = new Audio(encodeURI('/sounds/minigun fire.wav'));
     minigunFireAudio.loop = true;
-    minigunFireAudio.volume = 0.6;
+    minigunFireAudio.volume = 0.48;
 
     function initInteraction() {
       if (!hasInteracted) {
@@ -869,7 +869,7 @@
         minigunSource.buffer = minigunBuffer;
         minigunSource.loop = true;
         const gainNode = ctx.createGain();
-        gainNode.gain.value = 0.6;
+        gainNode.gain.value = 0.48;
         minigunSource.connect(gainNode);
         gainNode.connect(ctx.destination);
         minigunSource.start(0);
@@ -886,7 +886,7 @@
         if (playEndSound && !isMuted) {
           try {
             const clone = minigunEndAudio.cloneNode();
-            clone.volume = 0.6;
+            clone.volume = 0.48;
             clone.play().catch(() => {});
           } catch (e) {}
         }
@@ -905,14 +905,114 @@
       minigunFireAudio.currentTime = 0;
     }
 
+    // === Spatial Audio for Other Players ===
+    const spatialAudioMap = new Map(); // otherId -> { source, gainNode, weapon }
+    const seenBulletIds = new Set();
+
+    function getSpatialVolume(shooterX, shooterY, myX, myY, baseVol = 0.6) {
+      const dx = shooterX - myX;
+      const dy = shooterY - myY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      const viewW = canvas.width / zoom;
+      const viewH = canvas.height / zoom;
+      const viewDiag = Math.sqrt(viewW * viewW + viewH * viewH) / 2;
+      const maxHearDist = viewDiag * 1.2; // 20% larger than normal viewport
+      
+      if (dist >= maxHearDist) return 0;
+      const factor = 1 - (dist / maxHearDist);
+      return baseVol * Math.pow(factor, 1.2);
+    }
+
     function updateWeaponSounds(myPlayer, isShootingRequested) {
       if (!myPlayer || !myPlayer.alive || !playing) {
         stopAutoFire(false);
         stopMinigunFire(false);
         clearRevolverReloadSequence();
+        stopSpatialAudio();
         lastReloadState = false;
         lastPlayerWeapon = undefined;
         return;
+      }
+
+      // === Process Spatial Audio for Other Players (Firing Sounds Only) ===
+      if (gameState) {
+        const activeOtherShooters = new Set();
+
+        // 1. Single shots (Revolver) from other players
+        if (gameState.bullets) {
+          for (const b of gameState.bullets) {
+            if (b.ownerId !== myPlayer.id && !seenBulletIds.has(b.id)) {
+              seenBulletIds.add(b.id);
+              if (b.weapon === 'revolver') {
+                const vol = getSpatialVolume(b.x, b.y, myPlayer.x, myPlayer.y, 0.5);
+                if (vol > 0.02 && !isMuted) {
+                  try {
+                    const clone = revolverAudio.cloneNode();
+                    clone.volume = vol;
+                    clone.play().catch(() => {});
+                  } catch (e) {}
+                }
+              }
+            }
+          }
+          if (seenBulletIds.size > 300) {
+            const currentIds = new Set(gameState.bullets.map(b => b.id));
+            for (const id of seenBulletIds) {
+              if (!currentIds.has(id)) seenBulletIds.delete(id);
+            }
+          }
+        }
+
+        // 2. Continuous firing loops for other players (SMG, M4, AK47, Minigun)
+        for (const otherId in gameState.players) {
+          if (otherId === myPlayer.id) continue;
+          const op = gameState.players[otherId];
+          if (!op.alive) continue;
+
+          const isAuto = (op.weapon === 'smg' || op.weapon === 'm4' || op.weapon === 'ak47');
+          const isMinigun = (op.weapon === 'minigun');
+          const isFiring = (isAuto || isMinigun) && op.isShooting && !op.isReloading && op.ammo > 0;
+
+          if (isFiring) {
+            const baseVol = isMinigun ? 0.48 : 0.6;
+            const vol = getSpatialVolume(op.x, op.y, myPlayer.x, myPlayer.y, baseVol);
+            if (vol > 0.02 && !isMuted) {
+              activeOtherShooters.add(otherId);
+              let entry = spatialAudioMap.get(otherId);
+              const ctx = getAudioContext();
+              const buffer = isMinigun ? minigunBuffer : autoBuffer;
+
+              if (!entry || entry.weapon !== op.weapon) {
+                if (entry) {
+                  try { entry.source.stop(); entry.source.disconnect(); } catch(e){}
+                }
+                if (ctx && buffer) {
+                  const source = ctx.createBufferSource();
+                  source.buffer = buffer;
+                  source.loop = true;
+                  const gainNode = ctx.createGain();
+                  gainNode.gain.value = vol;
+                  source.connect(gainNode);
+                  gainNode.connect(ctx.destination);
+                  source.start(0);
+                  entry = { source, gainNode, weapon: op.weapon };
+                  spatialAudioMap.set(otherId, entry);
+                }
+              } else if (entry && entry.gainNode) {
+                entry.gainNode.gain.value = vol;
+              }
+            }
+          }
+        }
+
+        // Clean up spatial loops for players who stopped firing or left range
+        for (const [otherId, entry] of spatialAudioMap.entries()) {
+          if (!activeOtherShooters.has(otherId)) {
+            try { entry.source.stop(); entry.source.disconnect(); } catch(e){}
+            spatialAudioMap.delete(otherId);
+          }
+        }
       }
 
       const weapon = myPlayer.weapon;
@@ -968,10 +1068,18 @@
       }
     }
 
+    function stopSpatialAudio() {
+      for (const [otherId, entry] of spatialAudioMap.entries()) {
+        try { entry.source.stop(); entry.source.disconnect(); } catch(e){}
+      }
+      spatialAudioMap.clear();
+    }
+
     function stopAllWeaponSounds() {
       stopAutoFire(false);
       stopMinigunFire(false);
       clearRevolverReloadSequence();
+      stopSpatialAudio();
     }
 
     window.addEventListener('click', initInteraction);

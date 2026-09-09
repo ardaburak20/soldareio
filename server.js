@@ -763,9 +763,16 @@ function gameLoop() {
       // Reload timer
       if (p.isReloading) {
         p.reloadTimer -= dt;
+        if (p.weapon === 'revolver' && !p.revolverInterrupting) {
+          const elapsed = (Date.now() - (p.revolverReloadStartTime || Date.now())) / 1000;
+          const startAmmo = p.revolverReloadStartAmmo !== undefined ? p.revolverReloadStartAmmo : 0;
+          const missingTotal = Math.max(1, 6 - startAmmo);
+          const bulletsLoaded = Math.min(missingTotal, Math.floor(elapsed / 0.4));
+          p.ammo = Math.min(6, startAmmo + bulletsLoaded);
+        }
         if (p.reloadTimer <= 0) {
           p.isReloading = false;
-          p.ammo = (p.weapon === 'revolver' && p.revolverInterrupting) ? (p.revolverFinalAmmo || 6) : WEAPONS[p.weapon].magSize;
+          p.ammo = (p.weapon === 'revolver' && p.revolverInterrupting) ? (p.revolverFinalAmmo || 6) : (p.weapon === 'revolver' ? 6 : WEAPONS[p.weapon].magSize);
           p.reloadTimer = 0;
           p.revolverInterrupting = false;
         }
@@ -790,9 +797,7 @@ function gameLoop() {
           vy: Math.sin(angle) * BULLET_SPEED,
           damage: wDef.damage, traveled: 0, maxDist: maxD
         });
-        if (p.weapon !== 'minigun') {
-          p.ammo--;
-        }
+        p.ammo--;
         p.fireTimer = 1 / wDef.fireRate;
 
         // Soldier shooting (capped)
@@ -815,16 +820,19 @@ function gameLoop() {
           });
         }
 
-        if (p.ammo <= 0 && p.weapon !== 'minigun') {
-          p.isShooting = false; p.clickShoot = false; p.isReloading = true;
-          if (p.weapon === 'revolver') {
-            p.revolverReloadStartAmmo = 0;
-            p.revolverReloadStartTime = Date.now();
-            p.revolverInterrupting = false;
-            p.revolverFinalAmmo = 6;
-            p.reloadTimer = 6 * 0.4 + 0.5; // 2.9s full reload
-          } else {
-            p.reloadTimer = wDef.reloadTime;
+        if (p.ammo <= 0) {
+          p.isShooting = false; p.clickShoot = false;
+          if (p.weapon !== 'minigun') {
+            p.isReloading = true;
+            if (p.weapon === 'revolver') {
+              p.revolverReloadStartAmmo = 0;
+              p.revolverReloadStartTime = Date.now();
+              p.revolverInterrupting = false;
+              p.revolverFinalAmmo = 6;
+              p.reloadTimer = 6 * 0.4 + 0.5; // 2.9s full reload
+            } else {
+              p.reloadTimer = wDef.reloadTime;
+            }
           }
         }
       }
