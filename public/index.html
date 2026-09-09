@@ -137,9 +137,9 @@
       </div>
       
       <div class="controls-info">
-        <div class="control"><span class="key">🖱️ <span data-i18n="mouse">Fare</span></span> <span data-i18n="moveAim">Hareket et & Nişan al</span></div>
-        <div class="control"><span class="key">🔘 <span data-i18n="click">Tıkla</span></span> <span data-i18n="shoot">Ateş et</span></div>
-        <div class="control"><span class="key">R <span data-i18n="reloadKey">Şarjör doldurma</span></span></div>
+        <div class="control"><span class="key" id="ctrlMoveKey">🖱️ <span data-i18n="mouse">Fare</span></span> <span data-i18n="moveAim">Hareket et & Nişan al</span></div>
+        <div class="control"><span class="key" id="ctrlShootKey">🔘 <span data-i18n="click">Tıkla</span></span> <span data-i18n="shoot">Ateş et</span></div>
+        <div class="control"><span class="key" id="ctrlReloadKey">R <span data-i18n="reloadKey">Şarjör doldurma</span></span></div>
       </div>
     </div>
   </div>
@@ -300,8 +300,14 @@
       <div class="joystick-stick" id="joystickStick"></div>
     </div>
     <div class="action-buttons">
-      <div class="fire-button" id="fireButton">💥</div>
-      <div class="reload-button" id="reloadButton">R</div>
+      <div class="fire-button" id="fireButton" aria-label="Ateş Et">
+        <svg class="bullet-icon" viewBox="0 0 24 24" width="38" height="38" fill="currentColor">
+          <path d="M12 2C9.8 2 8.5 4.5 8.5 8v5.5c0 .8.7 1.5 1.5 1.5h4c.8 0 1.5-.7 1.5-1.5V8c0-3.5-1.3-6-3.5-6z"/>
+          <rect x="8.5" y="16" width="7" height="2" rx="0.5"/>
+          <path d="M9 19h6v2c0 .6-.4 1-1 1h-4c-.6 0-1-.4-1-1v-2z"/>
+        </svg>
+      </div>
+      <div class="reload-button" id="reloadButton" aria-label="Yeniden Yükle">R</div>
     </div>
   </div>
 

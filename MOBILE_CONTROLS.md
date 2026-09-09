@@ -19,18 +19,18 @@
   - Bırakınca merkeze döner
   - Aktifken glow efekti
 
-#### 🔥 Ateş Tuşu (Sağ Alt Köşe)
-- **Konum:** Sağ alt köşe, 90x90px dairesel
-- **Renk:** Kırmızı (#ff5252)
-- **İkon:** 🔥 FIRE
+#### 🔫 Ateş Tuşu (Sağ Alt Köşe)
+- **Konum:** Sağ alt köşe, 80x80px dairesel
+- **Renk:** Açık Gri (Light Gray Gradient)
+- **İkon:** 🔫 Mermi (SVG Bullet Icon)
 - **Davranış:**
   - Basılı tutma ile sürekli ateş
   - Bırakınca durur
-  - Basılıyken scale efekti
+  - Basılıyken scale & parlama efekti
 
-#### 🔄 Reload Tuşu (Ateş Tuşunun Çaprazında)
-- **Konum:** Ateş tuşunun sol üst çaprazı, 70x70px dairesel
-- **Renk:** Sarı (#ffc107)
+#### 🔄 Reload Tuşu (Ateş Tuşunun Yanında)
+- **Konum:** Ateş tuşunun solunda, 70x70px dairesel
+- **Renk:** Açık Gri (Light Gray Gradient)
 - **İkon:** R
 - **Davranış:**
   - Tek dokunuşla reload
@@ -104,14 +104,14 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 
 ### Ateş Tuşu
 ```css
-background: rgba(255, 82, 82, 0.7) - Kırmızı
-.active: scale(0.95) + glow efekti
+background: linear-gradient(135deg, rgba(235, 240, 245, 0.85), rgba(180, 190, 200, 0.85)) - Açık Gri
+.active: scale(0.93) + glow efekti + parlama
 ```
 
 ### Reload Tuşu
 ```css
-background: rgba(255, 193, 7, 0.7) - Sarı
-.active: scale(0.95) + glow efekti
+background: linear-gradient(135deg, rgba(225, 232, 240, 0.85), rgba(170, 180, 192, 0.85)) - Açık Gri
+.active: scale(0.93) + glow efekti + parlama
 ```
 
 ## 🔧 Geliştirici Notları

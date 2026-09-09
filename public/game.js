@@ -555,6 +555,11 @@
   let isMobileFireActive = false;
   let lastRevolverAmmo = undefined;
 
+  // === Mobile Detection ===
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   ('ontouchstart' in window) || 
+                   (navigator.maxTouchPoints > 0);
+
   // === Sound Manager ===
   const SoundManager = (() => {
     const mainThemeAudio = new Audio(encodeURI('/sounds/soldare io main theme.mp3'));
@@ -751,7 +756,34 @@
 
   // === Update Language ===
   function updateLang() {
-    const dict = I18N[currentLang];
+    const dict = Object.assign({}, I18N[currentLang]);
+    if (isMobile) {
+      if (currentLang === 'tr') {
+        dict.mouse = "Joystick";
+        dict.click = "Ateş Tuşu";
+        dict.reloadKey = "Reload Tuşu";
+      } else if (currentLang === 'en') {
+        dict.mouse = "Joystick";
+        dict.click = "Fire Button";
+        dict.reloadKey = "Reload Button";
+      } else if (currentLang === 'ru') {
+        dict.mouse = "Джойстик";
+        dict.click = "Кнопка огня";
+        dict.reloadKey = "Кнопка перезарядки";
+      } else if (currentLang === 'zh') {
+        dict.mouse = "摇杆";
+        dict.click = "开火按钮";
+        dict.reloadKey = "换弹按钮";
+      } else if (currentLang === 'de') {
+        dict.mouse = "Joystick";
+        dict.click = "Feuer-Taste";
+        dict.reloadKey = "Nachladen-Taste";
+      } else if (currentLang === 'fr') {
+        dict.mouse = "Joystick";
+        dict.click = "Bouton Tir";
+        dict.reloadKey = "Bouton Recharger";
+      }
+    }
     document.querySelectorAll('[data-i18n]').forEach(el => {
       if (dict[el.getAttribute('data-i18n')]) el.textContent = dict[el.getAttribute('data-i18n')];
     });
@@ -1284,10 +1316,11 @@
     if (!gameState) return;
     const myId = Network.getId();
     const mapSize = Network.getMapSize();
-    const mmSize = 160;
-    const mmPad = 20;
-    const mmX = mmPad;
-    const mmY = canvas.height - mmSize - mmPad;
+    const mmSize = isMobile ? 110 : 160;
+    const mmPadX = isMobile ? 15 : 20;
+    const mmPadY = isMobile ? 35 : 20;
+    const mmX = mmPadX;
+    const mmY = canvas.height - mmSize - mmPadY;
     const scale = mmSize / mapSize;
 
     ctx.save();
@@ -1419,10 +1452,6 @@
   }
 
   // === Mobile Detection & Controls ===
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                   ('ontouchstart' in window) || 
-                   (navigator.maxTouchPoints > 0);
-  
   const mobileControls = document.getElementById('mobileControls');
   const joystickArea = document.getElementById('joystickArea');
   const joystickStick = document.getElementById('joystickStick');
@@ -1439,6 +1468,13 @@
   
   if (isMobile) {
     console.log('📱 Mobile device detected - touch controls enabled');
+    const moveKey = document.getElementById('ctrlMoveKey');
+    const shootKey = document.getElementById('ctrlShootKey');
+    const reloadKey = document.getElementById('ctrlReloadKey');
+    if (moveKey) moveKey.innerHTML = '🕹️ <span data-i18n="mouse">Joystick</span>';
+    if (shootKey) shootKey.innerHTML = '🔫 <span data-i18n="click">Ateş Tuşu</span>';
+    if (reloadKey) reloadKey.innerHTML = '🔄 <span data-i18n="reloadKey">Reload Tuşu</span>';
+    updateLang();
   } else {
     console.log('🖥️ Desktop detected - mouse controls enabled');
   }
