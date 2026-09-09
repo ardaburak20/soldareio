@@ -576,14 +576,20 @@ io.on('connection', (socket) => {
     const roomCode = socketToRoom[socket.id];
     if (!roomCode || !rooms[roomCode]) return;
     const p = rooms[roomCode].players[socket.id];
-    if (p && p.alive) p.isShooting = true;
+    if (p && p.alive) {
+      p.isHoldingFire = true;
+      if (!p.isReloading) p.isShooting = true;
+    }
   });
 
   socket.on('stopShooting', () => {
     const roomCode = socketToRoom[socket.id];
     if (!roomCode || !rooms[roomCode]) return;
     const p = rooms[roomCode].players[socket.id];
-    if (p) p.isShooting = false;
+    if (p) {
+      p.isHoldingFire = false;
+      p.isShooting = false;
+    }
   });
 
   socket.on('clickShoot', () => {
@@ -623,11 +629,17 @@ io.on('connection', (socket) => {
     if (!roomCode || !rooms[roomCode]) return;
     const p = rooms[roomCode].players[socket.id];
     if (p && p.alive && p.isReloading && p.weapon === 'revolver' && !p.revolverInterrupting) {
+      const now = Date.now();
+      const timeSinceLastPress = (now - (p.lastFirePressTime || 0)) / 1000;
+      p.lastFirePressTime = now;
+      if (timeSinceLastPress <= 0.4) {
+        return; // Tolerated rapid tap (<=0.4s gap), do not cancel reload
+      }
       p.revolverInterrupting = true;
       p.isShooting = false;
       p.clickShoot = false;
-      const elapsed = (Date.now() - (p.revolverReloadStartTime || Date.now())) / 1000;
-      const startAmmo = p.revolverReloadStartAmmo !== undefined ? p.revolverReloadStartAmmo : p.ammo;
+      const elapsed = (now - (p.revolverReloadStartTime || now)) / 1000;
+      const startAmmo = p.revolverReloadStartAmmo !== undefined ? p.revolverReloadStartAmmo : 0;
       const missingTotal = Math.max(1, 6 - startAmmo);
       const bulletsDone = Math.min(missingTotal, Math.floor(elapsed / 0.4));
       const currentBulletFinishTime = (bulletsDone + 1) * 0.4;
@@ -775,6 +787,12 @@ function gameLoop() {
           p.ammo = (p.weapon === 'revolver' && p.revolverInterrupting) ? (p.revolverFinalAmmo || 6) : (p.weapon === 'revolver' ? 6 : WEAPONS[p.weapon].magSize);
           p.reloadTimer = 0;
           p.revolverInterrupting = false;
+
+          // Resume auto firing immediately if player is holding fire button when reload finishes
+          const wDef = WEAPONS[p.weapon];
+          if (wDef.auto && p.isHoldingFire && p.ammo > 0) {
+            p.isShooting = true;
+          }
         }
       }
 
@@ -1020,7 +1038,7 @@ function gameLoop() {
         soldiers: solArr,
         weapon: p.weapon, weaponName: WEAPONS[p.weapon].name,
         ammo: p.ammo, maxAmmo: WEAPONS[p.weapon].magSize,
-        isReloading: p.isReloading,
+        isReloading: p.isReloading, isShooting: !!p.isShooting, clickShoot: !!p.clickShoot,
         shieldActive: p.shieldActive, shieldTimer: p.shieldTimer,
         weaponTimer: p.weaponTimer,
         score: p.soldiers.length + 1, alive: p.alive, kills: p.kills || 0,

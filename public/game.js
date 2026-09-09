@@ -1940,14 +1940,23 @@
     }
   }
 
+  let lastFirePressTime = 0;
+
   function handleShootTrigger() {
     if (!gameState) return false;
     const myId = Network.getId();
     const me = gameState.players[myId];
+    const now = Date.now();
+    const timeSinceLastPress = (now - lastFirePressTime) / 1000;
+    lastFirePressTime = now;
+
     if (me && me.alive && me.isReloading && me.weapon === 'revolver') {
+      if (timeSinceLastPress <= 0.4) {
+        return false; // Tolerated rapid press (<=0.4s gap), do not cancel reload
+      }
       Network.cancelRevolverReload();
       SoundManager.interruptRevolverReload();
-      return true;
+      return true; // Deliberate press (>0.4s gap), interrupt revolver reload
     }
     return false;
   }
