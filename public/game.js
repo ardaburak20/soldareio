@@ -1318,7 +1318,7 @@
     const mapSize = Network.getMapSize();
     const mmSize = isMobile ? 110 : 160;
     const mmPadX = isMobile ? 15 : 20;
-    const mmPadY = isMobile ? 35 : 20;
+    const mmPadY = isMobile ? 90 : 20;
     const mmX = mmPadX;
     const mmY = canvas.height - mmSize - mmPadY;
     const scale = mmSize / mapSize;
