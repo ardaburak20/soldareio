@@ -569,19 +569,27 @@
     const revolverAudio = new Audio(encodeURI('/sounds/revolver.wav'));
     revolverAudio.volume = 0.6;
 
-    const autoFireAudio = new Audio(encodeURI('/sounds/smg m4 ak47 fire.wav'));
-    autoFireAudio.loop = true;
-    autoFireAudio.volume = 0.6;
+    const revolverReloadAudio = new Audio(encodeURI('/sounds/revolver reload.wav'));
+    revolverReloadAudio.volume = 0.7;
+
+    const revolverReloadFinishAudio = new Audio(encodeURI('/sounds/revolver reload finish.wav'));
+    revolverReloadFinishAudio.volume = 0.7;
+
+    const autoReloadAudio = new Audio(encodeURI('/sounds/smg m4 ak47 reload.mp3'));
+    autoReloadAudio.volume = 0.7;
 
     const autoEndAudio = new Audio(encodeURI('/sounds/smg m4 ak47 end.wav'));
     autoEndAudio.volume = 0.6;
 
-    const minigunFireAudio = new Audio(encodeURI('/sounds/minigun fire.wav'));
-    minigunFireAudio.loop = true;
-    minigunFireAudio.volume = 0.6;
-
     const minigunEndAudio = new Audio(encodeURI('/sounds/minigun end.wav'));
     minigunEndAudio.volume = 0.6;
+
+    // Web Audio API for continuous gapless looping
+    let audioCtx = null;
+    let autoBuffer = null;
+    let minigunBuffer = null;
+    let autoSource = null;
+    let minigunSource = null;
 
     let isAutoFiring = false;
     let isMinigunFiring = false;
@@ -589,9 +597,55 @@
     let hasInteracted = false;
     let isMuted = false;
 
+    let revolverReloadTimers = [];
+    let isRevolverReloadingSound = false;
+    let lastReloadState = false;
+    let lastPlayerAmmo = undefined;
+    let lastPlayerWeapon = undefined;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function loadBuffer(url, callback) {
+      fetch(encodeURI(url))
+        .then(r => r.arrayBuffer())
+        .then(buf => {
+          const ctx = getAudioContext();
+          if (ctx) {
+            ctx.decodeAudioData(buf, (decoded) => {
+              callback(decoded);
+            }, () => {});
+          }
+        })
+        .catch(() => {});
+    }
+
+    loadBuffer('/sounds/smg m4 ak47 fire.wav', b => { autoBuffer = b; });
+    loadBuffer('/sounds/minigun fire.wav', b => { minigunBuffer = b; });
+
+    // HTML5 audio fallbacks
+    const autoFireAudio = new Audio(encodeURI('/sounds/smg m4 ak47 fire.wav'));
+    autoFireAudio.loop = true;
+    autoFireAudio.volume = 0.6;
+
+    const minigunFireAudio = new Audio(encodeURI('/sounds/minigun fire.wav'));
+    minigunFireAudio.loop = true;
+    minigunFireAudio.volume = 0.6;
+
     function initInteraction() {
       if (!hasInteracted) {
         hasInteracted = true;
+        getAudioContext();
         if (!playing && !isMainThemePlaying && !isMuted) {
           playMainTheme();
         }
@@ -603,6 +657,7 @@
       if (isMuted) {
         mainThemeAudio.pause();
         isMainThemePlaying = false;
+        stopAllWeaponSounds();
       } else {
         if (!playing) {
           playMainTheme();
@@ -642,6 +697,7 @@
     }
 
     function playRevolver() {
+      if (isMuted) return;
       try {
         const clone = revolverAudio.cloneNode();
         clone.volume = 0.6;
@@ -649,25 +705,188 @@
       } catch (e) {}
     }
 
+    function clearRevolverReloadSequence() {
+      revolverReloadTimers.forEach(t => clearTimeout(t));
+      revolverReloadTimers = [];
+      isRevolverReloadingSound = false;
+    }
+
+    function playRevolverReloadSequence(missingCount) {
+      clearRevolverReloadSequence();
+      if (isMuted) return;
+      isRevolverReloadingSound = true;
+      const count = Math.max(1, Math.min(6, missingCount));
+      
+      for (let i = 0; i < count; i++) {
+        const delay = i * 400; // 0.4s per bullet
+        const isFinish = (i === count - 1);
+        const timer = setTimeout(() => {
+          if (!isRevolverReloadingSound || isMuted) return;
+          try {
+            if (isFinish) {
+              const clone = revolverReloadFinishAudio.cloneNode();
+              clone.volume = 0.75;
+              clone.play().catch(() => {});
+              isRevolverReloadingSound = false;
+            } else {
+              const clone = revolverReloadAudio.cloneNode();
+              clone.volume = 0.75;
+              clone.play().catch(() => {});
+            }
+          } catch (e) {}
+        }, delay);
+        revolverReloadTimers.push(timer);
+      }
+    }
+
+    function playAutoReloadSound() {
+      if (isMuted) return;
+      try {
+        const clone = autoReloadAudio.cloneNode();
+        clone.volume = 0.75;
+        clone.play().catch(() => {});
+      } catch (e) {}
+    }
+
+    function startAutoFire() {
+      if (isMuted || isAutoFiring) return;
+      isAutoFiring = true;
+      const ctx = getAudioContext();
+      if (ctx && autoBuffer) {
+        stopAutoSourceNode();
+        autoSource = ctx.createBufferSource();
+        autoSource.buffer = autoBuffer;
+        autoSource.loop = true;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 0.6;
+        autoSource.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        autoSource.start(0);
+      } else {
+        autoFireAudio.currentTime = 0;
+        autoFireAudio.play().catch(() => {});
+      }
+    }
+
+    function stopAutoFire(playEndSound = false) {
+      if (isAutoFiring) {
+        isAutoFiring = false;
+        stopAutoSourceNode();
+        if (playEndSound && !isMuted) {
+          try {
+            const clone = autoEndAudio.cloneNode();
+            clone.volume = 0.6;
+            clone.play().catch(() => {});
+          } catch (e) {}
+        }
+      }
+    }
+
+    function stopAutoSourceNode() {
+      if (autoSource) {
+        try {
+          autoSource.stop();
+          autoSource.disconnect();
+        } catch (e) {}
+        autoSource = null;
+      }
+      autoFireAudio.pause();
+      autoFireAudio.currentTime = 0;
+    }
+
+    function startMinigunFire() {
+      if (isMuted || isMinigunFiring) return;
+      isMinigunFiring = true;
+      const ctx = getAudioContext();
+      if (ctx && minigunBuffer) {
+        stopMinigunSourceNode();
+        minigunSource = ctx.createBufferSource();
+        minigunSource.buffer = minigunBuffer;
+        minigunSource.loop = true;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 0.6;
+        minigunSource.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        minigunSource.start(0);
+      } else {
+        minigunFireAudio.currentTime = 0;
+        minigunFireAudio.play().catch(() => {});
+      }
+    }
+
+    function stopMinigunFire(playEndSound = false) {
+      if (isMinigunFiring) {
+        isMinigunFiring = false;
+        stopMinigunSourceNode();
+        if (playEndSound && !isMuted) {
+          try {
+            const clone = minigunEndAudio.cloneNode();
+            clone.volume = 0.6;
+            clone.play().catch(() => {});
+          } catch (e) {}
+        }
+      }
+    }
+
+    function stopMinigunSourceNode() {
+      if (minigunSource) {
+        try {
+          minigunSource.stop();
+          minigunSource.disconnect();
+        } catch (e) {}
+        minigunSource = null;
+      }
+      minigunFireAudio.pause();
+      minigunFireAudio.currentTime = 0;
+    }
+
     function updateWeaponSounds(myPlayer, isShootingRequested) {
       if (!myPlayer || !myPlayer.alive || !playing) {
         stopAutoFire(false);
         stopMinigunFire(false);
+        clearRevolverReloadSequence();
+        lastReloadState = false;
+        lastPlayerWeapon = undefined;
         return;
       }
 
       const weapon = myPlayer.weapon;
       const isReloading = myPlayer.isReloading;
       const ammo = myPlayer.ammo;
-      const canShoot = !isReloading && ammo > 0 && isShootingRequested;
+
+      // Handle Weapon Switch
+      if (lastPlayerWeapon !== undefined && lastPlayerWeapon !== weapon) {
+        clearRevolverReloadSequence();
+        stopAutoFire(false);
+        stopMinigunFire(false);
+      }
+
+      // Handle Reload Sounds
+      if (isReloading && !lastReloadState) {
+        stopAutoFire(false);
+        stopMinigunFire(false);
+
+        if (weapon === 'revolver') {
+          const prevAmmo = (lastPlayerAmmo !== undefined) ? lastPlayerAmmo : ammo;
+          const missing = Math.max(1, 6 - prevAmmo);
+          playRevolverReloadSequence(missing);
+        } else if (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47') {
+          playAutoReloadSound();
+        }
+      } else if (!isReloading && lastReloadState) {
+        clearRevolverReloadSequence();
+      }
+
+      lastReloadState = isReloading;
+      lastPlayerAmmo = ammo;
+      lastPlayerWeapon = weapon;
+
+      // Handle Firing Sounds
+      const canShoot = !isReloading && (weapon === 'minigun' || ammo > 0) && isShootingRequested;
 
       const isAutoWeapon = (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47');
       if (isAutoWeapon && canShoot) {
-        if (!isAutoFiring) {
-          isAutoFiring = true;
-          autoFireAudio.currentTime = 0;
-          autoFireAudio.play().catch(() => {});
-        }
+        startAutoFire();
       } else {
         if (isAutoFiring) {
           stopAutoFire(true);
@@ -676,11 +895,7 @@
 
       const isMinigunWeapon = (weapon === 'minigun');
       if (isMinigunWeapon && canShoot) {
-        if (!isMinigunFiring) {
-          isMinigunFiring = true;
-          minigunFireAudio.currentTime = 0;
-          minigunFireAudio.play().catch(() => {});
-        }
+        startMinigunFire();
       } else {
         if (isMinigunFiring) {
           stopMinigunFire(true);
@@ -688,37 +903,10 @@
       }
     }
 
-    function stopAutoFire(playEndSound = false) {
-      if (isAutoFiring) {
-        isAutoFiring = false;
-        autoFireAudio.pause();
-        autoFireAudio.currentTime = 0;
-        if (playEndSound) {
-          try {
-            autoEndAudio.currentTime = 0;
-            autoEndAudio.play().catch(() => {});
-          } catch (e) {}
-        }
-      }
-    }
-
-    function stopMinigunFire(playEndSound = false) {
-      if (isMinigunFiring) {
-        isMinigunFiring = false;
-        minigunFireAudio.pause();
-        minigunFireAudio.currentTime = 0;
-        if (playEndSound) {
-          try {
-            minigunEndAudio.currentTime = 0;
-            minigunEndAudio.play().catch(() => {});
-          } catch (e) {}
-        }
-      }
-    }
-
     function stopAllWeaponSounds() {
       stopAutoFire(false);
       stopMinigunFire(false);
+      clearRevolverReloadSequence();
     }
 
     window.addEventListener('click', initInteraction);
@@ -1237,7 +1425,8 @@
     // Update weapon icon
     updateWeaponIcon(me.weapon || 'revolver');
     
-    const pct = Math.round((me.ammo / me.maxAmmo) * 100);
+    const isMinigun = (me.weapon === 'minigun');
+    const pct = isMinigun ? 100 : Math.round((me.ammo / me.maxAmmo) * 100);
     if (hudCache.ammoPct !== pct) {
       hudCache.ammoPct = pct;
       ammoFill.style.width = `${pct}%`;
@@ -1246,17 +1435,28 @@
       else ammoFill.style.background = 'linear-gradient(90deg, #ff5252, #ff1744)';
     }
 
-    const aText = `${me.ammo} / ${me.maxAmmo}`;
+    const aText = isMinigun ? '∞ / ∞' : `${me.ammo} / ${me.maxAmmo}`;
     if (hudCache.ammoText !== aText) {
       hudCache.ammoText = aText;
       ammoText.textContent = aText;
     }
 
-    const isRel = me.isReloading;
+    const isRel = me.isReloading && !isMinigun;
     if (hudCache.isReloading !== isRel) {
       hudCache.isReloading = isRel;
       if (isRel) reloadIndicator.classList.remove('hidden');
       else reloadIndicator.classList.add('hidden');
+    }
+
+    const reloadBtn = document.getElementById('reloadButton');
+    if (reloadBtn) {
+      if (isMinigun) {
+        reloadBtn.style.opacity = '0.3';
+        reloadBtn.style.pointerEvents = 'none';
+      } else {
+        reloadBtn.style.opacity = '1';
+        reloadBtn.style.pointerEvents = 'auto';
+      }
     }
 
     if (me.weaponTimer > 0 && me.weapon !== 'revolver') {

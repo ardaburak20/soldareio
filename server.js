@@ -64,7 +64,7 @@ const WEAPONS = {
   smg:      { name: 'SMG',      fireRate: 6, damage: 0.5, magSize: 30, reloadTime: 1.5, duration: 20, auto: true },
   m4:       { name: 'M4',       fireRate: 4, damage: 1, magSize: 32, reloadTime: 1.5, duration: 20, auto: true },
   ak47:     { name: 'AK-47',    fireRate: 4, damage: 1, magSize: 32, reloadTime: 1.5, duration: 20, auto: true },
-  minigun:  { name: 'Minigun',  fireRate: 10, damage: 1, magSize: 300, reloadTime: 5, duration: 20, auto: true }
+  minigun:  { name: 'Minigun',  fireRate: 10, damage: 1, magSize: 999, reloadTime: 0, duration: 20, auto: true }
 };
 
 const PICKUP_WEIGHTS = [
@@ -597,10 +597,19 @@ io.on('connection', (socket) => {
     const roomCode = socketToRoom[socket.id];
     if (!roomCode || !rooms[roomCode]) return;
     const p = rooms[roomCode].players[socket.id];
-    if (p && p.alive && !p.isReloading && p.ammo < WEAPONS[p.weapon].magSize) {
-      p.isReloading = true;
-      p.reloadTimer = WEAPONS[p.weapon].reloadTime;
-      p.isShooting = false;
+    if (p && p.alive && !p.isReloading) {
+      if (p.weapon === 'minigun') return; // Minigun has no reload
+      const wDef = WEAPONS[p.weapon];
+      if (p.ammo < wDef.magSize) {
+        p.isReloading = true;
+        p.isShooting = false;
+        if (p.weapon === 'revolver') {
+          const missing = Math.max(1, 6 - p.ammo);
+          p.reloadTimer = missing * 0.4 + 0.5;
+        } else {
+          p.reloadTimer = wDef.reloadTime;
+        }
+      }
     }
   });
 
@@ -755,7 +764,9 @@ function gameLoop() {
           vy: Math.sin(angle) * BULLET_SPEED,
           damage: wDef.damage, traveled: 0, maxDist: maxD
         });
-        p.ammo--;
+        if (p.weapon !== 'minigun') {
+          p.ammo--;
+        }
         p.fireTimer = 1 / wDef.fireRate;
 
         // Soldier shooting (capped)
@@ -778,9 +789,13 @@ function gameLoop() {
           });
         }
 
-        if (p.ammo <= 0) {
+        if (p.ammo <= 0 && p.weapon !== 'minigun') {
           p.isShooting = false; p.isReloading = true;
-          p.reloadTimer = wDef.reloadTime;
+          if (p.weapon === 'revolver') {
+            p.reloadTimer = 6 * 0.4 + 0.5; // 2.9s full reload
+          } else {
+            p.reloadTimer = wDef.reloadTime;
+          }
         }
       }
       p.clickShoot = false;
