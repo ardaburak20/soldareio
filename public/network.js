@@ -110,6 +110,10 @@ const Network = (() => {
     if (socket) socket.emit('manualReload');
   }
 
+  function cancelRevolverReload() {
+    if (socket) socket.emit('cancelRevolverReload');
+  }
+
   function getId() { return myId; }
   function getMapSize() { return mapSize; }
 
@@ -122,7 +126,7 @@ const Network = (() => {
 
   return {
     connect, join, joinWithBots, joinRoom, sendMouse, 
-    startShooting, stopShooting, clickShoot, manualReload,
+    startShooting, stopShooting, clickShoot, manualReload, cancelRevolverReload,
     equipRevolver,
     getId, getMapSize,
     onState, onJoined, onEliminated, onServerFull, onRoomNotFound, onRoomFull

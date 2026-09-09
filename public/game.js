@@ -599,6 +599,10 @@
 
     let revolverReloadTimers = [];
     let isRevolverReloadingSound = false;
+    let revolverReloadStartTime = 0;
+    let revolverStartAmmo = 0;
+    let revolverMissingCount = 0;
+    let revolverIsInterrupting = false;
     let lastReloadState = false;
     let lastPlayerAmmo = undefined;
     let lastPlayerWeapon = undefined;
@@ -709,32 +713,52 @@
       revolverReloadTimers.forEach(t => clearTimeout(t));
       revolverReloadTimers = [];
       isRevolverReloadingSound = false;
+      revolverIsInterrupting = false;
     }
 
-    function playRevolverReloadSequence(missingCount) {
+    function playRevolverReloadSequence(startAmmo, missingCount) {
       clearRevolverReloadSequence();
       if (isMuted) return;
       isRevolverReloadingSound = true;
+      revolverIsInterrupting = false;
+      revolverReloadStartTime = Date.now();
+      revolverStartAmmo = startAmmo;
       const count = Math.max(1, Math.min(6, missingCount));
+      revolverMissingCount = count;
       
+      const ammoTextEl = document.getElementById('ammoText');
+      const ammoFillEl = document.getElementById('ammoFill');
+
       // Play 'revolver reload.wav' once for each missing bullet (0.4s each)
       for (let i = 0; i < count; i++) {
         const delay = i * 400; // 0.4s per bullet
-        const timer = setTimeout(() => {
-          if (!isRevolverReloadingSound || isMuted) return;
+        const timer1 = setTimeout(() => {
+          if (!isRevolverReloadingSound || isMuted || revolverIsInterrupting) return;
           try {
             const clone = revolverReloadAudio.cloneNode();
             clone.volume = 0.75;
             clone.play().catch(() => {});
           } catch (e) {}
         }, delay);
-        revolverReloadTimers.push(timer);
+        revolverReloadTimers.push(timer1);
+
+        // Update ammo display after each bullet is inserted (at (i+1)*400ms)
+        const stepAmmo = Math.min(6, startAmmo + i + 1);
+        const timer2 = setTimeout(() => {
+          if (!isRevolverReloadingSound || isMuted || revolverIsInterrupting) return;
+          if (ammoTextEl) ammoTextEl.textContent = `${stepAmmo} / 6`;
+          if (ammoFillEl) {
+            const pct = Math.round((stepAmmo / 6) * 100);
+            ammoFillEl.style.width = `${pct}%`;
+          }
+        }, (i + 1) * 400);
+        revolverReloadTimers.push(timer2);
       }
 
       // After all missing bullets are inserted, play 'revolver reload finish.wav' (0.5s)
       const finishDelay = count * 400;
       const finishTimer = setTimeout(() => {
-        if (!isRevolverReloadingSound || isMuted) return;
+        if (!isRevolverReloadingSound || isMuted || revolverIsInterrupting) return;
         try {
           const clone = revolverReloadFinishAudio.cloneNode();
           clone.volume = 0.75;
@@ -742,6 +766,41 @@
         } catch (e) {}
         isRevolverReloadingSound = false;
       }, finishDelay);
+      revolverReloadTimers.push(finishTimer);
+    }
+
+    function interruptRevolverReload() {
+      if (!isRevolverReloadingSound || revolverIsInterrupting) return;
+      revolverIsInterrupting = true;
+      const dt = Date.now() - revolverReloadStartTime;
+      const bulletsDone = Math.min(revolverMissingCount, Math.floor(dt / 400));
+      
+      // Clear all scheduled timers after current bullet
+      revolverReloadTimers.forEach(t => clearTimeout(t));
+      revolverReloadTimers = [];
+
+      const currentBulletFinishDelay = Math.max(0, (bulletsDone + 1) * 400 - dt);
+      const finalAmmo = Math.min(6, revolverStartAmmo + bulletsDone + 1);
+      
+      const ammoTextEl = document.getElementById('ammoText');
+      const ammoFillEl = document.getElementById('ammoFill');
+
+      const finishTimer = setTimeout(() => {
+        if (ammoTextEl) ammoTextEl.textContent = `${finalAmmo} / 6`;
+        if (ammoFillEl) {
+          const pct = Math.round((finalAmmo / 6) * 100);
+          ammoFillEl.style.width = `${pct}%`;
+        }
+        if (!isMuted) {
+          try {
+            const clone = revolverReloadFinishAudio.cloneNode();
+            clone.volume = 0.75;
+            clone.play().catch(() => {});
+          } catch (e) {}
+        }
+        isRevolverReloadingSound = false;
+        revolverIsInterrupting = false;
+      }, currentBulletFinishDelay);
       revolverReloadTimers.push(finishTimer);
     }
 
@@ -875,7 +934,7 @@
         if (weapon === 'revolver') {
           const prevAmmo = (lastPlayerAmmo !== undefined) ? lastPlayerAmmo : ammo;
           const missing = Math.max(1, 6 - prevAmmo);
-          playRevolverReloadSequence(missing);
+          playRevolverReloadSequence(prevAmmo, missing);
         } else if (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47') {
           playAutoReloadSound();
         }
@@ -925,6 +984,7 @@
       playRevolver,
       updateWeaponSounds,
       stopAllWeaponSounds,
+      interruptRevolverReload,
       initInteraction,
       toggleMute,
       updateMuteButtonUI
@@ -1432,7 +1492,7 @@
     updateWeaponIcon(me.weapon || 'revolver');
     
     const isMinigun = (me.weapon === 'minigun');
-    const pct = isMinigun ? 100 : Math.round((me.ammo / me.maxAmmo) * 100);
+    const pct = Math.round((me.ammo / me.maxAmmo) * 100);
     if (hudCache.ammoPct !== pct) {
       hudCache.ammoPct = pct;
       ammoFill.style.width = `${pct}%`;
@@ -1441,7 +1501,7 @@
       else ammoFill.style.background = 'linear-gradient(90deg, #ff5252, #ff1744)';
     }
 
-    const aText = isMinigun ? '∞ / ∞' : `${me.ammo} / ${me.maxAmmo}`;
+    const aText = `${me.ammo} / ${me.maxAmmo}`;
     if (hudCache.ammoText !== aText) {
       hudCache.ammoText = aText;
       ammoText.textContent = aText;
@@ -1457,11 +1517,9 @@
     const reloadBtn = document.getElementById('reloadButton');
     if (reloadBtn) {
       if (isMinigun) {
-        reloadBtn.style.opacity = '0.3';
-        reloadBtn.style.pointerEvents = 'none';
+        reloadBtn.style.display = 'none';
       } else {
-        reloadBtn.style.opacity = '1';
-        reloadBtn.style.pointerEvents = 'auto';
+        reloadBtn.style.display = 'flex';
       }
     }
 
@@ -1774,6 +1832,18 @@
     }
   }
 
+  function handleShootTrigger() {
+    if (!gameState) return false;
+    const myId = Network.getId();
+    const me = gameState.players[myId];
+    if (me && me.alive && me.isReloading && me.weapon === 'revolver') {
+      Network.cancelRevolverReload();
+      SoundManager.interruptRevolverReload();
+      return true;
+    }
+    return false;
+  }
+
   if (isMobile) {
     // Listen for touches on canvas (left half) for joystick
     canvas.addEventListener('touchstart', handleJoystickStart, { passive: false });
@@ -1784,8 +1854,9 @@
     fireButton.addEventListener('touchstart', (e) => {
       e.preventDefault();
       if (!playing) return;
-      isMobileFireActive = true;
       fireButton.classList.add('active');
+      if (handleShootTrigger()) return;
+      isMobileFireActive = true;
       Network.clickShoot();
       Network.startShooting();
     });
@@ -1819,6 +1890,7 @@
 
   canvas.addEventListener('mousedown', (e) => {
     if (!isMobile && e.button === 0 && playing) {
+      if (handleShootTrigger()) return;
       isMouseDown = true;
       Network.clickShoot();
       Network.startShooting();

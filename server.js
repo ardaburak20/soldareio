@@ -64,7 +64,7 @@ const WEAPONS = {
   smg:      { name: 'SMG',      fireRate: 6, damage: 0.5, magSize: 30, reloadTime: 2.27, duration: 20, auto: true },
   m4:       { name: 'M4',       fireRate: 4, damage: 1, magSize: 32, reloadTime: 2.27, duration: 20, auto: true },
   ak47:     { name: 'AK-47',    fireRate: 4, damage: 1, magSize: 32, reloadTime: 2.27, duration: 20, auto: true },
-  minigun:  { name: 'Minigun',  fireRate: 10, damage: 1, magSize: 999, reloadTime: 0, duration: 20, auto: true }
+  minigun:  { name: 'Minigun',  fireRate: 10, damage: 1, magSize: 300, reloadTime: 0, duration: 20, auto: true }
 };
 
 const PICKUP_WEIGHTS = [
@@ -603,13 +603,38 @@ io.on('connection', (socket) => {
       if (p.ammo < wDef.magSize) {
         p.isReloading = true;
         p.isShooting = false;
+        p.clickShoot = false;
         if (p.weapon === 'revolver') {
           const missing = Math.max(1, 6 - p.ammo);
+          p.revolverReloadStartAmmo = p.ammo;
+          p.revolverReloadStartTime = Date.now();
+          p.revolverInterrupting = false;
+          p.revolverFinalAmmo = 6;
           p.reloadTimer = missing * 0.4 + 0.5;
         } else {
           p.reloadTimer = wDef.reloadTime;
         }
       }
+    }
+  });
+
+  socket.on('cancelRevolverReload', () => {
+    const roomCode = socketToRoom[socket.id];
+    if (!roomCode || !rooms[roomCode]) return;
+    const p = rooms[roomCode].players[socket.id];
+    if (p && p.alive && p.isReloading && p.weapon === 'revolver' && !p.revolverInterrupting) {
+      p.revolverInterrupting = true;
+      p.isShooting = false;
+      p.clickShoot = false;
+      const elapsed = (Date.now() - (p.revolverReloadStartTime || Date.now())) / 1000;
+      const startAmmo = p.revolverReloadStartAmmo !== undefined ? p.revolverReloadStartAmmo : p.ammo;
+      const missingTotal = Math.max(1, 6 - startAmmo);
+      const bulletsDone = Math.min(missingTotal, Math.floor(elapsed / 0.4));
+      const currentBulletFinishTime = (bulletsDone + 1) * 0.4;
+      const timeUntilCurrentDone = Math.max(0, currentBulletFinishTime - elapsed);
+      const finalAmmo = Math.min(6, startAmmo + bulletsDone + 1);
+      p.revolverFinalAmmo = finalAmmo;
+      p.reloadTimer = timeUntilCurrentDone + 0.5;
     }
   });
 
@@ -740,8 +765,9 @@ function gameLoop() {
         p.reloadTimer -= dt;
         if (p.reloadTimer <= 0) {
           p.isReloading = false;
-          p.ammo = WEAPONS[p.weapon].magSize;
+          p.ammo = (p.weapon === 'revolver' && p.revolverInterrupting) ? (p.revolverFinalAmmo || 6) : WEAPONS[p.weapon].magSize;
           p.reloadTimer = 0;
+          p.revolverInterrupting = false;
         }
       }
 
@@ -790,8 +816,12 @@ function gameLoop() {
         }
 
         if (p.ammo <= 0 && p.weapon !== 'minigun') {
-          p.isShooting = false; p.isReloading = true;
+          p.isShooting = false; p.clickShoot = false; p.isReloading = true;
           if (p.weapon === 'revolver') {
+            p.revolverReloadStartAmmo = 0;
+            p.revolverReloadStartTime = Date.now();
+            p.revolverInterrupting = false;
+            p.revolverFinalAmmo = 6;
             p.reloadTimer = 6 * 0.4 + 0.5; // 2.9s full reload
           } else {
             p.reloadTimer = wDef.reloadTime;
