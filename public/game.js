@@ -717,26 +717,32 @@
       isRevolverReloadingSound = true;
       const count = Math.max(1, Math.min(6, missingCount));
       
+      // Play 'revolver reload.wav' once for each missing bullet (0.4s each)
       for (let i = 0; i < count; i++) {
         const delay = i * 400; // 0.4s per bullet
-        const isFinish = (i === count - 1);
         const timer = setTimeout(() => {
           if (!isRevolverReloadingSound || isMuted) return;
           try {
-            if (isFinish) {
-              const clone = revolverReloadFinishAudio.cloneNode();
-              clone.volume = 0.75;
-              clone.play().catch(() => {});
-              isRevolverReloadingSound = false;
-            } else {
-              const clone = revolverReloadAudio.cloneNode();
-              clone.volume = 0.75;
-              clone.play().catch(() => {});
-            }
+            const clone = revolverReloadAudio.cloneNode();
+            clone.volume = 0.75;
+            clone.play().catch(() => {});
           } catch (e) {}
         }, delay);
         revolverReloadTimers.push(timer);
       }
+
+      // After all missing bullets are inserted, play 'revolver reload finish.wav' (0.5s)
+      const finishDelay = count * 400;
+      const finishTimer = setTimeout(() => {
+        if (!isRevolverReloadingSound || isMuted) return;
+        try {
+          const clone = revolverReloadFinishAudio.cloneNode();
+          clone.volume = 0.75;
+          clone.play().catch(() => {});
+        } catch (e) {}
+        isRevolverReloadingSound = false;
+      }, finishDelay);
+      revolverReloadTimers.push(finishTimer);
     }
 
     function playAutoReloadSound() {

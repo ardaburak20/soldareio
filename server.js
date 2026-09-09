@@ -61,9 +61,9 @@ const VIEW_RANGE = 2500; // Viewport range for state filtering
 // ==========================================
 const WEAPONS = {
   revolver: { name: 'Revolver', fireRate: 4, damage: 1, magSize: 6, reloadTime: 2, duration: Infinity, auto: false }, 
-  smg:      { name: 'SMG',      fireRate: 6, damage: 0.5, magSize: 30, reloadTime: 1.5, duration: 20, auto: true },
-  m4:       { name: 'M4',       fireRate: 4, damage: 1, magSize: 32, reloadTime: 1.5, duration: 20, auto: true },
-  ak47:     { name: 'AK-47',    fireRate: 4, damage: 1, magSize: 32, reloadTime: 1.5, duration: 20, auto: true },
+  smg:      { name: 'SMG',      fireRate: 6, damage: 0.5, magSize: 30, reloadTime: 2.27, duration: 20, auto: true },
+  m4:       { name: 'M4',       fireRate: 4, damage: 1, magSize: 32, reloadTime: 2.27, duration: 20, auto: true },
+  ak47:     { name: 'AK-47',    fireRate: 4, damage: 1, magSize: 32, reloadTime: 2.27, duration: 20, auto: true },
   minigun:  { name: 'Minigun',  fireRate: 10, damage: 1, magSize: 999, reloadTime: 0, duration: 20, auto: true }
 };
 
