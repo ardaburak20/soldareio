@@ -407,8 +407,11 @@
     let audioCtx = null;
     let autoBuffer = null;
     let minigunBuffer = null;
+    let mainThemeBuffer = null;
     let autoSource = null;
     let minigunSource = null;
+    let mainThemeSource = null;
+    let mainThemeGain = null;
 
     let isAutoFiring = false;
     let isMinigunFiring = false;
@@ -455,6 +458,7 @@
 
     loadBuffer('/sounds/smg m4 ak47 fire.wav', b => { autoBuffer = b; });
     loadBuffer('/sounds/minigun fire.wav', b => { minigunBuffer = b; });
+    loadBuffer('/sounds/soldare io main theme.mp3', b => { mainThemeBuffer = b; });
 
     // HTML5 audio fallbacks
     const autoFireAudio = new Audio(encodeURI('/sounds/smg m4 ak47 fire.wav'));
@@ -478,8 +482,7 @@
     function toggleMute() {
       isMuted = !isMuted;
       if (isMuted) {
-        mainThemeAudio.pause();
-        isMainThemePlaying = false;
+        stopMainTheme();
         stopAllWeaponSounds();
       } else {
         if (!playing) {
@@ -504,19 +507,53 @@
     }
 
     function playMainTheme() {
-      if (isMuted) return;
-      mainThemeAudio.currentTime = 0;
-      mainThemeAudio.play().then(() => {
-        isMainThemePlaying = true;
-      }).catch(() => {
-        isMainThemePlaying = false;
-      });
+      if (isMuted || isMainThemePlaying) return;
+      isMainThemePlaying = true;
+      
+      const ctx = getAudioContext();
+      if (ctx && mainThemeBuffer) {
+        // Web Audio API ile kesintisiz loop
+        stopMainThemeSource();
+        mainThemeSource = ctx.createBufferSource();
+        mainThemeSource.buffer = mainThemeBuffer;
+        mainThemeSource.loop = true;
+        mainThemeGain = ctx.createGain();
+        mainThemeGain.gain.value = 0.45;
+        mainThemeSource.connect(mainThemeGain);
+        mainThemeGain.connect(ctx.destination);
+        mainThemeSource.start(0);
+      } else {
+        // HTML5 Audio fallback
+        mainThemeAudio.currentTime = 0;
+        mainThemeAudio.play().then(() => {
+          isMainThemePlaying = true;
+        }).catch(() => {
+          isMainThemePlaying = false;
+        });
+      }
     }
 
     function stopMainTheme() {
+      isMainThemePlaying = false;
+      stopMainThemeSource();
+    }
+
+    function stopMainThemeSource() {
+      if (mainThemeSource) {
+        try {
+          mainThemeSource.stop();
+          mainThemeSource.disconnect();
+        } catch (e) {}
+        mainThemeSource = null;
+      }
+      if (mainThemeGain) {
+        try {
+          mainThemeGain.disconnect();
+        } catch (e) {}
+        mainThemeGain = null;
+      }
       mainThemeAudio.pause();
       mainThemeAudio.currentTime = 0;
-      isMainThemePlaying = false;
     }
 
     function playRevolver() {
