@@ -32,176 +32,7 @@
     if (bulletPool.length < 100) bulletPool.push(bullet);
   }
 
-  // === Weapon Icons - Ultra Realistic ===
-  const WEAPON_ICONS = {
-    revolver: `
-      <svg viewBox="0 0 64 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Simplified Revolver Icon based on reference image -->
-        <!-- Barrel - long and thin -->
-        <rect x="32" y="18" width="28" height="4" rx="2" fill="#8a8a8a" stroke="#6a6a6a" stroke-width="0.8"/>
-        <rect x="33" y="18.5" width="26" height="3" rx="1.5" fill="#a8a8a8"/>
-        
-        <!-- Cylinder - dark gray drum -->
-        <rect x="22" y="15" width="12" height="10" rx="2" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-        <rect x="23" y="16" width="10" height="8" rx="1.5" fill="#4a4a4a"/>
-        <!-- Cylinder chambers indicator -->
-        <line x1="24" y1="17" x2="24" y2="23" stroke="#2a2a2a" stroke-width="0.5"/>
-        <line x1="26" y1="17" x2="26" y2="23" stroke="#2a2a2a" stroke-width="0.5"/>
-        <line x1="28" y1="17" x2="28" y2="23" stroke="#2a2a2a" stroke-width="0.5"/>
-        <line x1="30" y1="17" x2="30" y2="23" stroke="#2a2a2a" stroke-width="0.5"/>
-        <line x1="32" y1="17" x2="32" y2="23" stroke="#2a2a2a" stroke-width="0.5"/>
-        
-        <!-- Frame - connecting piece -->
-        <path d="M18 20 L22 20 L22 24 L18 30 L12 30 L12 24 Z" fill="#b8b8b8" stroke="#888888" stroke-width="0.8"/>
-        <path d="M13 24 L20 24 L20 26 L13 26 Z" fill="#c8c8c8"/>
-        
-        <!-- Trigger -->
-        <ellipse cx="15" cy="27" rx="1.5" ry="2.5" fill="#5a5a5a" stroke="#3a3a3a" stroke-width="0.6"/>
-        
-        <!-- Grip - brown/orange wood -->
-        <rect x="8" y="25" width="8" height="16" rx="3" fill="#b87850" stroke="#8a5a38" stroke-width="1"/>
-        <rect x="9" y="26" width="6" height="14" rx="2.5" fill="#c88860"/>
-        <!-- Wood grain lines -->
-        <path d="M10 28 Q11 33 10 38" stroke="#a86840" stroke-width="0.6" fill="none"/>
-        <path d="M12 28 Q13 33 12 38" stroke="#a86840" stroke-width="0.6" fill="none"/>
-        <path d="M14 28 Q13.5 33 14 38" stroke="#a86840" stroke-width="0.6" fill="none"/>
-        
-        <!-- Hammer -->
-        <path d="M20 13 L22 15 L20 17" stroke="#6a6a6a" stroke-width="2" fill="none" stroke-linecap="round"/>
-      </svg>
-    `,
-    
-    ak47: `
-      <svg viewBox="0 0 48 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Realistic AK-47 -->
-        <rect x="29" y="15.5" width="15" height="2.5" rx="1.2" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.7"/>
-        <rect x="30" y="16" width="13" height="1.5" rx="0.8" fill="#3a3a3a"/>
-        <rect x="43" y="14.5" width="3" height="4.5" rx="0.5" fill="#1a1a1a"/>
-        <line x1="44" y1="15.5" x2="44" y2="18.5" stroke="#3a3a3a" stroke-width="0.5"/>
-        <line x1="45" y1="15.5" x2="45" y2="18.5" stroke="#3a3a3a" stroke-width="0.5"/>
-        <rect x="28" y="14" width="12" height="1.2" rx="0.6" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.5"/>
-        <rect x="17" y="14" width="15" height="6" rx="1.5" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
-        <rect x="18" y="15.5" width="12" height="3" rx="1" fill="#3a3a3a"/>
-        <rect x="23" y="14.5" width="5" height="2.5" rx="0.5" fill="#2a2a2a"/>
-        <rect x="25" y="18" width="9" height="4" rx="1.5" fill="#8B4513" stroke="#654321" stroke-width="0.7"/>
-        <line x1="26" y1="19.5" x2="33" y2="19.5" stroke="#654321" stroke-width="0.4" opacity="0.6"/>
-        <line x1="26" y1="20.5" x2="33" y2="20.5" stroke="#654321" stroke-width="0.4" opacity="0.6"/>
-        <path d="M26 19 Q28 20 26 21" stroke="#543311" stroke-width="0.5" fill="none"/>
-        <rect x="7" y="16" width="11" height="4" rx="2" fill="#8B4513" stroke="#654321" stroke-width="0.7"/>
-        <rect x="8" y="17" width="8" height="2" rx="1" fill="#654321" opacity="0.6"/>
-        <line x1="8.5" y1="17.5" x2="15" y2="17.5" stroke="#543311" stroke-width="0.5"/>
-        <path d="M15 20 L15 28 L17.5 30 L20 28 L20 22 Z" fill="#8B4513" stroke="#654321" stroke-width="0.7"/>
-        <rect x="16" y="24" width="3" height="1" rx="0.5" fill="#654321"/>
-        <rect x="16" y="26" width="3" height="0.8" rx="0.4" fill="#543311"/>
-        <path d="M17 26 Q16 27.5 17 28" stroke="#2a2a2a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M16 24 Q14 26 16 28" stroke="#2a2a2a" stroke-width="1.2" fill="none"/>
-        <path d="M18 20 L17 28 Q17 30 19 30.5 L20 30.5 Q22 30 22 28 L21 21 Z" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
-        <path d="M18.5 22 L18 28 Q18 29 19.5 29.5 L20 29.5 Q21 29 21 28 L20.5 22 Z" fill="#2a2a2a"/>
-        <rect x="37" y="13" width="1.5" height="2.5" rx="0.4" fill="#2a2a2a"/>
-        <circle cx="37.8" cy="13.5" r="0.5" fill="#3a3a3a"/>
-        <rect x="28" y="13" width="2" height="2" rx="0.5" fill="#2a2a2a"/>
-      </svg>
-    `,
-    
-    smg: `
-      <svg viewBox="0 0 60 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Simplified SMG Icon -->
-        <path d="M4 16 L12 12 L12 28 L4 32 Z" fill="#7a7a7a" stroke="#5a5a5a" stroke-width="1"/>
-        <path d="M6 18 L10 16 L10 26 L6 28 Z" fill="#9a9a9a"/>
-        <rect x="12" y="15" width="32" height="10" rx="2" fill="#1a1a1a" stroke="#000000" stroke-width="1"/>
-        <rect x="13" y="16" width="30" height="8" rx="1.5" fill="#2a2a2a"/>
-        <rect x="44" y="17" width="14" height="6" rx="3" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.8"/>
-        <rect x="45" y="18" width="12" height="4" rx="2" fill="#4a4a4a"/>
-        <rect x="24" y="25" width="6" height="14" rx="1.5" fill="#1a1a1a" stroke="#000000" stroke-width="0.8"/>
-        <rect x="25" y="26" width="4" height="12" rx="1" fill="#2a2a2a"/>
-        <path d="M18 25 L18 34 L20 36 L22 34 L22 27 Z" fill="#1a1a1a" stroke="#000000" stroke-width="0.8"/>
-        <rect x="19" y="29" width="2" height="1" rx="0.5" fill="#2a2a2a"/>
-        <ellipse cx="20" cy="30" rx="1" ry="1.5" fill="#3a3a3a"/>
-        <path d="M19 27 Q17 30 19 33" stroke="#1a1a1a" stroke-width="1" fill="none"/>
-        <rect x="36" y="25" width="3" height="6" rx="1.5" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.6"/>
-      </svg>
-    `,
-    
-    m4: `
-      <svg viewBox="0 0 48 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Realistic M4 Carbine -->
-        <rect x="27" y="15.5" width="15" height="2.5" rx="1.2" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.7"/>
-        <rect x="28" y="16" width="13" height="1.5" rx="0.8" fill="#3a3a3a"/>
-        <rect x="41" y="14.5" width="3.5" height="4.5" rx="0.5" fill="#1a1a1a"/>
-        <rect x="41.5" y="15.5" width="2.5" height="2.5" rx="0.3" fill="#333"/>
-        <line x1="42" y1="16" x2="43.5" y2="16" stroke="#2a2a2a" stroke-width="0.4"/>
-        <rect x="16" y="14" width="14" height="6" rx="1.5" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
-        <rect x="17" y="15.5" width="11" height="3" rx="1" fill="#3a3a3a"/>
-        <rect x="23" y="14.5" width="4" height="3" rx="0.5" fill="#1a1a1a" opacity="0.9"/>
-        <circle cx="25" cy="16" r="0.4" fill="#3a3a3a"/>
-        <rect x="24" y="15" width="7" height="5" rx="1" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.6"/>
-        <line x1="25" y1="16" x2="30" y2="16" stroke="#2a2a2a" stroke-width="0.4"/>
-        <line x1="25" y1="17" x2="30" y2="17" stroke="#2a2a2a" stroke-width="0.4"/>
-        <line x1="25" y1="18" x2="30" y2="18" stroke="#2a2a2a" stroke-width="0.4"/>
-        <rect x="7" y="15.5" width="10" height="3" rx="1.5" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.6"/>
-        <rect x="8" y="16" width="7" height="2" rx="1" fill="#1a1a1a"/>
-        <rect x="5" y="16" width="4" height="1.5" rx="0.8" fill="#3a3a3a"/>
-        <circle cx="5.5" cy="16.8" r="0.6" fill="#2a2a2a"/>
-        <path d="M14 20 L14 27.5 L16.5 29.5 L19 27.5 L19 21.5 Z" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.7"/>
-        <rect x="15" y="23" width="3" height="1" rx="0.5" fill="#1a1a1a"/>
-        <rect x="15" y="25" width="3" height="0.8" rx="0.4" fill="#1a1a1a"/>
-        <path d="M16 25 Q15 26.5 16 27" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M15 23 Q13 25.5 15 28" stroke="#2a2a2a" stroke-width="1.2" fill="none"/>
-        <rect x="17" y="20" width="4" height="9" rx="1.5" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="0.7"/>
-        <rect x="18" y="22" width="2" height="6" rx="0.8" fill="#2a2a2a"/>
-        <rect x="27" y="12" width="6" height="2.5" rx="1" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="0.6"/>
-        <circle cx="30" cy="13.2" r="0.8" fill="#4a9eff" opacity="0.8"/>
-        <rect x="28" y="12.5" width="4" height="1.5" rx="0.5" fill="#3a3a3a"/>
-        <rect x="36" y="13.5" width="1.5" height="2.5" rx="0.4" fill="#2a2a2a"/>
-        <rect x="27" y="13.5" width="1" height="1.5" rx="0.3" fill="#3a3a3a"/>
-      </svg>
-    `,
-    
-    minigun: `
-      <svg viewBox="0 0 80 48" width="34" height="34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Simplified Minigun Icon -->
-        <path d="M8 12 L20 12 L20 36 L8 36 Z" fill="#a8a8a8" stroke="#888888" stroke-width="1"/>
-        <path d="M10 16 L18 24 L10 32 Z" fill="#c8c8c8"/>
-        <rect x="20" y="12" width="18" height="24" rx="2" fill="#8a8a8a" stroke="#6a6a6a" stroke-width="1.2"/>
-        <rect x="22" y="14" width="14" height="20" rx="1.5" fill="#6a6a6a"/>
-        <path d="M24 16 Q26 20 24 24 Q26 28 24 32" stroke="#c8c8c8" stroke-width="0.8" fill="none"/>
-        <path d="M28 16 Q30 20 28 24 Q30 28 28 32" stroke="#c8c8c8" stroke-width="0.8" fill="none"/>
-        <path d="M32 16 Q34 20 32 24 Q34 28 32 32" stroke="#c8c8c8" stroke-width="0.8" fill="none"/>
-        <rect x="38" y="14" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
-        <rect x="38" y="18" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
-        <rect x="38" y="22" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
-        <rect x="38" y="26" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
-        <rect x="38" y="30" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
-        <rect x="38" y="34" width="34" height="2" rx="1" fill="#9a9a9a" stroke="#7a7a7a" stroke-width="0.6"/>
-        <circle cx="72" cy="15" r="1" fill="#5a5a5a"/>
-        <circle cx="72" cy="19" r="1" fill="#5a5a5a"/>
-        <circle cx="72" cy="23" r="1" fill="#5a5a5a"/>
-        <circle cx="72" cy="27" r="1" fill="#5a5a5a"/>
-        <circle cx="72" cy="31" r="1" fill="#5a5a5a"/>
-        <circle cx="72" cy="35" r="1" fill="#5a5a5a"/>
-      </svg>
-    `
-  };
-  
-  let lastRenderedWeaponIcon = null;
-  function updateWeaponIcon(weapon) {
-    const displayWeapon = weapon || 'revolver';
-    if (displayWeapon === lastRenderedWeaponIcon) return;
-    lastRenderedWeaponIcon = displayWeapon;
-
-    const iconContainer = document.getElementById('currentWeaponIcon');
-    if (iconContainer && WEAPON_ICONS[displayWeapon]) {
-      iconContainer.innerHTML = WEAPON_ICONS[displayWeapon];
-    }
-    
-    const btn = document.getElementById('equipRevolverBtn');
-    if (btn) {
-      const weaponNames = {
-        revolver: 'Revolver', ak47: 'AK-47', smg: 'SMG', m4: 'M4 Carbine', minigun: 'Minigun'
-      };
-      btn.title = weaponNames[weapon] || 'Current Weapon';
-    }
-  }
+  // Weapon icon removed - using text display only
 
   const I18N = {
     tr: {
@@ -828,7 +659,7 @@
         gainNode.connect(ctx.destination);
         autoSource.start(0);
       } else {
-        autoFireAudio.currentTime = 0;
+        // Remove currentTime = 0 to eliminate delay
         autoFireAudio.play().catch(() => {});
       }
     }
@@ -874,7 +705,7 @@
         gainNode.connect(ctx.destination);
         minigunSource.start(0);
       } else {
-        minigunFireAudio.currentTime = 0;
+        // Remove currentTime = 0 to eliminate delay
         minigunFireAudio.play().catch(() => {});
       }
     }
@@ -1616,12 +1447,7 @@
       weaponNameEl.textContent = wName;
     }
     
-    // Update weapon icon only when weapon changes
-    const weaponKey = me.weapon || 'revolver';
-    if (lastWeaponIconUpdate !== weaponKey) {
-      lastWeaponIconUpdate = weaponKey;
-      updateWeaponIcon(weaponKey);
-    }
+    // Weapon icon removed
     
     const isMinigun = (me.weapon === 'minigun');
     const pct = Math.round((me.ammo / me.maxAmmo) * 100);
@@ -1861,9 +1687,10 @@
       drawAimLine();
     });
 
-    // Throttle expensive HUD updates (every 3 frames = ~20 FPS update rate)
+    // Update HUD every frame for smooth minimap, throttle only expensive leaderboard
+    drawMinimap();
+    
     if (frameCounter % 3 === 0) {
-      drawMinimap();
       updateHUD();
     }
 
