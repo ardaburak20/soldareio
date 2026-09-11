@@ -851,9 +851,9 @@
         stopMinigunFire(false);
 
         if (weapon === 'revolver') {
-          // Use lastPlayerAmmo which is the ammo value BEFORE reload started
-          const prevAmmo = (lastPlayerAmmo !== undefined) ? lastPlayerAmmo : ammo;
-          const missing = 6 - prevAmmo; // Calculate exact missing bullets
+          // Server guarantees ammo is correct at reload start
+          const prevAmmo = ammo;
+          const missing = 6 - prevAmmo;
           console.log(`[DEBUG] Revolver reload START: prevAmmo=${prevAmmo}, missing=${missing}, currentAmmo=${ammo}`);
           playRevolverReloadSequence(prevAmmo, missing);
         } else if (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47') {

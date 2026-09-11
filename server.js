@@ -848,7 +848,7 @@ function gameLoop() {
           if (p.weapon !== 'minigun') {
             p.isReloading = true;
             if (p.weapon === 'revolver') {
-              p.revolverReloadStartAmmo = 0;
+              p.revolverReloadStartAmmo = p.ammo; // Fixed: use actual ammo (0) instead of hardcoded
               p.revolverReloadStartTime = Date.now();
               p.revolverInterrupting = false;
               p.revolverFinalAmmo = 6;
