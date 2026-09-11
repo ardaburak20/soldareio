@@ -405,15 +405,18 @@
 
     // Web Audio API for continuous gapless looping
     let audioCtx = null;
-    let autoBuffer = null;
+    let smgBuffer = null;
+    let m4ak47Buffer = null;
     let minigunBuffer = null;
     let mainThemeBuffer = null;
-    let autoSource = null;
+    let smgSource = null;
+    let m4ak47Source = null;
     let minigunSource = null;
     let mainThemeSource = null;
     let mainThemeGain = null;
 
-    let isAutoFiring = false;
+    let isSmgFiring = false;
+    let isM4Ak47Firing = false;
     let isMinigunFiring = false;
     let isMainThemePlaying = false;
     let hasInteracted = false;
@@ -456,14 +459,19 @@
         .catch(() => {});
     }
 
-    loadBuffer('/sounds/smg fire.wav', b => { autoBuffer = b; });
+    loadBuffer('/sounds/smg fire.wav', b => { smgBuffer = b; });
+    loadBuffer('/sounds/m4 ak47 fire.wav', b => { m4ak47Buffer = b; });
     loadBuffer('/sounds/minigun fire.wav', b => { minigunBuffer = b; });
     loadBuffer('/sounds/soldare io main theme.mp3', b => { mainThemeBuffer = b; });
 
     // HTML5 audio fallbacks
-    const autoFireAudio = new Audio(encodeURI('/sounds/smg fire.wav'));
-    autoFireAudio.loop = true;
-    autoFireAudio.volume = 0.6;
+    const smgFireAudio = new Audio(encodeURI('/sounds/smg fire.wav'));
+    smgFireAudio.loop = true;
+    smgFireAudio.volume = 0.6;
+
+    const m4ak47FireAudio = new Audio(encodeURI('/sounds/m4 ak47 fire.wav'));
+    m4ak47FireAudio.loop = true;
+    m4ak47FireAudio.volume = 0.6;
 
     const minigunFireAudio = new Audio(encodeURI('/sounds/minigun fire.wav'));
     minigunFireAudio.loop = true;
@@ -669,30 +677,29 @@
       } catch (e) {}
     }
 
-    function startAutoFire() {
-      if (isMuted || isAutoFiring) return;
-      isAutoFiring = true;
+    function startSmgFire() {
+      if (isMuted || isSmgFiring) return;
+      isSmgFiring = true;
       const ctx = getAudioContext();
-      if (ctx && autoBuffer) {
-        stopAutoSourceNode();
-        autoSource = ctx.createBufferSource();
-        autoSource.buffer = autoBuffer;
-        autoSource.loop = true;
+      if (ctx && smgBuffer) {
+        stopSmgSourceNode();
+        smgSource = ctx.createBufferSource();
+        smgSource.buffer = smgBuffer;
+        smgSource.loop = true;
         const gainNode = ctx.createGain();
         gainNode.gain.value = 0.6;
-        autoSource.connect(gainNode);
+        smgSource.connect(gainNode);
         gainNode.connect(ctx.destination);
-        autoSource.start(0);
+        smgSource.start(0);
       } else {
-        // Remove currentTime = 0 to eliminate delay
-        autoFireAudio.play().catch(() => {});
+        smgFireAudio.play().catch(() => {});
       }
     }
 
-    function stopAutoFire(playEndSound = false) {
-      if (isAutoFiring) {
-        isAutoFiring = false;
-        stopAutoSourceNode();
+    function stopSmgFire(playEndSound = false) {
+      if (isSmgFiring) {
+        isSmgFiring = false;
+        stopSmgSourceNode();
         if (playEndSound && !isMuted) {
           try {
             const clone = autoEndAudio.cloneNode();
@@ -703,16 +710,59 @@
       }
     }
 
-    function stopAutoSourceNode() {
-      if (autoSource) {
+    function stopSmgSourceNode() {
+      if (smgSource) {
         try {
-          autoSource.stop();
-          autoSource.disconnect();
+          smgSource.stop();
+          smgSource.disconnect();
         } catch (e) {}
-        autoSource = null;
+        smgSource = null;
       }
-      autoFireAudio.pause();
-      // Removed currentTime = 0 to eliminate end sound delay
+      smgFireAudio.pause();
+    }
+
+    function startM4Ak47Fire() {
+      if (isMuted || isM4Ak47Firing) return;
+      isM4Ak47Firing = true;
+      const ctx = getAudioContext();
+      if (ctx && m4ak47Buffer) {
+        stopM4Ak47SourceNode();
+        m4ak47Source = ctx.createBufferSource();
+        m4ak47Source.buffer = m4ak47Buffer;
+        m4ak47Source.loop = true;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 0.6;
+        m4ak47Source.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        m4ak47Source.start(0);
+      } else {
+        m4ak47FireAudio.play().catch(() => {});
+      }
+    }
+
+    function stopM4Ak47Fire(playEndSound = false) {
+      if (isM4Ak47Firing) {
+        isM4Ak47Firing = false;
+        stopM4Ak47SourceNode();
+        if (playEndSound && !isMuted) {
+          try {
+            const clone = autoEndAudio.cloneNode();
+            clone.volume = 0.6;
+            clone.play().catch(() => {});
+          } catch (e) {}
+        }
+      }
+    }
+
+    function stopM4Ak47SourceNode() {
+      if (m4ak47Source) {
+        try {
+          m4ak47Source.stop();
+          m4ak47Source.disconnect();
+        } catch (e) {}
+        m4ak47Source = null;
+      }
+      m4ak47FireAudio.pause();
     }
 
     function startMinigunFire() {
@@ -782,7 +832,8 @@
 
     function updateWeaponSounds(myPlayer, isShootingRequested) {
       if (!myPlayer || !myPlayer.alive || !playing) {
-        stopAutoFire(false);
+        stopSmgFire(false);
+        stopM4Ak47Fire(false);
         stopMinigunFire(false);
         clearRevolverReloadSequence();
         stopSpatialAudio();
@@ -826,9 +877,10 @@
           const op = gameState.players[otherId];
           if (!op.alive) continue;
 
-          const isAuto = (op.weapon === 'smg' || op.weapon === 'm4' || op.weapon === 'ak47');
+          const isSmg = (op.weapon === 'smg');
+          const isM4Ak47 = (op.weapon === 'm4' || op.weapon === 'ak47');
           const isMinigun = (op.weapon === 'minigun');
-          const isFiring = (isAuto || isMinigun) && op.isShooting && !op.isReloading && op.ammo > 0;
+          const isFiring = (isSmg || isM4Ak47 || isMinigun) && op.isShooting && !op.isReloading && op.ammo > 0;
 
           if (isFiring) {
             const baseVol = isMinigun ? 0.48 : 0.6;
@@ -837,7 +889,10 @@
               activeOtherShooters.add(otherId);
               let entry = spatialAudioMap.get(otherId);
               const ctx = getAudioContext();
-              const buffer = isMinigun ? minigunBuffer : autoBuffer;
+              let buffer;
+              if (isMinigun) buffer = minigunBuffer;
+              else if (isSmg) buffer = smgBuffer;
+              else if (isM4Ak47) buffer = m4ak47Buffer;
 
               if (!entry || entry.weapon !== op.weapon) {
                 if (entry) {
@@ -878,13 +933,15 @@
       // Handle Weapon Switch
       if (lastPlayerWeapon !== undefined && lastPlayerWeapon !== weapon) {
         clearRevolverReloadSequence();
-        stopAutoFire(false);
+        stopSmgFire(false);
+        stopM4Ak47Fire(false);
         stopMinigunFire(false);
       }
 
       // Handle Reload Sounds
       if (isReloading && !lastReloadState) {
-        stopAutoFire(false);
+        stopSmgFire(false);
+        stopM4Ak47Fire(false);
         stopMinigunFire(false);
 
         if (weapon === 'revolver') {
@@ -910,12 +967,19 @@
       // Handle Firing Sounds
       const canShoot = !isReloading && (weapon === 'minigun' || ammo > 0) && isShootingRequested;
 
-      const isAutoWeapon = (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47');
-      if (isAutoWeapon && canShoot) {
-        startAutoFire();
+      if (weapon === 'smg' && canShoot) {
+        startSmgFire();
       } else {
-        if (isAutoFiring) {
-          stopAutoFire(true);
+        if (isSmgFiring) {
+          stopSmgFire(true);
+        }
+      }
+
+      if ((weapon === 'm4' || weapon === 'ak47') && canShoot) {
+        startM4Ak47Fire();
+      } else {
+        if (isM4Ak47Firing) {
+          stopM4Ak47Fire(true);
         }
       }
 
@@ -937,7 +1001,8 @@
     }
 
     function stopAllWeaponSounds() {
-      stopAutoFire(false);
+      stopSmgFire(false);
+      stopM4Ak47Fire(false);
       stopMinigunFire(false);
       clearRevolverReloadSequence();
       stopSpatialAudio();
