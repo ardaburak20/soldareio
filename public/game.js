@@ -697,16 +697,22 @@
     }
 
     function stopSmgFire(playEndSound = false) {
-      if (isSmgFiring) {
-        isSmgFiring = false;
+      if (!isSmgFiring) return;
+      isSmgFiring = false;
+      
+      if (playEndSound && !isMuted) {
+        // Keep firing sound until end sound duration passes (~0.3s)
+        setTimeout(() => {
+          stopSmgSourceNode();
+        }, 300);
+        
+        try {
+          const clone = autoEndAudio.cloneNode();
+          clone.volume = 0.6;
+          clone.play().catch(() => {});
+        } catch (e) {}
+      } else {
         stopSmgSourceNode();
-        if (playEndSound && !isMuted) {
-          try {
-            const clone = autoEndAudio.cloneNode();
-            clone.volume = 0.6;
-            clone.play().catch(() => {});
-          } catch (e) {}
-        }
       }
     }
 
@@ -741,16 +747,22 @@
     }
 
     function stopM4Ak47Fire(playEndSound = false) {
-      if (isM4Ak47Firing) {
-        isM4Ak47Firing = false;
+      if (!isM4Ak47Firing) return;
+      isM4Ak47Firing = false;
+      
+      if (playEndSound && !isMuted) {
+        // Keep firing sound until end sound duration passes (~0.3s)
+        setTimeout(() => {
+          stopM4Ak47SourceNode();
+        }, 300);
+        
+        try {
+          const clone = autoEndAudio.cloneNode();
+          clone.volume = 0.6;
+          clone.play().catch(() => {});
+        } catch (e) {}
+      } else {
         stopM4Ak47SourceNode();
-        if (playEndSound && !isMuted) {
-          try {
-            const clone = autoEndAudio.cloneNode();
-            clone.volume = 0.6;
-            clone.play().catch(() => {});
-          } catch (e) {}
-        }
       }
     }
 
@@ -786,16 +798,22 @@
     }
 
     function stopMinigunFire(playEndSound = false) {
-      if (isMinigunFiring) {
-        isMinigunFiring = false;
+      if (!isMinigunFiring) return;
+      isMinigunFiring = false;
+      
+      if (playEndSound && !isMuted) {
+        // Keep firing sound until end sound duration passes (~0.5s)
+        setTimeout(() => {
+          stopMinigunSourceNode();
+        }, 500);
+        
+        try {
+          const clone = minigunEndAudio.cloneNode();
+          clone.volume = 0.48;
+          clone.play().catch(() => {});
+        } catch (e) {}
+      } else {
         stopMinigunSourceNode();
-        if (playEndSound && !isMuted) {
-          try {
-            const clone = minigunEndAudio.cloneNode();
-            clone.volume = 0.48;
-            clone.play().catch(() => {});
-          } catch (e) {}
-        }
       }
     }
 
@@ -1840,7 +1858,18 @@
         const dx = touch.clientX - joystickStartPos.x;
         const dy = touch.clientY - joystickStartPos.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 40;
+        
+        // Dynamic max distance based on soldier count
+        let maxDistance = 40;
+        if (gameState) {
+          const myId = Network.getId();
+          const me = gameState.players[myId];
+          if (me && me.alive) {
+            const soldierCount = (me.soldiers ? me.soldiers.length : 0) + 1;
+            // Increase joystick range with soldier count (40 base + 5 per soldier, max 150)
+            maxDistance = Math.min(150, 40 + soldierCount * 5);
+          }
+        }
         
         if (distance > maxDistance) {
           const angle = Math.atan2(dy, dx);
@@ -1853,7 +1882,7 @@
         
         joystickStick.style.transform = `translate(-50%, -50%) translate(${joystickDelta.x}px, ${joystickDelta.y}px)`;
         
-        // Update virtual mouse position based on joystick
+        // Update virtual mouse position based on joystick with dynamic distance
         if (gameState) {
           const myId = Network.getId();
           const me = gameState.players[myId];
@@ -1861,9 +1890,11 @@
             const magnitude = Math.sqrt(joystickDelta.x * joystickDelta.x + joystickDelta.y * joystickDelta.y);
             if (magnitude > 5) {
               const angle = Math.atan2(joystickDelta.y, joystickDelta.x);
-              const distance = 300;
-              virtualMouseWorld.x = me.x + Math.cos(angle) * distance;
-              virtualMouseWorld.y = me.y + Math.sin(angle) * distance;
+              const soldierCount = (me.soldiers ? me.soldiers.length : 0) + 1;
+              // Increase aim distance with soldier count (300 base + 20 per soldier, max 800)
+              const aimDistance = Math.min(800, 300 + soldierCount * 20);
+              virtualMouseWorld.x = me.x + Math.cos(angle) * aimDistance;
+              virtualMouseWorld.y = me.y + Math.sin(angle) * aimDistance;
             }
           }
         }

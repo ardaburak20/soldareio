@@ -734,6 +734,10 @@ function gameLoop() {
           s.x += sdx * 0.3;
           s.y += sdy * 0.3;
         }
+        
+        // Clamp soldier position to map boundaries
+        s.x = clamp(s.x, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
+        s.y = clamp(s.y, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
       }
 
       // Recruit neutrals
