@@ -456,12 +456,12 @@
         .catch(() => {});
     }
 
-    loadBuffer('/sounds/smg m4 ak47 fire.wav', b => { autoBuffer = b; });
+    loadBuffer('/sounds/smg fire.wav', b => { autoBuffer = b; });
     loadBuffer('/sounds/minigun fire.wav', b => { minigunBuffer = b; });
     loadBuffer('/sounds/soldare io main theme.mp3', b => { mainThemeBuffer = b; });
 
     // HTML5 audio fallbacks
-    const autoFireAudio = new Audio(encodeURI('/sounds/smg m4 ak47 fire.wav'));
+    const autoFireAudio = new Audio(encodeURI('/sounds/smg fire.wav'));
     autoFireAudio.loop = true;
     autoFireAudio.volume = 0.6;
 
