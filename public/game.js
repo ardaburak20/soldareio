@@ -1033,7 +1033,8 @@
 
         if (weapon === 'revolver') {
           const prevAmmo = (lastPlayerAmmo !== undefined) ? lastPlayerAmmo : ammo;
-          const missing = Math.max(1, 6 - prevAmmo);
+          const missing = 6 - prevAmmo; // Calculate exact missing bullets
+          console.log(`[DEBUG] Revolver reload: prevAmmo=${prevAmmo}, missing=${missing}`);
           playRevolverReloadSequence(prevAmmo, missing);
         } else if (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47') {
           playAutoReloadSound();
