@@ -150,8 +150,6 @@
   const colorBtns = document.querySelectorAll('.color-btn');
   const toggleCustomBtn = document.getElementById('toggleCustomBtn');
   const customizationPanel = document.getElementById('customizationPanel');
-  const equipRevolverBtn = document.getElementById('equipRevolverBtn');
-  const storedPickupBadge = document.getElementById('storedPickupBadge');
   
   const topCenterHud = document.getElementById('topCenterHud');
   const topKillsVal = document.getElementById('topKillsVal');
@@ -180,16 +178,6 @@
 
   toggleCustomBtn.addEventListener('click', () => {
     customizationPanel.classList.toggle('hidden');
-  });
-
-  let lastEquipRevolverTime = 0;
-  equipRevolverBtn.addEventListener('click', () => {
-    const now = Date.now();
-    if (now - lastEquipRevolverTime < 300) {
-      return;
-    }
-    lastEquipRevolverTime = now;
-    Network.equipRevolver();
   });
 
   deathToggleCustomBtn.addEventListener('click', () => {
@@ -687,7 +675,7 @@
         autoSource = null;
       }
       autoFireAudio.pause();
-      autoFireAudio.currentTime = 0;
+      // Removed currentTime = 0 to eliminate end sound delay
     }
 
     function startMinigunFire() {
@@ -733,7 +721,7 @@
         minigunSource = null;
       }
       minigunFireAudio.pause();
-      minigunFireAudio.currentTime = 0;
+      // Removed currentTime = 0 to eliminate end sound delay
     }
 
     // === Spatial Audio for Other Players ===
@@ -1526,18 +1514,7 @@
       topAliveVal.textContent = totPlayers;
     }
 
-    const hasStored = me.hasStoredPickup;
-    if (hudCache.hasStored !== hasStored) {
-      hudCache.hasStored = hasStored;
-      if (hasStored) {
-        equipRevolverBtn.classList.add('has-stored');
-        storedPickupBadge.classList.remove('hidden');
-        storedPickupBadge.textContent = '!';
-      } else {
-        equipRevolverBtn.classList.remove('has-stored');
-        storedPickupBadge.classList.add('hidden');
-      }
-    }
+    // Stored pickup badge removed
   }
 
   function drawMinimap() {
