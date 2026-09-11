@@ -1568,18 +1568,33 @@
     ctx.stroke();
   }
 
-  // === HUD Update ===
+  // === HUD Update (Optimized) ===
   let lastLbCache = '';
+  let lastLbHash = 0;
   const hudCache = {};
+  let lastWeaponIconUpdate = '';
+  
+  function hashLeaderboard(lb, myName) {
+    // Fast hash instead of JSON.stringify
+    let hash = 0;
+    for (let i = 0; i < lb.length; i++) {
+      const entry = lb[i];
+      hash = ((hash << 5) - hash) + entry.score;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash + '_' + myName;
+  }
+  
   function updateHUD() {
     if (!gameState) return;
     const myId = Network.getId();
     const me = gameState.players[myId];
     if (!me) return;
 
-    const lbCacheKey = JSON.stringify(gameState.leaderboard) + '_' + me.name;
-    if (lbCacheKey !== lastLbCache) {
-      lastLbCache = lbCacheKey;
+    // Leaderboard update with fast hash
+    const lbHash = hashLeaderboard(gameState.leaderboard, me.name);
+    if (lbHash !== lastLbHash) {
+      lastLbHash = lbHash;
       lbList.innerHTML = '';
       for (let i = 0; i < gameState.leaderboard.length; i++) {
         const entry = gameState.leaderboard[i];
@@ -1601,8 +1616,12 @@
       weaponNameEl.textContent = wName;
     }
     
-    // Update weapon icon
-    updateWeaponIcon(me.weapon || 'revolver');
+    // Update weapon icon only when weapon changes
+    const weaponKey = me.weapon || 'revolver';
+    if (lastWeaponIconUpdate !== weaponKey) {
+      lastWeaponIconUpdate = weaponKey;
+      updateWeaponIcon(weaponKey);
+    }
     
     const isMinigun = (me.weapon === 'minigun');
     const pct = Math.round((me.ammo / me.maxAmmo) * 100);
@@ -1630,9 +1649,15 @@
     const reloadBtn = document.getElementById('reloadButton');
     if (reloadBtn) {
       if (isMinigun) {
-        reloadBtn.style.display = 'none';
+        if (hudCache.reloadBtnVisible !== false) {
+          hudCache.reloadBtnVisible = false;
+          reloadBtn.style.display = 'none';
+        }
       } else {
-        reloadBtn.style.display = 'flex';
+        if (hudCache.reloadBtnVisible !== true) {
+          hudCache.reloadBtnVisible = true;
+          reloadBtn.style.display = 'flex';
+        }
       }
     }
 
@@ -1749,20 +1774,34 @@
 
     frameCounter++;
     
-    // Memory cleanup every 2 seconds
-    if (frameCounter - lastCleanupFrame >= 120) {
+    // Memory cleanup every 5 seconds (more efficient, less spikes)
+    if (frameCounter - lastCleanupFrame >= 300) {
       const activeKeys = new Set();
+      
+      // Use for...in for better performance
       for (const id in gameState.players) {
         activeKeys.add(`p_${id}`);
-        for (let i = 0; i < gameState.players[id].soldiers.length; i++) {
+        const soldiers = gameState.players[id].soldiers;
+        for (let i = 0; i < soldiers.length; i++) {
           activeKeys.add(`s_${id}_${i}`);
         }
       }
-      for (const n of gameState.neutrals) activeKeys.add(`n_${n.id}`);
-      for (const b of gameState.bullets) activeKeys.add(`b_${b.id}`);
       
+      const neutrals = gameState.neutrals;
+      for (let i = 0; i < neutrals.length; i++) {
+        activeKeys.add(`n_${neutrals[i].id}`);
+      }
+      
+      const bullets = gameState.bullets;
+      for (let i = 0; i < bullets.length; i++) {
+        activeKeys.add(`b_${bullets[i].id}`);
+      }
+      
+      // Clean up old positions
       for (const key in smoothPositions) {
-        if (!activeKeys.has(key)) delete smoothPositions[key];
+        if (!activeKeys.has(key)) {
+          delete smoothPositions[key];
+        }
       }
       
       lastCleanupFrame = frameCounter;
@@ -1822,8 +1861,11 @@
       drawAimLine();
     });
 
-    drawMinimap();
-    updateHUD();
+    // Throttle expensive HUD updates (every 3 frames = ~20 FPS update rate)
+    if (frameCounter % 3 === 0) {
+      drawMinimap();
+      updateHUD();
+    }
 
     requestAnimationFrame(render);
   }

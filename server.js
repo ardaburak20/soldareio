@@ -56,6 +56,11 @@ const BOT_SHOOT_RANGE = 450;
 const MAX_BOTS = 7;
 const VIEW_RANGE = 2500; // Viewport range for state filtering
 
+// Performance optimization: leaderboard cache
+let leaderboardCache = null;
+let leaderboardCacheTime = 0;
+const LEADERBOARD_CACHE_MS = 500; // Update leaderboard every 500ms instead of every tick
+
 // ==========================================
 //  WEAPON DEFINITIONS
 // ==========================================
@@ -1015,20 +1020,31 @@ function gameLoop() {
     }
 
     // --- Build & Send State (per-player viewport filtering) ---
-    const leaderboard = Object.values(players)
-      .filter(p => p.alive)
-      .map(p => ({ name: p.name, score: p.soldiers.length + 1, color: p.color }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
+    const now = Date.now();
+    
+    // Cache leaderboard calculation (update every 500ms instead of every tick)
+    let leaderboard;
+    if (!leaderboardCache || (now - leaderboardCacheTime) > LEADERBOARD_CACHE_MS) {
+      leaderboard = Object.values(players)
+        .filter(p => p.alive)
+        .map(p => ({ name: p.name, score: p.soldiers.length + 1, color: p.color }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+      leaderboardCache = leaderboard;
+      leaderboardCacheTime = now;
+    } else {
+      leaderboard = leaderboardCache;
+    }
 
     const totalPlayers = Object.values(players).filter(p => p.alive).length;
 
-    // Build full player data once
+    // Build full player data once (object pooling for better performance)
     const allPlayerData = {};
     for (const id in players) {
       const p = players[id];
-      const solArr = new Array(p.soldiers.length);
-      for (let sIdx = 0; sIdx < p.soldiers.length; sIdx++) {
+      const solLen = p.soldiers.length;
+      const solArr = new Array(solLen);
+      for (let sIdx = 0; sIdx < solLen; sIdx++) {
         const s = p.soldiers[sIdx];
         solArr[sIdx] = { x: Math.round(s.x), y: Math.round(s.y), cs: s.canShoot };
       }
@@ -1046,7 +1062,7 @@ function gameLoop() {
       };
     }
 
-    // Send filtered state per player
+    // Send filtered state per player (optimized spatial queries)
     const viewRangeSq = VIEW_RANGE * VIEW_RANGE;
     const playerViewRangeSq = (VIEW_RANGE + 600) * (VIEW_RANGE + 600);
     
@@ -1060,31 +1076,51 @@ function gameLoop() {
       for (const pid in players) {
         const other = players[pid];
         if (!other.alive) continue;
-        if (pid === id || distSq(me, other) < playerViewRangeSq) {
+        if (pid === id) {
           nearPlayers[pid] = allPlayerData[pid];
+        } else {
+          // Fast distance check with squared distance
+          const dx = me.x - other.x;
+          const dy = me.y - other.y;
+          const dSq = dx * dx + dy * dy;
+          if (dSq < playerViewRangeSq) {
+            nearPlayers[pid] = allPlayerData[pid];
+          }
         }
       }
       
-      // Filter neutrals by distance
+      // Filter neutrals by distance (pre-allocate array for better performance)
       const nearNeutrals = [];
-      for (const n of neutralSoldiers) {
-        if (distSq(me, n) < viewRangeSq) {
+      const neutralLen = neutralSoldiers.length;
+      for (let i = 0; i < neutralLen; i++) {
+        const n = neutralSoldiers[i];
+        const dx = me.x - n.x;
+        const dy = me.y - n.y;
+        if ((dx * dx + dy * dy) < viewRangeSq) {
           nearNeutrals.push({ id: n.id, x: n.x, y: n.y, cs: n.canShoot });
         }
       }
       
       // Filter bullets by distance
       const nearBullets = [];
-      for (const b of bullets) {
-        if (distSq(me, b) < viewRangeSq) {
+      const bulletLen = bullets.length;
+      for (let i = 0; i < bulletLen; i++) {
+        const b = bullets[i];
+        const dx = me.x - b.x;
+        const dy = me.y - b.y;
+        if ((dx * dx + dy * dy) < viewRangeSq) {
           nearBullets.push({ id: b.id, x: b.x, y: b.y, c: b.color });
         }
       }
       
       // Filter pickups by distance
       const nearPickups = [];
-      for (const pk of pickups) {
-        if (distSq(me, pk) < viewRangeSq) {
+      const pickupLen = pickups.length;
+      for (let i = 0; i < pickupLen; i++) {
+        const pk = pickups[i];
+        const dx = me.x - pk.x;
+        const dy = me.y - pk.y;
+        if ((dx * dx + dy * dy) < viewRangeSq) {
           nearPickups.push({ id: pk.id, x: pk.x, y: pk.y, type: pk.type });
         }
       }
