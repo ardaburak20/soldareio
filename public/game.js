@@ -723,7 +723,7 @@
       revolverIsInterrupting = false;
       revolverReloadStartTime = Date.now();
       revolverStartAmmo = startAmmo;
-      const count = Math.max(1, Math.min(6, missingCount));
+      const count = missingCount; // Use full missing count (6 when ammo is 0)
       revolverMissingCount = count;
       
       const ammoTextEl = document.getElementById('ammoText');
