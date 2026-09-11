@@ -409,10 +409,10 @@
     const autoReloadAudio = new Audio(encodeURI('/sounds/smg m4 ak47 reload.mp3'));
     autoReloadAudio.volume = 0.7;
 
-    const autoEndAudio = new Audio(encodeURI('/sounds/smg m4 ak47 end.wav'));
+    const autoEndAudio = new Audio(encodeURI('/sounds/smg-m4-ak47-end.wav'));
     autoEndAudio.volume = 0.6;
 
-    const minigunEndAudio = new Audio(encodeURI('/sounds/minigun end.wav'));
+    const minigunEndAudio = new Audio(encodeURI('/sounds/minigun-end.wav'));
     minigunEndAudio.volume = 0.48;
 
     // Web Audio API for continuous gapless looping
