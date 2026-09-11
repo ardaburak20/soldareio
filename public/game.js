@@ -1032,9 +1032,10 @@
         stopMinigunFire(false);
 
         if (weapon === 'revolver') {
+          // Use lastPlayerAmmo which is the ammo value BEFORE reload started
           const prevAmmo = (lastPlayerAmmo !== undefined) ? lastPlayerAmmo : ammo;
           const missing = 6 - prevAmmo; // Calculate exact missing bullets
-          console.log(`[DEBUG] Revolver reload: prevAmmo=${prevAmmo}, missing=${missing}`);
+          console.log(`[DEBUG] Revolver reload START: prevAmmo=${prevAmmo}, missing=${missing}, currentAmmo=${ammo}`);
           playRevolverReloadSequence(prevAmmo, missing);
         } else if (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47') {
           playAutoReloadSound();
@@ -1043,8 +1044,11 @@
         clearRevolverReloadSequence();
       }
 
+      // Update lastPlayerAmmo ONLY when NOT reloading (to capture pre-reload ammo)
+      if (!isReloading) {
+        lastPlayerAmmo = ammo;
+      }
       lastReloadState = isReloading;
-      lastPlayerAmmo = ammo;
       lastPlayerWeapon = weapon;
 
       // Handle Firing Sounds

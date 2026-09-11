@@ -611,7 +611,7 @@ io.on('connection', (socket) => {
         p.isShooting = false;
         p.clickShoot = false;
         if (p.weapon === 'revolver') {
-          const missing = Math.max(1, 6 - p.ammo);
+          const missing = 6 - p.ammo; // Calculate exact missing bullets (no Math.max!)
           p.revolverReloadStartAmmo = p.ammo;
           p.revolverReloadStartTime = Date.now();
           p.revolverInterrupting = false;
