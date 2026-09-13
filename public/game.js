@@ -49,7 +49,7 @@
       watchAdBonus: "🎬 REKLAM İZLE: Ödül Al!", adBonusActive: "⚡ REKLAM ÖDÜLÜ AKTİF!"
     },
     en: {
-      subtitle: "Build your army. Dominate the map.", placeholder: "Enter name...", play: "PLAY", playBots: "PLAY WITH BOTS",
+      subtitle: "Build your army. Dominate the map!", placeholder: "Enter name...", play: "PLAY", playBots: "PLAY WITH BOTS",
       mouse: "Mouse", moveAim: "Move & Aim", click: "Click", shoot: "Shoot",
       leaderboard: "🏆 LEADERBOARD", reloading: "RELOADING...", eliminated: "ELIMINATED!", soldiers: "soldiers",
       color: "Color:", drawSkin: "Draw Skin (8x8):", clear: "Clear", eraser: "Eraser",
@@ -62,7 +62,7 @@
       watchAdBonus: "🎬 WATCH AD: Get Bonus!", adBonusActive: "⚡ AD BONUS ACTIVE!"
     },
     ru: {
-      subtitle: "Создай армию. Доминируй на карте.", placeholder: "Введите имя...", play: "ИГРАТЬ", playBots: "ИГРАТЬ С БОТАМИ",
+      subtitle: "Создай армию. Доминируй на карте!", placeholder: "Введите имя...", play: "ИГРАТЬ", playBots: "ИГРАТЬ С БОТАМИ",
       mouse: "Мышь", moveAim: "Движение и Прицел", click: "Клик", shoot: "Стрелять",
       leaderboard: "🏆 РЕЙТИНГ", reloading: "ПЕРЕЗАРЯДКА...", eliminated: "ВЫБЫЛ!", soldiers: "солдат",
       color: "Цвет:", drawSkin: "Рисовать скин:", clear: "Очистить", eraser: "Ластик",
@@ -75,7 +75,7 @@
       watchAdBonus: "🎬 СМОТРЕТЬ РЕКЛАМУ: Бонус!", adBonusActive: "⚡ БОНУС АКТИВЕН!"
     },
     zh: {
-      subtitle: "建立你的军队。统治地图。", placeholder: "输入名字...", play: "开始游戏", playBots: "与机器人玩",
+      subtitle: "建立你的军队。统治地图！", placeholder: "输入名字...", play: "开始游戏", playBots: "与机器人玩",
       mouse: "鼠标", moveAim: "移动与瞄准", click: "点击", shoot: "射击",
       leaderboard: "🏆 排行榜", reloading: "重新装弹...", eliminated: "被淘汰！", soldiers: "士兵",
       color: "颜色:", drawSkin: "画皮肤(8x8):", clear: "清除", eraser: "橡皮擦",
@@ -88,7 +88,7 @@
       watchAdBonus: "🎬 观看广告: 获得奖励!", adBonusActive: "⚡ 奖励已激活!"
     },
     de: {
-      subtitle: "Baue deine Armee auf. Beherrsche die Karte.", placeholder: "Name eingeben...", play: "SPIELEN", playBots: "MIT BOTS SPIELEN",
+      subtitle: "Baue deine Armee auf. Beherrsche die Karte!", placeholder: "Name eingeben...", play: "SPIELEN", playBots: "MIT BOTS SPIELEN",
       mouse: "Maus", moveAim: "Bewegen & Zielen", click: "Klick", shoot: "Schießen",
       leaderboard: "🏆 BESTENLISTE", reloading: "NACHLADEN...", eliminated: "ELIMINIERT!", soldiers: "Soldaten",
       color: "Farbe:", drawSkin: "Skin zeichnen:", clear: "Klar", eraser: "Radiergummi",
@@ -101,7 +101,7 @@
       watchAdBonus: "🎬 WERBUNG ANSEHEN: Bonus!", adBonusActive: "⚡ BONUS AKTIV!"
     },
     fr: {
-      subtitle: "Construisez votre armée. Dominez la carte.", placeholder: "Entrez votre nom...", play: "JOUER", playBots: "JOUER AVEC BOTS",
+      subtitle: "Construisez votre armée. Dominez la carte!", placeholder: "Entrez votre nom...", play: "JOUER", playBots: "JOUER AVEC BOTS",
       mouse: "Souris", moveAim: "Bouger & Viser", click: "Clic", shoot: "Tirer",
       leaderboard: "🏆 CLASSEMENT", reloading: "RECHARGEMENT...", eliminated: "ÉLIMINÉ!", soldiers: "soldats",
       color: "Couleur:", drawSkin: "Dessiner la peau:", clear: "Effacer", eraser: "Gomme",
