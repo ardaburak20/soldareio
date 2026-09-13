@@ -840,32 +840,33 @@
       const dy = shooterY - myY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       
-      const viewW = canvas.width / zoom;
-      const viewH = canvas.height / zoom;
-      const viewDiag = Math.sqrt(viewW * viewW + viewH * viewH) / 2;
+      // Fixed distance zones for consistent audio across devices
+      const closeRange = 800;   // Close range: full spatial audio
+      const farRange = 1200;     // Far range: quieter audio
+      const maxRange = 1500;     // Max hearing distance
       
-      // Three audio zones:
-      // 1. Inside viewport: 80% volume (20% reduction from base)
-      // 2. Extended zone (+10%): 50% volume (quieter, distant sound)
-      // 3. Beyond extended zone: Silent
+      // Silent beyond max range
+      if (dist >= maxRange) return 0;
       
-      const viewportRadius = viewDiag;
-      const extendedRadius = viewDiag * 1.1; // +10% extended hearing zone
-      
-      // Silent beyond extended zone
-      if (dist >= extendedRadius) return 0;
-      
-      // Inside viewport: 80% volume with distance falloff
-      if (dist < viewportRadius) {
-        const factor = 1 - (dist / viewportRadius);
-        return (baseVol * 0.8) * Math.pow(factor, 1.2);
+      // Close range: 60% volume with distance falloff (lower than before)
+      if (dist < closeRange) {
+        const factor = 1 - (dist / closeRange);
+        return (baseVol * 0.6) * Math.pow(factor, 1.5);
       }
       
-      // Extended zone (viewport to +10%): 50% volume with distance falloff
-      const extendedDist = dist - viewportRadius;
-      const extendedRange = extendedRadius - viewportRadius;
-      const extendedFactor = 1 - (extendedDist / extendedRange);
-      return (baseVol * 0.5) * Math.pow(extendedFactor, 1.5);
+      // Far range (close to far): 40% volume with distance falloff
+      if (dist < farRange) {
+        const relDist = dist - closeRange;
+        const range = farRange - closeRange;
+        const factor = 1 - (relDist / range);
+        return (baseVol * 0.4) * Math.pow(factor, 1.5);
+      }
+      
+      // Extended zone (far to max): 20% volume with distance falloff
+      const extendedDist = dist - farRange;
+      const extendedRange = maxRange - farRange;
+      const factor = 1 - (extendedDist / extendedRange);
+      return (baseVol * 0.2) * Math.pow(factor, 2.0);
     }
 
     function updateWeaponSounds(myPlayer, isShootingRequested) {
@@ -885,6 +886,8 @@
         const activeOtherShooters = new Set();
 
         // 1. Single shots (Revolver) from other players - detect by new bullets
+        // SADECE oyuncunun kendi silahı revolver ise revolver sesini çal
+        // Soldier bullet'larını (her zaman revolver) göz ardı et
         if (gameState.bullets) {
           for (const b of gameState.bullets) {
             if (b.ownerId !== myPlayer.id && b.weapon === 'revolver' && !seenBulletIds.has(b.id)) {
@@ -892,7 +895,9 @@
               
               // Find the shooter player for accurate position
               const shooter = gameState.players[b.ownerId];
-              if (shooter && shooter.alive) {
+              // Sadece oyuncunun kendisi revolver kullanıyorsa revolver sesi çal
+              // Soldier bullet'larını atla (player M4 kullanırken soldier'lar revolver kullanıyor)
+              if (shooter && shooter.alive && shooter.weapon === 'revolver') {
                 const vol = getSpatialVolume(shooter.x, shooter.y, myPlayer.x, myPlayer.y, 0.6);
                 
                 if (vol > 0.02 && !isMuted) {
