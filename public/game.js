@@ -891,12 +891,19 @@
         if (gameState.bullets) {
           console.log('[DEBUG] Processing', gameState.bullets.length, 'bullets');
           
+          // Debug: Log ALL bullets with their weapons
+          gameState.bullets.forEach((b, idx) => {
+            console.log(`[DEBUG] Bullet ${idx}: weapon="${b.weapon}" ownerId="${b.ownerId}" myId="${myPlayer.id}"`);
+          });
+          
           // Debug: Log all bullets to see what's happening
           const otherRevolverBullets = gameState.bullets.filter(b => 
             b.ownerId !== myPlayer.id && b.weapon === 'revolver'
           );
           if (otherRevolverBullets.length > 0) {
             console.log('[REVOLVER DEBUG] Found', otherRevolverBullets.length, 'revolver bullets from others');
+          } else {
+            console.log('[REVOLVER DEBUG] No revolver bullets found from others');
           }
           
           for (const b of gameState.bullets) {
