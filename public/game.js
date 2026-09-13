@@ -36,7 +36,7 @@
 
   const I18N = {
     tr: {
-      subtitle: "Ordunu kur. Haritaya hükmet.", placeholder: "İsmini gir...", play: "OYNA", playBots: "BOTLARLA OYNA",
+      subtitle: "Ordunu kur. Haritaya hükmet!", placeholder: "İsmini gir...", play: "OYNA", playBots: "BOTLARLA OYNA",
       mouse: "Fare", moveAim: "Hareket et & Nişan al", click: "Tıkla", shoot: "Ateş et",
       leaderboard: "🏆 SIRALAMA", reloading: "YENİDEN DOLDUR...", eliminated: "ELENDİN!", soldiers: "asker",
       color: "Renk Seç:", drawSkin: "Askerini Boya (8x8):", clear: "Temizle", eraser: "Silgi",
