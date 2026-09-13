@@ -16,10 +16,6 @@
   const MAX_RENDER_FPS = 60;
   const INTERPOLATION_SMOOTHING = 0.2;
   
-  // Low-end device optimization
-  const isLowEndDevice = navigator.hardwareConcurrency <= 4 || navigator.deviceMemory <= 4;
-  const SOLDIER_RENDER_LIMIT = isLowEndDevice ? 100 : 200; // Limit rendered soldiers
-  
   // Frame throttling
   let lastRenderTime = 0;
   const minFrameTime = 1000 / MAX_RENDER_FPS;
@@ -1305,19 +1301,17 @@
     const right = left + viewW;
     const bottom = top + viewH;
 
-    // Draw fewer grid lines on low-end devices
-    const gridSpacing = isLowEndDevice ? GRID_SIZE * 2 : GRID_SIZE;
-    const startX = Math.floor(left / gridSpacing) * gridSpacing;
-    const startY = Math.floor(top / gridSpacing) * gridSpacing;
+    const startX = Math.floor(left / GRID_SIZE) * GRID_SIZE;
+    const startY = Math.floor(top / GRID_SIZE) * GRID_SIZE;
 
     ctx.strokeStyle = GRID_COLOR;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    for (let x = startX; x <= right + gridSpacing; x += gridSpacing) {
+    for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE) {
       ctx.moveTo(x, top - 100);
       ctx.lineTo(x, bottom + 100);
     }
-    for (let y = startY; y <= bottom + gridSpacing; y += gridSpacing) {
+    for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE) {
       ctx.moveTo(left - 100, y);
       ctx.lineTo(right + 100, y);
     }
@@ -1370,9 +1364,7 @@
       if (!isInViewport(pk.x, pk.y)) continue;
       
       const style = PICKUP_STYLES[pk.type] || PICKUP_STYLES.smg;
-      
-      // Simplified pulse for low-end devices
-      const pulse = isLowEndDevice ? 1 : (1 + Math.sin(time * 3 + pk.id) * 0.12);
+      const pulse = 1 + Math.sin(time * 3 + pk.id) * 0.12;
       const finalScale = pulse * pickupScale;
 
       drawCircle(pk.x, pk.y, 35 * finalScale, hexToRgba(style.color, 0.15), null);
@@ -1407,13 +1399,10 @@
   function drawSoldierUnit(sx, sy, color, canShoot, isMain, angle, skinCanvas) {
     const r = SOLDIER_RADIUS;
 
-    // Skip shadow on low-end devices
-    if (!isLowEndDevice) {
-      ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.beginPath();
-      ctx.arc(sx, sy + r * 0.5, r * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.arc(sx, sy + r * 0.5, r * 0.7, 0, Math.PI * 2);
+    ctx.fill();
 
     drawCircle(sx, sy, r, color, isMain ? '#fff' : hexToRgba('#000', 0.4), isMain ? 2 : 1.5);
 
@@ -1462,8 +1451,6 @@
     const playerIds = Object.keys(gameState.players);
     const sortedIds = playerIds.filter(id => id !== myId).concat(playerIds.filter(id => id === myId));
 
-    let totalSoldiersRendered = 0;
-
     for (const id of sortedIds) {
       const p = gameState.players[id];
       if (!p.alive) continue;
@@ -1473,49 +1460,36 @@
       const angle = p.angle || 0;
       const skinCnv = getSkinCanvas(id, p.skin);
 
-      // Simplified shield effect (remove heavy animations on low-end)
+      // Shield effect
       if (p.shieldActive) {
-        if (!isLowEndDevice) {
-          const time = Date.now() / 1000;
-          const shieldR = SOLDIER_RADIUS + 30 + p.soldiers.length * 4;
-          const pulse = 1 + Math.sin(time * 4) * 0.05;
+        const time = Date.now() / 1000;
+        const shieldR = SOLDIER_RADIUS + 30 + p.soldiers.length * 4;
+        const pulse = 1 + Math.sin(time * 4) * 0.05;
 
-          ctx.save();
-          ctx.globalAlpha = 0.2 + Math.sin(time * 3) * 0.05;
-          const shieldGrad = ctx.createRadialGradient(pos.x, pos.y, shieldR * 0.5, pos.x, pos.y, shieldR * pulse);
-          shieldGrad.addColorStop(0, 'rgba(38, 198, 218, 0.05)');
-          shieldGrad.addColorStop(0.8, 'rgba(38, 198, 218, 0.25)');
-          shieldGrad.addColorStop(1, 'rgba(38, 198, 218, 0)');
-          ctx.fillStyle = shieldGrad;
-          ctx.beginPath();
-          ctx.arc(pos.x, pos.y, shieldR * pulse, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(38, 198, 218, 0.6)';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-          ctx.restore();
-        } else {
-          // Simple shield for low-end devices
-          const shieldR = SOLDIER_RADIUS + 30 + p.soldiers.length * 4;
-          ctx.strokeStyle = 'rgba(38, 198, 218, 0.5)';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(pos.x, pos.y, shieldR, 0, Math.PI * 2);
-          ctx.stroke();
-        }
+        ctx.save();
+        ctx.globalAlpha = 0.2 + Math.sin(time * 3) * 0.05;
+        const shieldGrad = ctx.createRadialGradient(pos.x, pos.y, shieldR * 0.5, pos.x, pos.y, shieldR * pulse);
+        shieldGrad.addColorStop(0, 'rgba(38, 198, 218, 0.05)');
+        shieldGrad.addColorStop(0.8, 'rgba(38, 198, 218, 0.25)');
+        shieldGrad.addColorStop(1, 'rgba(38, 198, 218, 0)');
+        ctx.fillStyle = shieldGrad;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, shieldR * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(38, 198, 218, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
       }
 
-      // Draw swarm soldiers with Viewport Culling + Render Limit
+      // Draw swarm soldiers with Viewport Culling
       for (let i = 0; i < p.soldiers.length; i++) {
-        if (totalSoldiersRendered >= SOLDIER_RENDER_LIMIT) break;
-        
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
         const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.25);
         const solAngle = Math.atan2(pos.y - sol.y, pos.x - sol.x);
         drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, sol.cs ? angle : solAngle, skinCnv);
-        totalSoldiersRendered++;
       }
 
       // Draw main soldier
@@ -1909,15 +1883,10 @@
       drawAimLine();
     });
 
-    // Update HUD and minimap with throttling for low-end devices
-    const hudUpdateInterval = isLowEndDevice ? 2 : 1;
-    const leaderboardUpdateInterval = isLowEndDevice ? 6 : 3;
+    // Update HUD every frame for smooth minimap, throttle only expensive leaderboard
+    drawMinimap();
     
-    if (frameCounter % hudUpdateInterval === 0) {
-      drawMinimap();
-    }
-    
-    if (frameCounter % leaderboardUpdateInterval === 0) {
+    if (frameCounter % 3 === 0) {
       updateHUD();
     }
 
