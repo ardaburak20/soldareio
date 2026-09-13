@@ -886,23 +886,35 @@
 
         // 1. Single shots (Revolver) from other players - detect by new bullets
         if (gameState.bullets) {
+          // Debug: Log all bullets to see what's happening
+          const otherRevolverBullets = gameState.bullets.filter(b => 
+            b.ownerId !== myPlayer.id && b.weapon === 'revolver'
+          );
+          if (otherRevolverBullets.length > 0) {
+            console.log('[REVOLVER DEBUG] Found', otherRevolverBullets.length, 'revolver bullets from others');
+          }
+          
           for (const b of gameState.bullets) {
             if (b.ownerId !== myPlayer.id && b.weapon === 'revolver' && !seenBulletIds.has(b.id)) {
               seenBulletIds.add(b.id);
+              
+              console.log('[REVOLVER] NEW bullet detected! ID:', b.id, 'Owner:', b.ownerId, 'Weapon:', b.weapon);
               
               // Find the shooter player for accurate position
               const shooter = gameState.players[b.ownerId];
               if (shooter && shooter.alive) {
                 const vol = getSpatialVolume(shooter.x, shooter.y, myPlayer.x, myPlayer.y, 0.6);
-                console.log('[REVOLVER] Detected bullet from', b.ownerId, '| Volume:', vol.toFixed(3), '| Muted:', isMuted);
+                console.log('[REVOLVER] Shooter found:', shooter.name, '| Volume:', vol.toFixed(3), '| Muted:', isMuted);
                 
                 if (vol > 0.02 && !isMuted) {
                   // Play spatial revolver sound
                   playRevolver(vol);
-                  console.log('[REVOLVER] Playing spatial audio at volume:', vol.toFixed(3));
+                  console.log('[REVOLVER] ✅ Playing spatial audio at volume:', vol.toFixed(3));
                 } else {
-                  console.log('[REVOLVER] NOT playing - volume too low or muted');
+                  console.log('[REVOLVER] ❌ NOT playing - volume:', vol.toFixed(3), 'or muted:', isMuted);
                 }
+              } else {
+                console.log('[REVOLVER] ❌ Shooter not found or dead for owner:', b.ownerId);
               }
             }
           }
