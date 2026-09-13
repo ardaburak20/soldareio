@@ -284,8 +284,21 @@
   function paintPixel(e, canvas) {
     if(!isDrawingSkin) return;
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
-    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
+    
+    // Mouse veya touch koordinatlarını al
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+      // Touch event
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      // Mouse event
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    
+    const x = Math.floor((clientX - rect.left) / PIXEL_SIZE);
+    const y = Math.floor((clientY - rect.top) / PIXEL_SIZE);
     if(x >= 0 && x < PIXEL_RES && y >= 0 && y < PIXEL_RES) {
       const idx = y * PIXEL_RES + x;
       skinData[idx] = useEraser ? '#ffffff' : selectedPaintColor;
@@ -293,13 +306,36 @@
     }
   }
 
+  // Mouse events for desktop
   pEditCanvas.addEventListener('mousedown', (e) => { isDrawingSkin = true; paintPixel(e, pEditCanvas); });
   pEditCanvas.addEventListener('mousemove', (e) => paintPixel(e, pEditCanvas));
   
   deathPEditCanvas.addEventListener('mousedown', (e) => { isDrawingSkin = true; paintPixel(e, deathPEditCanvas); });
   deathPEditCanvas.addEventListener('mousemove', (e) => paintPixel(e, deathPEditCanvas));
 
+  // Touch events for mobile
+  pEditCanvas.addEventListener('touchstart', (e) => { 
+    e.preventDefault(); 
+    isDrawingSkin = true; 
+    paintPixel(e, pEditCanvas); 
+  }, { passive: false });
+  pEditCanvas.addEventListener('touchmove', (e) => { 
+    e.preventDefault(); 
+    paintPixel(e, pEditCanvas); 
+  }, { passive: false });
+  
+  deathPEditCanvas.addEventListener('touchstart', (e) => { 
+    e.preventDefault(); 
+    isDrawingSkin = true; 
+    paintPixel(e, deathPEditCanvas); 
+  }, { passive: false });
+  deathPEditCanvas.addEventListener('touchmove', (e) => { 
+    e.preventDefault(); 
+    paintPixel(e, deathPEditCanvas); 
+  }, { passive: false });
+
   window.addEventListener('mouseup', () => { isDrawingSkin = false; });
+  window.addEventListener('touchend', () => { isDrawingSkin = false; });
 
   document.getElementById('clearSkinBtn').addEventListener('click', () => {
     skinData.fill('#ffffff');
