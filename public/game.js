@@ -564,13 +564,15 @@
       mainThemeAudio.currentTime = 0;
     }
 
-    function playRevolver() {
+    function playRevolver(volume = 0.6) {
       if (isMuted) return;
       try {
-        const clone = revolverAudio.cloneNode();
-        clone.volume = 0.6;
-        clone.play().catch(() => {});
-      } catch (e) {}
+        const spatialRevolver = new Audio(encodeURI('/sounds/revolver.wav'));
+        spatialRevolver.volume = volume;
+        spatialRevolver.play().catch(() => {});
+      } catch (e) {
+        console.error('[AUDIO] Error playing revolver:', e);
+      }
     }
 
     function clearRevolverReloadSequence() {
@@ -892,16 +894,14 @@
               const shooter = gameState.players[b.ownerId];
               if (shooter && shooter.alive) {
                 const vol = getSpatialVolume(shooter.x, shooter.y, myPlayer.x, myPlayer.y, 0.6);
+                console.log('[REVOLVER] Detected bullet from', b.ownerId, '| Volume:', vol.toFixed(3), '| Muted:', isMuted);
                 
                 if (vol > 0.02 && !isMuted) {
-                  try {
-                    // Create new Audio instance for spatial sound
-                    const spatialRevolver = new Audio(encodeURI('/sounds/revolver.wav'));
-                    spatialRevolver.volume = vol;
-                    spatialRevolver.play().catch(() => {});
-                  } catch (e) {
-                    console.error('[SPATIAL AUDIO] Error playing revolver:', e);
-                  }
+                  // Play spatial revolver sound
+                  playRevolver(vol);
+                  console.log('[REVOLVER] Playing spatial audio at volume:', vol.toFixed(3));
+                } else {
+                  console.log('[REVOLVER] NOT playing - volume too low or muted');
                 }
               }
             }
