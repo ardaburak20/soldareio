@@ -869,8 +869,6 @@
     }
 
     function updateWeaponSounds(myPlayer, isShootingRequested) {
-      console.log('[DEBUG] updateWeaponSounds called - myPlayer:', !!myPlayer, 'playing:', playing);
-      
       if (!myPlayer || !myPlayer.alive || !playing) {
         stopSmgFire(false);
         stopM4Ak47Fire(false);
@@ -884,54 +882,26 @@
 
       // === Process Spatial Audio for Other Players (Firing Sounds Only) ===
       if (gameState) {
-        console.log('[DEBUG] gameState exists, bullets:', gameState.bullets ? gameState.bullets.length : 'null');
         const activeOtherShooters = new Set();
 
         // 1. Single shots (Revolver) from other players - detect by new bullets
         if (gameState.bullets) {
-          console.log('[DEBUG] Processing', gameState.bullets.length, 'bullets');
-          
-          // Debug: Log ALL bullets with their weapons
-          gameState.bullets.forEach((b, idx) => {
-            console.log(`[DEBUG] Bullet ${idx}: weapon="${b.weapon}" ownerId="${b.ownerId}" myId="${myPlayer.id}"`);
-          });
-          
-          // Debug: Log all bullets to see what's happening
-          const otherRevolverBullets = gameState.bullets.filter(b => 
-            b.ownerId !== myPlayer.id && b.weapon === 'revolver'
-          );
-          if (otherRevolverBullets.length > 0) {
-            console.log('[REVOLVER DEBUG] Found', otherRevolverBullets.length, 'revolver bullets from others');
-          } else {
-            console.log('[REVOLVER DEBUG] No revolver bullets found from others');
-          }
-          
           for (const b of gameState.bullets) {
             if (b.ownerId !== myPlayer.id && b.weapon === 'revolver' && !seenBulletIds.has(b.id)) {
               seenBulletIds.add(b.id);
-              
-              console.log('[REVOLVER] NEW bullet detected! ID:', b.id, 'Owner:', b.ownerId, 'Weapon:', b.weapon);
               
               // Find the shooter player for accurate position
               const shooter = gameState.players[b.ownerId];
               if (shooter && shooter.alive) {
                 const vol = getSpatialVolume(shooter.x, shooter.y, myPlayer.x, myPlayer.y, 0.6);
-                console.log('[REVOLVER] Shooter found:', shooter.name, '| Volume:', vol.toFixed(3), '| Muted:', isMuted);
                 
                 if (vol > 0.02 && !isMuted) {
                   // Play spatial revolver sound
                   playRevolver(vol);
-                  console.log('[REVOLVER] ✅ Playing spatial audio at volume:', vol.toFixed(3));
-                } else {
-                  console.log('[REVOLVER] ❌ NOT playing - volume:', vol.toFixed(3), 'or muted:', isMuted);
                 }
-              } else {
-                console.log('[REVOLVER] ❌ Shooter not found or dead for owner:', b.ownerId);
               }
             }
           }
-        } else {
-          console.log('[DEBUG] gameState.bullets is null/undefined');
         }
 
         // Clean up old bullet IDs
