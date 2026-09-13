@@ -882,28 +882,22 @@
       if (gameState) {
         const activeOtherShooters = new Set();
 
-        // 1. Single shots (Revolver) from other players - using player position not bullet
-        for (const otherId in gameState.players) {
-          if (otherId === myPlayer.id) continue;
-          const op = gameState.players[otherId];
-          if (!op.alive) continue;
-
-          // Revolver spatial audio - check if player just shot
-          if (op.weapon === 'revolver' && op.isShooting && !op.isReloading && op.ammo >= 0) {
-            // Check if this player has new bullets
-            if (gameState.bullets) {
-              for (const b of gameState.bullets) {
-                if (b.ownerId === otherId && b.weapon === 'revolver' && !seenBulletIds.has(b.id)) {
-                  seenBulletIds.add(b.id);
-                  const vol = getSpatialVolume(op.x, op.y, myPlayer.x, myPlayer.y, 0.6);
-                  if (vol > 0.02 && !isMuted) {
-                    try {
-                      const clone = revolverAudio.cloneNode();
-                      clone.volume = vol;
-                      clone.play().catch(() => {});
-                    } catch (e) {}
-                  }
-                  break; // Only play once per player per frame
+        // 1. Single shots (Revolver) from other players - detect by new bullets
+        if (gameState.bullets) {
+          for (const b of gameState.bullets) {
+            if (b.ownerId !== myPlayer.id && b.weapon === 'revolver' && !seenBulletIds.has(b.id)) {
+              seenBulletIds.add(b.id);
+              
+              // Find the shooter player for accurate position
+              const shooter = gameState.players[b.ownerId];
+              if (shooter && shooter.alive) {
+                const vol = getSpatialVolume(shooter.x, shooter.y, myPlayer.x, myPlayer.y, 0.6);
+                if (vol > 0.02 && !isMuted) {
+                  try {
+                    const clone = revolverAudio.cloneNode();
+                    clone.volume = vol;
+                    clone.play().catch(() => {});
+                  } catch (e) {}
                 }
               }
             }
