@@ -1506,19 +1506,18 @@
   function drawBullets() {
     if (!gameState || !gameState.bullets || gameState.bullets.length === 0) return;
 
+    // Single loop optimization - draw both fill and stroke in one pass
     ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
     for (let i = 0; i < gameState.bullets.length; i++) {
       const b = gameState.bullets[i];
       if (!isInViewport(b.x, b.y)) continue;
-      ctx.moveTo(b.x + 3.5, b.y);
+      
+      // Draw white fill
+      ctx.beginPath();
       ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
-    }
-    ctx.fill();
-
-    for (let i = 0; i < gameState.bullets.length; i++) {
-      const b = gameState.bullets[i];
-      if (!isInViewport(b.x, b.y)) continue;
+      ctx.fill();
+      
+      // Draw colored stroke
       ctx.strokeStyle = b.c || '#4fc3f7';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -1604,12 +1603,29 @@
         const entry = gameState.leaderboard[i];
         const row = document.createElement('div');
         row.className = 'lb-row' + (entry.name === me.name ? ' me' : '');
-        row.innerHTML = `
-          <span class="lb-rank">${i + 1}.</span>
-          <span class="lb-color" style="background:${entry.color}"></span>
-          <span class="lb-name">${entry.name}</span>
-          <span class="lb-score">${entry.score}</span>
-        `;
+        
+        // Optimized DOM creation - avoid innerHTML template literals
+        const rankSpan = document.createElement('span');
+        rankSpan.className = 'lb-rank';
+        rankSpan.textContent = (i + 1) + '.';
+        
+        const colorSpan = document.createElement('span');
+        colorSpan.className = 'lb-color';
+        colorSpan.style.background = entry.color;
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'lb-name';
+        nameSpan.textContent = entry.name;
+        
+        const scoreSpan = document.createElement('span');
+        scoreSpan.className = 'lb-score';
+        scoreSpan.textContent = entry.score;
+        
+        row.appendChild(rankSpan);
+        row.appendChild(colorSpan);
+        row.appendChild(nameSpan);
+        row.appendChild(scoreSpan);
+        
         lbList.appendChild(row);
       }
     }
@@ -1759,6 +1775,14 @@
       requestAnimationFrame(render);
       return;
     }
+
+    // FPS throttling - limit to MAX_RENDER_FPS
+    const elapsed = timestamp - lastRenderTime;
+    if (elapsed < minFrameTime) {
+      requestAnimationFrame(render);
+      return;
+    }
+    lastRenderTime = timestamp - (elapsed % minFrameTime);
 
     frameCounter++;
     
