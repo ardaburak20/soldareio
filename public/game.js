@@ -892,12 +892,16 @@
               const shooter = gameState.players[b.ownerId];
               if (shooter && shooter.alive) {
                 const vol = getSpatialVolume(shooter.x, shooter.y, myPlayer.x, myPlayer.y, 0.6);
+                
                 if (vol > 0.02 && !isMuted) {
                   try {
-                    const clone = revolverAudio.cloneNode();
-                    clone.volume = vol;
-                    clone.play().catch(() => {});
-                  } catch (e) {}
+                    // Create new Audio instance for spatial sound
+                    const spatialRevolver = new Audio(encodeURI('/sounds/revolver.wav'));
+                    spatialRevolver.volume = vol;
+                    spatialRevolver.play().catch(() => {});
+                  } catch (e) {
+                    console.error('[SPATIAL AUDIO] Error playing revolver:', e);
+                  }
                 }
               }
             }
