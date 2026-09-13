@@ -869,6 +869,8 @@
     }
 
     function updateWeaponSounds(myPlayer, isShootingRequested) {
+      console.log('[DEBUG] updateWeaponSounds called - myPlayer:', !!myPlayer, 'playing:', playing);
+      
       if (!myPlayer || !myPlayer.alive || !playing) {
         stopSmgFire(false);
         stopM4Ak47Fire(false);
@@ -882,10 +884,13 @@
 
       // === Process Spatial Audio for Other Players (Firing Sounds Only) ===
       if (gameState) {
+        console.log('[DEBUG] gameState exists, bullets:', gameState.bullets ? gameState.bullets.length : 'null');
         const activeOtherShooters = new Set();
 
         // 1. Single shots (Revolver) from other players - detect by new bullets
         if (gameState.bullets) {
+          console.log('[DEBUG] Processing', gameState.bullets.length, 'bullets');
+          
           // Debug: Log all bullets to see what's happening
           const otherRevolverBullets = gameState.bullets.filter(b => 
             b.ownerId !== myPlayer.id && b.weapon === 'revolver'
@@ -918,6 +923,8 @@
               }
             }
           }
+        } else {
+          console.log('[DEBUG] gameState.bullets is null/undefined');
         }
 
         // Clean up old bullet IDs
