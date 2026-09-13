@@ -14,9 +14,16 @@
   
   <!-- Backend URL Configuration -->
   <script>
-    // Always use the same domain as frontend (soldare.io or localhost)
-    const BACKEND_URL = window.location.origin;
-    console.log('🌐 Backend URL:', BACKEND_URL);
+    // Backend URL detection for CrazyGames iframe support
+    const hostname = window.location.hostname;
+    const isCrazyGames = hostname.includes('crazygames.com');
+    
+    // CrazyGames iframe'den soldare.io backend'ine bağlan
+    const BACKEND_URL = isCrazyGames 
+      ? 'https://soldare.io'  // CrazyGames iframe için soldare.io backend
+      : window.location.origin; // Kendi domain için kendi backend
+    
+    console.log('🌐 Backend URL:', BACKEND_URL, '| Hostname:', hostname, '| isCrazyGames:', isCrazyGames);
   </script>
   
   <!-- CrazyGames SDK v3 -->

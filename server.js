@@ -18,11 +18,16 @@ const io = new Server(server, {
   pingInterval: 25000    // 25 saniye ping gönder (default: 25000)
 });
 
-// CORS middleware
+// CORS middleware + iframe headers for CrazyGames
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Allow iframe embedding (for CrazyGames and other platforms)
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors *");
+  
   if (req.method === 'OPTIONS') return res.status(200).end();
   next();
 });

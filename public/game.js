@@ -417,26 +417,26 @@
 
   // === Sound Manager ===
   const SoundManager = (() => {
-    const mainThemeAudio = new Audio(encodeURI('/sounds/soldare io main theme.mp3'));
+    const mainThemeAudio = new Audio(encodeURI('./sounds/soldare io main theme.mp3'));
     mainThemeAudio.loop = true;
     mainThemeAudio.volume = 0.45;
 
-    const revolverAudio = new Audio(encodeURI('/sounds/revolver.wav'));
+    const revolverAudio = new Audio(encodeURI('./sounds/revolver.wav'));
     revolverAudio.volume = 0.6;
 
-    const revolverReloadAudio = new Audio(encodeURI('/sounds/revolver reload.wav'));
+    const revolverReloadAudio = new Audio(encodeURI('./sounds/revolver reload.wav'));
     revolverReloadAudio.volume = 0.7;
 
-    const revolverReloadFinishAudio = new Audio(encodeURI('/sounds/revolver reload finish.wav'));
+    const revolverReloadFinishAudio = new Audio(encodeURI('./sounds/revolver reload finish.wav'));
     revolverReloadFinishAudio.volume = 0.7;
 
-    const autoReloadAudio = new Audio(encodeURI('/sounds/smg m4 ak47 reload.mp3'));
+    const autoReloadAudio = new Audio(encodeURI('./sounds/smg m4 ak47 reload.mp3'));
     autoReloadAudio.volume = 0.7;
 
-    const autoEndAudio = new Audio(encodeURI('/sounds/smg-m4-ak47-end.wav'));
+    const autoEndAudio = new Audio(encodeURI('./sounds/smg-m4-ak47-end.wav'));
     autoEndAudio.volume = 0.6;
 
-    const minigunEndAudio = new Audio(encodeURI('/sounds/minigun-end.wav'));
+    const minigunEndAudio = new Audio(encodeURI('./sounds/minigun-end.wav'));
     minigunEndAudio.volume = 0.48;
 
     // Web Audio API for continuous gapless looping
@@ -495,21 +495,21 @@
         .catch(() => {});
     }
 
-    loadBuffer('/sounds/smg fire.wav', b => { smgBuffer = b; });
-    loadBuffer('/sounds/m4 ak47 fire.wav', b => { m4ak47Buffer = b; });
-    loadBuffer('/sounds/minigun fire.wav', b => { minigunBuffer = b; });
-    loadBuffer('/sounds/soldare io main theme.mp3', b => { mainThemeBuffer = b; });
+    loadBuffer('./sounds/smg fire.wav', b => { smgBuffer = b; });
+    loadBuffer('./sounds/m4 ak47 fire.wav', b => { m4ak47Buffer = b; });
+    loadBuffer('./sounds/minigun fire.wav', b => { minigunBuffer = b; });
+    loadBuffer('./sounds/soldare io main theme.mp3', b => { mainThemeBuffer = b; });
 
     // HTML5 audio fallbacks
-    const smgFireAudio = new Audio(encodeURI('/sounds/smg fire.wav'));
+    const smgFireAudio = new Audio(encodeURI('./sounds/smg fire.wav'));
     smgFireAudio.loop = true;
     smgFireAudio.volume = 0.6;
 
-    const m4ak47FireAudio = new Audio(encodeURI('/sounds/m4 ak47 fire.wav'));
+    const m4ak47FireAudio = new Audio(encodeURI('./sounds/m4 ak47 fire.wav'));
     m4ak47FireAudio.loop = true;
     m4ak47FireAudio.volume = 0.6;
 
-    const minigunFireAudio = new Audio(encodeURI('/sounds/minigun fire.wav'));
+    const minigunFireAudio = new Audio(encodeURI('./sounds/minigun fire.wav'));
     minigunFireAudio.loop = true;
     minigunFireAudio.volume = 0.48;
 
@@ -603,7 +603,7 @@
     function playRevolver(volume = 0.6) {
       if (isMuted) return;
       try {
-        const spatialRevolver = new Audio(encodeURI('/sounds/revolver.wav'));
+        const spatialRevolver = new Audio(encodeURI('./sounds/revolver.wav'));
         spatialRevolver.volume = volume;
         spatialRevolver.play().catch(() => {});
       } catch (e) {
