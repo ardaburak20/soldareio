@@ -20,16 +20,35 @@ const Network = (() => {
       transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 25,
-      timeout: 20000
+      reconnectionAttempts: 50,        // 25 → 50 (daha fazla deneme)
+      timeout: 30000,                   // 20s → 30s (daha uzun timeout)
+      forceNew: false                   // Aynı socket ID'yi kullan
     });
 
     socket.on('connect', () => {
       console.log('⚡ Socket connected to backend!');
+      
+      // Reconnect sonrası kullanıcıya bildir
+      if (myId && onStateCallback) {
+        console.log('✅ Reconnected successfully!');
+      }
+      
       if (pendingJoin) {
         socket.emit(pendingJoin.event, pendingJoin.payload);
         pendingJoin = null;
       }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('⚠️ Connection lost. Reconnecting...');
+    });
+
+    socket.on('reconnect_attempt', (attempt) => {
+      console.log(`🔄 Reconnection attempt ${attempt}/50`);
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.log('❌ Reconnection failed. Please refresh the page.');
     });
 
     socket.on('joined', (data) => {

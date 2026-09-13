@@ -12,7 +12,10 @@ const io = new Server(server, {
   cors: { 
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  // Reconnection settings - daha uzun timeout
+  pingTimeout: 60000,    // 60 saniye (default: 5000)
+  pingInterval: 25000    // 25 saniye ping gönder (default: 25000)
 });
 
 // CORS middleware
@@ -36,6 +39,7 @@ const MAP_SIZE = 10000;
 const TICK_RATE = 30;
 const TICK_MS = 1000 / TICK_RATE;
 const PLAYER_SPEED = 250;
+const RECONNECT_TIMEOUT = 30000; // 30 saniye içinde geri dönebilir
 const BULLET_SPEED = 800;
 const MAX_BULLET_DIST = 900;
 const SOLDIER_RADIUS = 16;
@@ -87,6 +91,7 @@ const TOTAL_WEIGHT = PICKUP_WEIGHTS.reduce((s, p) => s + p.weight, 0);
 let nextId = 1;
 const rooms = {};
 const socketToRoom = {};
+const disconnectedPlayers = new Map(); // socketId -> { player, roomCode, disconnectTime }
 
 // ==========================================
 //  UTILITY
@@ -665,7 +670,48 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    leaveCurrentRoom(socket.id);
+    const roomCode = socketToRoom[socket.id];
+    if (!roomCode || !rooms[roomCode]) return;
+    
+    const room = rooms[roomCode];
+    const player = room.players[socket.id];
+    
+    if (player && !player.isBot) {
+      // Oyuncuyu hemen silme, 30 saniye bekle (reconnect şansı ver)
+      console.log(`⚠️ Player ${player.name} disconnected, waiting for reconnect...`);
+      
+      disconnectedPlayers.set(socket.id, {
+        player: JSON.parse(JSON.stringify(player)), // Deep copy
+        roomCode: roomCode,
+        disconnectTime: Date.now()
+      });
+      
+      // 30 saniye sonra hala geri dönmediyse sil
+      setTimeout(() => {
+        if (disconnectedPlayers.has(socket.id)) {
+          console.log(`❌ Player timeout, removing from game`);
+          disconnectedPlayers.delete(socket.id);
+          leaveCurrentRoom(socket.id);
+        }
+      }, RECONNECT_TIMEOUT);
+    } else {
+      // Bot ise direkt sil
+      leaveCurrentRoom(socket.id);
+    }
+  });
+
+  socket.on('connect', () => {
+    // Eğer bu socket ID daha önce disconnect olduysa, geri yükle
+    if (disconnectedPlayers.has(socket.id)) {
+      const data = disconnectedPlayers.get(socket.id);
+      const room = rooms[data.roomCode];
+      
+      if (room && room.players[socket.id]) {
+        console.log(`✅ Player reconnected successfully!`);
+        disconnectedPlayers.delete(socket.id);
+        socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: data.roomCode });
+      }
+    }
   });
 });
 
