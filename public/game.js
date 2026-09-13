@@ -906,6 +906,7 @@
       return (baseVol * 0.1) * Math.pow(factor, 2.0);
     }
 
+    let lastSpatialUpdateFrame = 0;
     function updateWeaponSounds(myPlayer, isShootingRequested) {
       if (!myPlayer || !myPlayer.alive || !playing) {
         stopSmgFire(false);
@@ -919,7 +920,10 @@
       }
 
       // === Process Spatial Audio for Other Players (Firing Sounds Only) ===
-      if (gameState) {
+      // Throttle spatial audio updates to every 2 frames for better performance
+      const shouldUpdateSpatial = (frameCounter - lastSpatialUpdateFrame) >= 2;
+      if (gameState && shouldUpdateSpatial) {
+        lastSpatialUpdateFrame = frameCounter;
         const activeOtherShooters = new Set();
 
         // 1. Single shots (Revolver) from other players - detect by new bullets
@@ -1245,9 +1249,15 @@
   function smooth(key, tx, ty, factor) {
     if (!smoothPositions[key]) {
       smoothPositionsCount++;
-      if (smoothPositionsCount > 1500) {
-        smoothPositions = {};
-        smoothPositionsCount = 0;
+      // Gradual cleanup instead of hard reset (prevents stutter)
+      if (smoothPositionsCount > 2000) {
+        // Clean up only 25% oldest entries instead of everything
+        const keys = Object.keys(smoothPositions);
+        const toDelete = Math.floor(keys.length * 0.25);
+        for (let i = 0; i < toDelete; i++) {
+          delete smoothPositions[keys[i]];
+        }
+        smoothPositionsCount = keys.length - toDelete;
       }
       smoothPositions[key] = { x: tx, y: ty };
     }
