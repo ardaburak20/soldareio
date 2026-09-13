@@ -1113,7 +1113,7 @@ function gameLoop() {
         const dx = me.x - b.x;
         const dy = me.y - b.y;
         if ((dx * dx + dy * dy) < viewRangeSq) {
-          nearBullets.push({ id: b.id, x: b.x, y: b.y, c: b.color });
+          nearBullets.push({ id: b.id, x: b.x, y: b.y, c: b.color, weapon: b.weapon, ownerId: b.ownerId });
         }
       }
       
