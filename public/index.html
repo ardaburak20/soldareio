@@ -14,10 +14,16 @@
   
   <!-- Backend URL Configuration -->
   <script>
-    // Localhost ortamındaysa yerel sunucuyu, canlı ortamda (CrazyGames) Render sunucusunu kullanır
-    const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    // Localhost veya local network IP'si ise yerel sunucuyu kullan, yoksa Render
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isLocalNetwork = hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.');
+    
+    const BACKEND_URL = (isLocalhost || isLocalNetwork)
       ? window.location.origin
       : 'https://soldareio.onrender.com';
+    
+    console.log('🌐 Backend URL:', BACKEND_URL, '| Hostname:', hostname);
   </script>
   
   <!-- CrazyGames SDK v3 -->
