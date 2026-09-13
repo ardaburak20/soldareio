@@ -841,32 +841,33 @@
       const dist = Math.sqrt(dx * dx + dy * dy);
       
       // Fixed distance zones for consistent audio across devices
-      const closeRange = 800;   // Close range: full spatial audio
-      const farRange = 1200;     // Far range: quieter audio
+      // Reduced volumes for better balance (especially on mobile)
+      const closeRange = 800;   // Close range: moderate spatial audio
+      const farRange = 1200;     // Far range: quiet audio
       const maxRange = 1500;     // Max hearing distance
       
       // Silent beyond max range
       if (dist >= maxRange) return 0;
       
-      // Close range: 60% volume with distance falloff (lower than before)
+      // Close range: 40% volume max (reduced from 60% for mobile)
       if (dist < closeRange) {
         const factor = 1 - (dist / closeRange);
-        return (baseVol * 0.6) * Math.pow(factor, 1.5);
+        return (baseVol * 0.4) * Math.pow(factor, 1.5);
       }
       
-      // Far range (close to far): 40% volume with distance falloff
+      // Far range (close to far): 25% volume
       if (dist < farRange) {
         const relDist = dist - closeRange;
         const range = farRange - closeRange;
         const factor = 1 - (relDist / range);
-        return (baseVol * 0.4) * Math.pow(factor, 1.5);
+        return (baseVol * 0.25) * Math.pow(factor, 1.5);
       }
       
-      // Extended zone (far to max): 20% volume with distance falloff
+      // Extended zone (far to max): 10% volume
       const extendedDist = dist - farRange;
       const extendedRange = maxRange - farRange;
       const factor = 1 - (extendedDist / extendedRange);
-      return (baseVol * 0.2) * Math.pow(factor, 2.0);
+      return (baseVol * 0.1) * Math.pow(factor, 2.0);
     }
 
     function updateWeaponSounds(myPlayer, isShootingRequested) {
