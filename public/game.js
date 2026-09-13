@@ -1624,39 +1624,43 @@
     const me = gameState.players[myId];
     if (!me) return;
 
-    // Leaderboard update with fast hash
-    const lbHash = hashLeaderboard(gameState.leaderboard, me.name);
-    if (lbHash !== lastLbHash) {
-      lastLbHash = lbHash;
-      lbList.innerHTML = '';
-      for (let i = 0; i < gameState.leaderboard.length; i++) {
-        const entry = gameState.leaderboard[i];
-        const row = document.createElement('div');
-        row.className = 'lb-row' + (entry.name === me.name ? ' me' : '');
-        
-        // Optimized DOM creation - avoid innerHTML template literals
-        const rankSpan = document.createElement('span');
-        rankSpan.className = 'lb-rank';
-        rankSpan.textContent = (i + 1) + '.';
-        
-        const colorSpan = document.createElement('span');
-        colorSpan.className = 'lb-color';
-        colorSpan.style.background = entry.color;
-        
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'lb-name';
-        nameSpan.textContent = entry.name;
-        
-        const scoreSpan = document.createElement('span');
-        scoreSpan.className = 'lb-score';
-        scoreSpan.textContent = entry.score;
-        
-        row.appendChild(rankSpan);
-        row.appendChild(colorSpan);
-        row.appendChild(nameSpan);
-        row.appendChild(scoreSpan);
-        
-        lbList.appendChild(row);
+    // Leaderboard update with fast hash and safety checks
+    if (gameState.leaderboard && Array.isArray(gameState.leaderboard) && gameState.leaderboard.length > 0) {
+      const lbHash = hashLeaderboard(gameState.leaderboard, me.name);
+      if (lbHash !== lastLbHash) {
+        lastLbHash = lbHash;
+        lbList.innerHTML = '';
+        for (let i = 0; i < gameState.leaderboard.length; i++) {
+          const entry = gameState.leaderboard[i];
+          if (!entry || !entry.name) continue; // Safety check
+          
+          const row = document.createElement('div');
+          row.className = 'lb-row' + (entry.name === me.name ? ' me' : '');
+          
+          // Optimized DOM creation - avoid innerHTML template literals
+          const rankSpan = document.createElement('span');
+          rankSpan.className = 'lb-rank';
+          rankSpan.textContent = (i + 1) + '.';
+          
+          const colorSpan = document.createElement('span');
+          colorSpan.className = 'lb-color';
+          colorSpan.style.background = entry.color || '#ffffff';
+          
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'lb-name';
+          nameSpan.textContent = entry.name;
+          
+          const scoreSpan = document.createElement('span');
+          scoreSpan.className = 'lb-score';
+          scoreSpan.textContent = entry.score || 0;
+          
+          row.appendChild(rankSpan);
+          row.appendChild(colorSpan);
+          row.appendChild(nameSpan);
+          row.appendChild(scoreSpan);
+          
+          lbList.appendChild(row);
+        }
       }
     }
 

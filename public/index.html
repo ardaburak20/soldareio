@@ -14,14 +14,14 @@
   
   <!-- Backend URL Configuration -->
   <script>
-    // Backend URL belirleme
+    // Localhost veya local network IP'si ise yerel sunucuyu kullan, yoksa Render
     const hostname = window.location.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
     const isLocalNetwork = hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.');
     
-    // DigitalOcean VPS veya production domain ise otomatik olarak window.location.origin kullan
-    // Localhost ise yine window.location.origin kullan
-    const BACKEND_URL = window.location.origin;
+    const BACKEND_URL = (isLocalhost || isLocalNetwork)
+      ? window.location.origin
+      : 'https://soldareio.onrender.com';
     
     console.log('🌐 Backend URL:', BACKEND_URL, '| Hostname:', hostname);
   </script>

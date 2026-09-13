@@ -58,11 +58,18 @@ const BOT_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#fd7
 const BOT_VISION_RANGE = 500;
 const BOT_SHOOT_RANGE = 450;
 const MAX_BOTS = 7;
-const VIEW_RANGE = 2500; // Viewport range for state filtering
+const VIEW_RANGE = 10000; // Full map view (optimized with zones)
 
-// Performance optimization: leaderboard cache
-let leaderboardCache = null;
-let leaderboardCacheTime = 0;
+// Zone-based update throttling for performance
+const ZONE_CLOSE = 2500;      // 0-2500: Update every frame
+const ZONE_MID = 5000;        // 2500-5000: Update every 2 frames
+const ZONE_FAR = 10000;       // 5000-10000: Update every 4 frames
+
+const ZONE_CLOSE_SQ = ZONE_CLOSE * ZONE_CLOSE;
+const ZONE_MID_SQ = ZONE_MID * ZONE_MID;
+const ZONE_FAR_SQ = ZONE_FAR * ZONE_FAR;
+
+// Performance optimization: Room stats tracking
 const LEADERBOARD_CACHE_MS = 500; // Update leaderboard every 500ms instead of every tick
 
 // ==========================================
@@ -211,7 +218,10 @@ function createRoomObj(code, isPrivate, isBotRoom) {
     isPrivate: isPrivate || false,
     isBotRoom: isBotRoom || false,
     spawnTickNeutral: 0,
-    spawnTickPickup: 0
+    spawnTickPickup: 0,
+    // Per-room leaderboard cache (prevents mixing data between rooms)
+    leaderboardCache: null,
+    leaderboardCacheTime: 0
   };
 }
 
@@ -1072,18 +1082,25 @@ function gameLoop() {
     // --- Build & Send State (per-player viewport filtering) ---
     const now = Date.now();
     
-    // Cache leaderboard calculation (update every 500ms instead of every tick)
+    // Cache leaderboard calculation per-room (update every 500ms instead of every tick)
     let leaderboard;
-    if (!leaderboardCache || (now - leaderboardCacheTime) > LEADERBOARD_CACHE_MS) {
-      leaderboard = Object.values(players)
-        .filter(p => p.alive)
-        .map(p => ({ name: p.name, score: p.soldiers.length + 1, color: p.color }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
-      leaderboardCache = leaderboard;
-      leaderboardCacheTime = now;
+    if (!room.leaderboardCache || (now - room.leaderboardCacheTime) > LEADERBOARD_CACHE_MS) {
+      const alivePlayers = Object.values(players).filter(p => p.alive);
+      
+      // Always return at least one entry (even if no players) to prevent empty leaderboard
+      if (alivePlayers.length === 0) {
+        leaderboard = [];
+      } else {
+        leaderboard = alivePlayers
+          .map(p => ({ name: p.name, score: p.soldiers.length + 1, color: p.color }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5); // Top 5 players only
+      }
+      
+      room.leaderboardCache = leaderboard;
+      room.leaderboardCacheTime = now;
     } else {
-      leaderboard = leaderboardCache;
+      leaderboard = room.leaderboardCache;
     }
 
     const totalPlayers = Object.values(players).filter(p => p.alive).length;
@@ -1112,7 +1129,7 @@ function gameLoop() {
       };
     }
 
-    // Send filtered state per player (optimized spatial queries)
+    // Send filtered state per player (optimized with zone-based throttling)
     const viewRangeSq = VIEW_RANGE * VIEW_RANGE;
     const playerViewRangeSq = (VIEW_RANGE + 600) * (VIEW_RANGE + 600);
     
@@ -1120,8 +1137,12 @@ function gameLoop() {
       if (players[id].isBot) continue; // Don't send to bots
       
       const me = players[id];
+      
+      // Initialize player's frame counter if not exists
+      if (!me.updateFrame) me.updateFrame = 0;
+      me.updateFrame++;
 
-      // Filter players by distance (only send nearby players to client)
+      // Filter players by distance (always full detail for players)
       const nearPlayers = {};
       for (const pid in players) {
         const other = players[pid];
@@ -1129,7 +1150,6 @@ function gameLoop() {
         if (pid === id) {
           nearPlayers[pid] = allPlayerData[pid];
         } else {
-          // Fast distance check with squared distance
           const dx = me.x - other.x;
           const dy = me.y - other.y;
           const dSq = dx * dx + dy * dy;
@@ -1139,19 +1159,43 @@ function gameLoop() {
         }
       }
       
-      // Filter neutrals by distance (pre-allocate array for better performance)
+      // Filter neutrals with zone-based throttling + precision reduction
       const nearNeutrals = [];
       const neutralLen = neutralSoldiers.length;
       for (let i = 0; i < neutralLen; i++) {
         const n = neutralSoldiers[i];
         const dx = me.x - n.x;
         const dy = me.y - n.y;
-        if ((dx * dx + dy * dy) < viewRangeSq) {
-          nearNeutrals.push({ id: n.id, x: n.x, y: n.y, cs: n.canShoot });
+        const dSq = dx * dx + dy * dy;
+        
+        if (dSq > viewRangeSq) continue;
+        
+        // Zone-based throttling
+        let shouldUpdate = false;
+        if (dSq < ZONE_CLOSE_SQ) {
+          shouldUpdate = true; // Close zone: every frame
+        } else if (dSq < ZONE_MID_SQ) {
+          shouldUpdate = (me.updateFrame % 2 === 0); // Mid zone: every 2 frames
+        } else {
+          shouldUpdate = (me.updateFrame % 4 === 0); // Far zone: every 4 frames
+        }
+        
+        if (shouldUpdate) {
+          // Precision reduction for far objects
+          if (dSq > ZONE_CLOSE_SQ) {
+            nearNeutrals.push({ 
+              id: n.id, 
+              x: Math.round(n.x / 10) * 10, // Round to nearest 10
+              y: Math.round(n.y / 10) * 10, 
+              cs: n.canShoot 
+            });
+          } else {
+            nearNeutrals.push({ id: n.id, x: n.x, y: n.y, cs: n.canShoot });
+          }
         }
       }
       
-      // Filter bullets by distance
+      // Filter bullets (always every frame, full precision - critical for gameplay)
       const nearBullets = [];
       const bulletLen = bullets.length;
       for (let i = 0; i < bulletLen; i++) {
@@ -1163,15 +1207,39 @@ function gameLoop() {
         }
       }
       
-      // Filter pickups by distance
+      // Filter pickups with zone-based throttling
       const nearPickups = [];
       const pickupLen = pickups.length;
       for (let i = 0; i < pickupLen; i++) {
         const pk = pickups[i];
         const dx = me.x - pk.x;
         const dy = me.y - pk.y;
-        if ((dx * dx + dy * dy) < viewRangeSq) {
-          nearPickups.push({ id: pk.id, x: pk.x, y: pk.y, type: pk.type });
+        const dSq = dx * dx + dy * dy;
+        
+        if (dSq > viewRangeSq) continue;
+        
+        // Zone-based throttling for pickups
+        let shouldUpdate = false;
+        if (dSq < ZONE_CLOSE_SQ) {
+          shouldUpdate = true;
+        } else if (dSq < ZONE_MID_SQ) {
+          shouldUpdate = (me.updateFrame % 2 === 0);
+        } else {
+          shouldUpdate = (me.updateFrame % 4 === 0);
+        }
+        
+        if (shouldUpdate) {
+          // Precision reduction for far pickups
+          if (dSq > ZONE_CLOSE_SQ) {
+            nearPickups.push({ 
+              id: pk.id, 
+              x: Math.round(pk.x / 10) * 10, 
+              y: Math.round(pk.y / 10) * 10, 
+              type: pk.type 
+            });
+          } else {
+            nearPickups.push({ id: pk.id, x: pk.x, y: pk.y, type: pk.type });
+          }
         }
       }
 
