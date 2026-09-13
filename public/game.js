@@ -841,11 +841,29 @@
       const viewW = canvas.width / zoom;
       const viewH = canvas.height / zoom;
       const viewDiag = Math.sqrt(viewW * viewW + viewH * viewH) / 2;
-      const maxHearDist = viewDiag * 1.2; // 20% larger than normal viewport
       
-      if (dist >= maxHearDist) return 0;
-      const factor = 1 - (dist / maxHearDist);
-      return baseVol * Math.pow(factor, 1.2);
+      // Three audio zones:
+      // 1. Inside viewport: 80% volume (20% reduction from base)
+      // 2. Extended zone (+10%): 50% volume (quieter, distant sound)
+      // 3. Beyond extended zone: Silent
+      
+      const viewportRadius = viewDiag;
+      const extendedRadius = viewDiag * 1.1; // +10% extended hearing zone
+      
+      // Silent beyond extended zone
+      if (dist >= extendedRadius) return 0;
+      
+      // Inside viewport: 80% volume with distance falloff
+      if (dist < viewportRadius) {
+        const factor = 1 - (dist / viewportRadius);
+        return (baseVol * 0.8) * Math.pow(factor, 1.2);
+      }
+      
+      // Extended zone (viewport to +10%): 50% volume with distance falloff
+      const extendedDist = dist - viewportRadius;
+      const extendedRange = extendedRadius - viewportRadius;
+      const extendedFactor = 1 - (extendedDist / extendedRange);
+      return (baseVol * 0.5) * Math.pow(extendedFactor, 1.5);
     }
 
     function updateWeaponSounds(myPlayer, isShootingRequested) {
@@ -864,28 +882,39 @@
       if (gameState) {
         const activeOtherShooters = new Set();
 
-        // 1. Single shots (Revolver) from other players
-        if (gameState.bullets) {
-          for (const b of gameState.bullets) {
-            if (b.ownerId !== myPlayer.id && !seenBulletIds.has(b.id)) {
-              seenBulletIds.add(b.id);
-              if (b.weapon === 'revolver') {
-                const vol = getSpatialVolume(b.x, b.y, myPlayer.x, myPlayer.y, 0.5);
-                if (vol > 0.02 && !isMuted) {
-                  try {
-                    const clone = revolverAudio.cloneNode();
-                    clone.volume = vol;
-                    clone.play().catch(() => {});
-                  } catch (e) {}
+        // 1. Single shots (Revolver) from other players - using player position not bullet
+        for (const otherId in gameState.players) {
+          if (otherId === myPlayer.id) continue;
+          const op = gameState.players[otherId];
+          if (!op.alive) continue;
+
+          // Revolver spatial audio - check if player just shot
+          if (op.weapon === 'revolver' && op.isShooting && !op.isReloading && op.ammo >= 0) {
+            // Check if this player has new bullets
+            if (gameState.bullets) {
+              for (const b of gameState.bullets) {
+                if (b.ownerId === otherId && b.weapon === 'revolver' && !seenBulletIds.has(b.id)) {
+                  seenBulletIds.add(b.id);
+                  const vol = getSpatialVolume(op.x, op.y, myPlayer.x, myPlayer.y, 0.6);
+                  if (vol > 0.02 && !isMuted) {
+                    try {
+                      const clone = revolverAudio.cloneNode();
+                      clone.volume = vol;
+                      clone.play().catch(() => {});
+                    } catch (e) {}
+                  }
+                  break; // Only play once per player per frame
                 }
               }
             }
           }
-          if (seenBulletIds.size > 300) {
-            const currentIds = new Set(gameState.bullets.map(b => b.id));
-            for (const id of seenBulletIds) {
-              if (!currentIds.has(id)) seenBulletIds.delete(id);
-            }
+        }
+
+        // Clean up old bullet IDs
+        if (gameState.bullets && seenBulletIds.size > 300) {
+          const currentIds = new Set(gameState.bullets.map(b => b.id));
+          for (const id of seenBulletIds) {
+            if (!currentIds.has(id)) seenBulletIds.delete(id);
           }
         }
 
@@ -956,17 +985,17 @@
         stopMinigunFire(false);
       }
 
-      // Handle Reload Sounds
+      // Handle Reload Sounds - DISABLED for spatial audio clarity
+      // Only play reload sounds for own weapon, not for other players
       if (isReloading && !lastReloadState) {
         stopSmgFire(false);
         stopM4Ak47Fire(false);
         stopMinigunFire(false);
 
+        // Reload sounds only for player's own weapon (already handled by existing code)
         if (weapon === 'revolver') {
-          // Server guarantees ammo is correct at reload start
           const prevAmmo = ammo;
           const missing = 6 - prevAmmo;
-          console.log(`[DEBUG] Revolver reload START: prevAmmo=${prevAmmo}, missing=${missing}, currentAmmo=${ammo}`);
           playRevolverReloadSequence(prevAmmo, missing);
         } else if (weapon === 'smg' || weapon === 'm4' || weapon === 'ak47') {
           playAutoReloadSound();
