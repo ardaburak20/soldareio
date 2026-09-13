@@ -718,10 +718,8 @@
     function startSmgFire() {
       if (isMuted) return;
       
-      // Eğer zaten çalışıyorsa return etme, önce durdur sonra başlat
-      if (isSmgFiring) {
-        stopSmgSourceNode();
-      }
+      // Eğer zaten çalışıyorsa hiçbir şey yapma
+      if (isSmgFiring) return;
       
       isSmgFiring = true;
       const ctx = getAudioContext();
@@ -736,7 +734,6 @@
         gainNode.connect(ctx.destination);
         smgSource.start(0);
       } else {
-        smgFireAudio.currentTime = 0;
         smgFireAudio.play().catch(() => {});
       }
     }
@@ -745,6 +742,9 @@
       if (!isSmgFiring) return;
       
       if (playEndSound && !isMuted) {
+        // Flag'i hemen false yap ki tekrar başlatılabilsin
+        isSmgFiring = false;
+        
         // Keep firing sound until end sound duration passes (~0.3s)
         setTimeout(() => {
           stopSmgSourceNode();
@@ -756,11 +756,9 @@
           clone.play().catch(() => {});
         } catch (e) {}
       } else {
+        isSmgFiring = false;
         stopSmgSourceNode();
       }
-      
-      // Flag'i hemen false yap, böylece hemen tekrar başlatılabilir
-      isSmgFiring = false;
     }
 
     function stopSmgSourceNode() {
@@ -777,10 +775,8 @@
     function startM4Ak47Fire() {
       if (isMuted) return;
       
-      // Eğer zaten çalışıyorsa restart et
-      if (isM4Ak47Firing) {
-        stopM4Ak47SourceNode();
-      }
+      // Eğer zaten çalışıyorsa hiçbir şey yapma
+      if (isM4Ak47Firing) return;
       
       isM4Ak47Firing = true;
       const ctx = getAudioContext();
@@ -795,7 +791,6 @@
         gainNode.connect(ctx.destination);
         m4ak47Source.start(0);
       } else {
-        m4ak47FireAudio.currentTime = 0;
         m4ak47FireAudio.play().catch(() => {});
       }
     }
@@ -804,6 +799,9 @@
       if (!isM4Ak47Firing) return;
       
       if (playEndSound && !isMuted) {
+        // Flag'i hemen false yap
+        isM4Ak47Firing = false;
+        
         // Keep firing sound until end sound duration passes (~0.3s)
         setTimeout(() => {
           stopM4Ak47SourceNode();
@@ -815,11 +813,9 @@
           clone.play().catch(() => {});
         } catch (e) {}
       } else {
+        isM4Ak47Firing = false;
         stopM4Ak47SourceNode();
       }
-      
-      // Flag'i hemen false yap
-      isM4Ak47Firing = false;
     }
 
     function stopM4Ak47SourceNode() {
@@ -836,10 +832,8 @@
     function startMinigunFire() {
       if (isMuted) return;
       
-      // Eğer zaten çalışıyorsa restart et
-      if (isMinigunFiring) {
-        stopMinigunSourceNode();
-      }
+      // Eğer zaten çalışıyorsa hiçbir şey yapma
+      if (isMinigunFiring) return;
       
       isMinigunFiring = true;
       const ctx = getAudioContext();
@@ -854,7 +848,6 @@
         gainNode.connect(ctx.destination);
         minigunSource.start(0);
       } else {
-        minigunFireAudio.currentTime = 0;
         minigunFireAudio.play().catch(() => {});
       }
     }
@@ -863,6 +856,9 @@
       if (!isMinigunFiring) return;
       
       if (playEndSound && !isMuted) {
+        // Flag'i hemen false yap
+        isMinigunFiring = false;
+        
         // Keep firing sound until end sound duration passes (~0.5s)
         setTimeout(() => {
           stopMinigunSourceNode();
@@ -874,11 +870,9 @@
           clone.play().catch(() => {});
         } catch (e) {}
       } else {
+        isMinigunFiring = false;
         stopMinigunSourceNode();
       }
-      
-      // Flag'i hemen false yap
-      isMinigunFiring = false;
     }
 
     function stopMinigunSourceNode() {
