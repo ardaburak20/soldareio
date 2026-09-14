@@ -1323,7 +1323,7 @@
     return `rgba(${r},${g},${b},${a})`;
   }
 
-  // === Draw Grid === (OPTIMIZED: Cache grid, update every 10 frames)
+  // === Draw Grid === (OPTIMIZED: Cache grid, update every 30 frames or 500px move)
   let gridCache = null;
   let lastGridCameraX = 0;
   let lastGridCameraY = 0;
@@ -1340,12 +1340,12 @@
 
     const mapSize = Network.getMapSize();
     
-    // Cache grid: Sadece kamera çok hareket ederse yeniden çiz
+    // OPTIMIZE: Grid sadece 30 frame'de bir veya kamera çok hareket ederse
     gridFrameCounter++;
-    const cameraMoved = Math.abs(camera.x - lastGridCameraX) > 200 || 
-                        Math.abs(camera.y - lastGridCameraY) > 200;
+    const cameraMoved = Math.abs(camera.x - lastGridCameraX) > 500 || 
+                        Math.abs(camera.y - lastGridCameraY) > 500;
     
-    if (gridFrameCounter % 10 === 0 || cameraMoved || !gridCache) {
+    if (gridFrameCounter % 30 === 0 || cameraMoved) {
       const viewW = canvas.width / zoom;
       const viewH = canvas.height / zoom;
       const left = camera.x - viewW / 2;
@@ -1359,11 +1359,13 @@
       ctx.strokeStyle = GRID_COLOR;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE) {
+      
+      // OPTIMIZE: Daha az line çiz
+      for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE * 2) {
         ctx.moveTo(x, top - 100);
         ctx.lineTo(x, bottom + 100);
       }
-      for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE) {
+      for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE * 2) {
         ctx.moveTo(left - 100, y);
         ctx.lineTo(right + 100, y);
       }
@@ -1562,12 +1564,24 @@
       const maxSkinnedSoldiers = 20; // Sadece 20 asker skin'li
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
       
+      // OPTIMIZE: Angle cache - atan2 çok pahalı!
+      const angleCache = {};
+      
       for (let i = 0; i < soldiersToDraw; i++) {
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
         const solPos = i < maxSmoothSoldiers ? smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15) : { x: sol.x, y: sol.y };
-        const solAngle = sol.cs ? angle : Math.atan2(pos.y - sol.y, pos.x - sol.x);
+        
+        // OPTIMIZE: Angle sadece canShoot için hesapla
+        let solAngle = angle;
+        if (!sol.cs) {
+          const key = `${Math.floor(sol.x/10)}_${Math.floor(sol.y/10)}`;
+          if (!angleCache[key]) {
+            angleCache[key] = Math.atan2(pos.y - sol.y, pos.x - sol.x);
+          }
+          solAngle = angleCache[key];
+        }
         
         // Sadece ilk 20 askere skin ver
         const useSkin = i < maxSkinnedSoldiers ? skinCnv : null;
