@@ -1758,7 +1758,7 @@
     const mapSize = Network.getMapSize();
     const mmSize = isMobile ? 110 : 160;
     const mmPadX = isMobile ? 15 : 20;
-    const mmPadY = isMobile ? 90 : 20;
+    const mmPadY = isMobile ? 15 : 20; // Mobilde de ALTA yerleştir (joystick'in üstünde)
     const mmX = mmPadX;
     const mmY = canvas.height - mmSize - mmPadY;
     const scale = mmSize / mapSize;

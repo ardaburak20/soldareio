@@ -1110,28 +1110,31 @@ body {
     /* OYUN İÇİ - LANDSCAPE ORANTILI LAYOUT */
     /* ============================================ */
     
-    /* Minimap (Soldier Count) - TAM SOL ALT KÖŞE */
+    /* Minimap (Soldier Count) - SOL ALT, MİNİMAP'İN ÜSTÜNDE */
     #soldierCount {
       position: fixed !important;
-      bottom: 0px !important;
-      left: 0px !important;
-      width: min(20vh, 140px) !important;
-      height: min(20vh, 140px) !important;
-      padding: 8px !important;
+      bottom: 145px !important; /* Minimap (110px) + 20px boşluk + 15px padding */
+      left: 15px !important;
+      width: auto !important;
+      height: auto !important;
+      padding: 6px 12px !important;
       display: flex !important;
-      flex-direction: column !important;
+      flex-direction: row !important;
       align-items: center !important;
       justify-content: center !important;
-      border-radius: 0 10px 0 0 !important;
+      gap: 6px !important;
+      border-radius: 8px !important;
+      background: rgba(40, 40, 50, 0.9) !important;
+      border: 2px solid rgba(76, 175, 80, 0.6) !important;
     }
     
     #myCount {
-      font-size: clamp(1.3rem, 3.5vh, 2.2rem) !important;
+      font-size: clamp(1.2rem, 3vh, 1.8rem) !important;
       font-weight: 900 !important;
     }
     
     .count-label {
-      font-size: clamp(0.65rem, 1.3vh, 0.9rem) !important;
+      font-size: clamp(0.7rem, 1.5vh, 0.95rem) !important;
     }
     
     /* Room Code - Sol �st, 1/10 geni�lik */
@@ -1336,15 +1339,19 @@ body {
     }
   }
   
-  /* K���k yatay ekranlar i�in ek optimizasyon */
+  /* Küçük yatay ekranlar için ek optimizasyon */
   @media (orientation: landscape) and (max-height: 500px) {
     #soldierCount {
-      max-width: 150px !important;
-      max-height: 150px !important;
+      bottom: 130px !important; /* Landscape'de minimap küçük olduğu için */
+      padding: 5px 10px !important;
     }
     
     #myCount {
-      font-size: clamp(1.2rem, 3.5vh, 2rem) !important;
+      font-size: 1rem !important;
+    }
+    
+    .count-label {
+      font-size: 0.7rem !important;
     }
     
     .joystick-area {
