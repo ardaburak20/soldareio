@@ -1606,7 +1606,7 @@
       }
 
       // Draw swarm soldiers with Viewport Culling - ULTRA OPTIMIZE
-      const maxSmoothSoldiers = 30;
+      const maxSmoothSoldiers = 100; // Tüm askerler smooth (titreme yok)
       const maxDrawnSoldiers = 100;
       const maxSkinnedSoldiers = 20; // Sadece 20 asker skin'li
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
@@ -1619,7 +1619,8 @@
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
-        const solPos = i < maxSmoothSoldiers ? smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15) : { x: sol.x, y: sol.y };
+        // Tüm askerler smooth olsun (titreme yok)
+        const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15);
         
         // OPTIMIZE: Angle sadece canShoot için hesapla
         let solAngle = angle;
