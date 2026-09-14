@@ -1107,6 +1107,70 @@ body {
 
 /* === MOBILE RESPONSIVE FIX - Prevents UI overlap === */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  /* ANA MENÜ MOBİL DÜZENLEMELERİ */
+  .game-title {
+    font-size: 3rem !important; /* 5rem -> 3rem */
+  }
+  
+  .game-subtitle {
+    font-size: 0.9rem !important; /* 1.3rem -> 0.9rem */
+    margin-bottom: 25px !important;
+  }
+  
+  .menu-box {
+    min-width: 90vw !important; /* 400px -> 90% ekran genişliği */
+    padding: 25px 15px !important;
+  }
+  
+  .input-group {
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100%;
+  }
+  
+  #nameInput {
+    width: 100% !important;
+    border-radius: 8px !important;
+    border-right: 2px solid rgba(255, 255, 255, 0.15) !important;
+  }
+  
+  #playBtn, #playBotsBtn, #openRoomModalBtn {
+    width: 100% !important;
+    border-radius: 8px !important;
+    padding: 12px 20px !important;
+    font-size: 1rem !important;
+  }
+  
+  .toggle-custom-btn {
+    font-size: 0.8rem !important;
+    padding: 8px 12px !important;
+  }
+  
+  .customization-panel {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+  
+  /* Pixel editor küçült */
+  #pixelEditor, #deathPixelEditor {
+    width: 160px !important;
+    height: 160px !important;
+  }
+  
+  .color-palette {
+    gap: 5px !important;
+  }
+  
+  .color-btn, .color-btn-d {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  .paint-btn, .paint-btn-d {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
   /* Leaderboard - Küçült ve yukarı taşı */
   #leaderboard {
     top: 10px;
