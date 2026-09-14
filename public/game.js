@@ -416,6 +416,15 @@
     return cachedFont;
   }
   
+  // Performance: Cache Date.now() per frame
+  let cachedNow = Date.now();
+  let cachedTime = cachedNow / 1000;
+  
+  function updateTimeCache() {
+    cachedNow = Date.now();
+    cachedTime = cachedNow / 1000;
+  }
+  
   // Performance: Minimap throttling - sadece pozisyonları cache'le
   let lastMinimapUpdate = 0;
   let cachedMinimapPositions = [];
@@ -1291,15 +1300,13 @@
     if (!p) {
       smoothPositionsCount++;
       p = smoothPositions[key] = { x: tx, y: ty };
-    }
-    
-    // OPTIMIZE: Cleanup sadece 5 saniyede bir (300 frame)
-    smoothCleanupCounter++;
-    if (smoothCleanupCounter > 300 && smoothPositionsCount > 3000) {
-      // Tümünü temizle - oyun loop dışında olacak
-      smoothPositions = {};
-      smoothPositionsCount = 0;
-      smoothCleanupCounter = 0;
+      
+      // OPTIMIZE: Memory cap - max 5000 positions
+      if (smoothPositionsCount > 5000) {
+        // Reset all (çok nadir olur)
+        smoothPositions = {};
+        smoothPositionsCount = 0;
+      }
     }
     
     p.x += (tx - p.x) * (factor * 1.5);
@@ -1417,7 +1424,6 @@
   // === Draw Entities ===
   function drawPickups() {
     if (!gameState) return;
-    const time = Date.now() / 1000;
     
     const myId = Network.getId();
     const me = gameState.players[myId];
@@ -1430,7 +1436,7 @@
       if (!isInViewport(pk.x, pk.y)) continue;
       
       const style = PICKUP_STYLES[pk.type] || PICKUP_STYLES.smg;
-      const pulse = 1 + Math.sin(time * 3 + pk.id) * 0.12;
+      const pulse = 1 + Math.sin(cachedTime * 3 + pk.id) * 0.12;
       const finalScale = pulse * pickupScale;
 
       drawCircle(pk.x, pk.y, 35 * finalScale, hexToRgba(style.color, 0.15), null);
@@ -1527,8 +1533,8 @@
     // Sonra ben (en üstte)
     if (players[myId]) sortedIds.push(myId);
     
-    // Optimize: time hesapla SADECE BİR KEZ
-    const time = Date.now() / 1000;
+    // Optimize: Angle cache PER FRAME (her oyuncu için ayrı)
+    const playerAngleCaches = {};
 
     for (const id of sortedIds) {
       const p = gameState.players[id];
@@ -1542,10 +1548,10 @@
       // Shield effect - optimize gradient
       if (p.shieldActive) {
         const shieldR = SOLDIER_RADIUS + 30 + p.soldiers.length * 4;
-        const pulse = 1 + Math.sin(time * 4) * 0.05;
+        const pulse = 1 + Math.sin(cachedTime * 4) * 0.05;
 
         ctx.save();
-        ctx.globalAlpha = 0.2 + Math.sin(time * 3) * 0.05;
+        ctx.globalAlpha = 0.2 + Math.sin(cachedTime * 3) * 0.05;
         
         // Basit circle yerine gradient (daha hızlı)
         ctx.fillStyle = 'rgba(38, 198, 218, 0.15)';
@@ -1564,8 +1570,9 @@
       const maxSkinnedSoldiers = 20; // Sadece 20 asker skin'li
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
       
-      // OPTIMIZE: Angle cache - atan2 çok pahalı!
-      const angleCache = {};
+      // OPTIMIZE: Angle cache - frame başına bir kere (dışarıda tanımlı)
+      if (!playerAngleCaches[id]) playerAngleCaches[id] = {};
+      const angleCache = playerAngleCaches[id];
       
       for (let i = 0; i < soldiersToDraw; i++) {
         const sol = p.soldiers[i];
@@ -1848,8 +1855,7 @@
     const scale = mmSize / mapSize;
 
     // Pozisyonları 1 saniyede bir güncelle
-    const now = Date.now();
-    if (now - lastMinimapUpdate >= MINIMAP_UPDATE_INTERVAL) {
+    if (cachedNow - lastMinimapUpdate >= MINIMAP_UPDATE_INTERVAL) {
       cachedMinimapPositions = [];
       for (const id in gameState.players) {
         const p = gameState.players[id];
@@ -1861,7 +1867,7 @@
           isMe: id === myId
         });
       }
-      lastMinimapUpdate = now;
+      lastMinimapUpdate = cachedNow;
     }
 
     // Her frame minimap'i çiz (arka plan + cache'lenmiş pozisyonlar)
@@ -1919,6 +1925,9 @@
     lastRenderTime = timestamp - (elapsed % minFrameTime);
 
     frameCounter++;
+    
+    // Update time cache once per frame
+    updateTimeCache();
     
     // DISABLED CLEANUP: smooth() fonksiyonu kendi temizliğini yapıyor
     // Bu cleanup loop çok pahalı ve gereksiz - smooth() içinde zaten var
