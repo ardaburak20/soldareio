@@ -1870,7 +1870,15 @@
       }
       
       const scaleLevel = calculateScaleLevel(me.score);
-      const targetZoom = 1.0 / Math.pow(1.1, scaleLevel);
+      let targetZoom = 1.0 / Math.pow(1.1, scaleLevel);
+      
+      // Mobil küçük ekranlarda görüş alanını %20 daha büyük yap
+      const isMobile = 'ontouchstart' in window;
+      const isSmallScreen = canvas.width < 768 || canvas.height < 500;
+      if (isMobile && isSmallScreen) {
+        targetZoom *= 0.833; // 1 / 1.2 = 0.833 (20% daha fazla alan)
+      }
+      
       zoom += (targetZoom - zoom) * 0.05;
 
       const isShootingRequested = isMouseDown || isMobileFireActive;

@@ -873,12 +873,12 @@ body {
 
 /* === Shield HUD === */
 #shieldHud {
-  bottom: 20px;
+  bottom: 0px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 200, 255, 0.15);
   border: 1px solid rgba(0, 200, 255, 0.3);
-  border-radius: 10px;
+  border-radius: 10px 10px 0 0;
   padding: 8px 20px;
   backdrop-filter: blur(8px);
   display: flex;
@@ -1320,10 +1320,10 @@ body {
       font-size: clamp(0.5rem, 1vh, 0.65rem) !important;
     }
     
-    /* Shield HUD - Alt orta */
+    /* Shield HUD - Alt kenarın tam ortası */
     #shieldHud {
-      transform: scale(0.9) !important;
-      bottom: 3vh !important;
+      transform: translateX(-50%) scale(0.9) !important;
+      bottom: 0 !important;
       padding: 10px 18px !important;
     }
     
