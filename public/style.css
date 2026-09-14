@@ -1135,32 +1135,42 @@ body {
     padding: 20px 14px !important;
   }
   
-  /* Ana menü input group - PC gibi yan yana */
+  /* Ana menü input group - PC GİBİ düzen */
   .input-group {
     flex-direction: row !important;
-    gap: 8px !important;
+    gap: 10px !important;
     width: 100%;
-    padding: 0 5px;
-    flex-wrap: wrap !important;
+    padding: 0;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
   }
   
   #nameInput {
-    flex: 1 1 auto !important;
-    min-width: 150px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
     border-radius: 8px !important;
-    border: 2px solid rgba(255, 255, 255, 0.15) !important;
-    padding: 12px 16px !important;
-    font-size: 1rem !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 14px 16px !important;
+    font-size: 1.05rem !important;
   }
   
-  /* Butonlar yan yana, eşit boyutta */
-  #playBtn, #playBotsBtn, #openRoomModalBtn {
-    flex: 1 1 calc(33.333% - 6px) !important;
-    min-width: 100px !important;
+  /* Play butonu - Name input'la aynı satırda */
+  #playBtn {
+    flex: 0 0 auto !important;
+    min-width: 120px !important;
     border-radius: 8px !important;
-    padding: 12px 10px !important;
-    font-size: 0.85rem !important;
+    padding: 14px 18px !important;
+    font-size: 1rem !important;
     white-space: nowrap !important;
+  }
+  
+  /* Diğer butonlar - Alt satırda */
+  #playBotsBtn, #openRoomModalBtn {
+    width: 100% !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    font-size: 0.95rem !important;
+    margin-top: 8px !important;
   }
   
   #deathNameInput {
@@ -1223,31 +1233,31 @@ body {
     gap: 12px !important;
   }
   
-  /* Renk paletleri YATAY (solda) */
+  /* Renk paletleri YATAY düzenli */
   .color-palette {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: wrap !important;
-    gap: 6px !important;
-    max-width: 100px !important;
+    gap: 8px !important;
+    max-width: 140px !important;
     order: 1 !important;
   }
   
   /* Asker boyama sağda */
   #pixelEditor, #deathPixelEditor {
-    width: 160px !important;
-    height: 160px !important;
+    width: 180px !important;
+    height: 180px !important;
     order: 2 !important;
   }
   
   .color-btn, .color-btn-d {
-    width: 28px !important;
-    height: 28px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
   
   .paint-btn, .paint-btn-d {
-    width: 28px !important;
-    height: 28px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
   
   /* Controls info gizle (mobilde joystick var) */
@@ -1269,11 +1279,25 @@ body {
   }
   
   /* ============================================ */
-  /* OYUN İÇİ MOBİL - PC GİBİ (HUD'lar aynı, sadece kontroller eklendi) */
+  /* OYUN İÇİ MOBİL - DÜZGÜN SIRALAMA */
   /* ============================================ */
   
-  /* TÜM HUD'LAR PC İLE AYNI BOYUTTA - Değişiklik yok! */
-  /* Sadece joystick ve action butonları eklenecek */
+  /* Leaderboard - Sağ üst, ORİJİNAL BOYUTTA */
+  #leaderboard {
+    width: 180px !important;
+    padding: 10px 12px !important;
+    font-size: 0.8rem !important;
+  }
+  
+  .lb-title {
+    font-size: 0.9rem !important;
+    margin-bottom: 6px !important;
+  }
+  
+  .lb-row {
+    font-size: 0.75rem !important;
+    padding: 4px 0 !important;
+  }
   
   /* Joystick - Sol alt */
   .joystick-area {
@@ -1288,12 +1312,28 @@ body {
     height: 50px !important;
   }
   
-  /* Action Buttons - Sağ alt */
-  .action-buttons {
+  /* SAĞ ALT SIRALAMA (aşağıdan yukarı):
+     1. Weapon HUD (en altta)
+     2. Action Buttons (ortada)
+     3. Weapon Slots (en üstte)
+  */
+  
+  /* 1. Weapon HUD - EN ALTA */
+  #weaponHud {
     position: fixed !important;
     bottom: 20px !important;
     right: 20px !important;
+    transform: none !important;
+    /* PC ile aynı boyutta, scale yok */
+  }
+  
+  /* 2. Action Buttons - Weapon HUD'ın 90px ÜSTÜNDE */
+  .action-buttons {
+    position: fixed !important;
+    bottom: 110px !important;
+    right: 20px !important;
     gap: 15px !important;
+    z-index: 1000 !important;
   }
   
   .fire-button {
@@ -1311,43 +1351,105 @@ body {
     height: 65px !important;
     font-size: 1.6rem !important;
   }
+  
+  /* 3. Weapon Slots - Action Buttons'ın 90px ÜSTÜNDE */
+  .weapon-slots-hud {
+    position: fixed !important;
+    bottom: 200px !important;
+    right: 20px !important;
+  }
 }
 
 /* Küçük telefonlar (iPhone SE, küçük Android - 320px-390px) */
 @media (max-width: 390px) and (max-height: 700px) {
   /* Ana menü */
   .game-title {
-    font-size: 1.8rem !important;
+    font-size: 2rem !important;
   }
   
   .game-subtitle {
-    font-size: 0.7rem !important;
-    margin-bottom: 12px !important;
+    font-size: 0.75rem !important;
+    margin-bottom: 14px !important;
   }
   
   #nameInput {
-    min-width: 120px !important;
-    font-size: 0.85rem !important;
-    padding: 10px 12px !important;
+    font-size: 0.95rem !important;
+    padding: 12px 14px !important;
   }
   
-  #playBtn, #playBotsBtn, #openRoomModalBtn {
-    font-size: 0.7rem !important;
-    padding: 10px 6px !important;
-    min-width: 85px !important;
+  #playBtn {
+    min-width: 110px !important;
+    font-size: 0.9rem !important;
+    padding: 12px 16px !important;
+  }
+  
+  #playBotsBtn, #openRoomModalBtn {
+    font-size: 0.85rem !important;
+    padding: 11px 14px !important;
+  }
+  
+  #pixelEditor, #deathPixelEditor {
+    width: 160px !important;
+    height: 160px !important;
+  }
+  
+  .color-palette {
+    max-width: 120px !important;
+  }
+  
+  .color-btn, .color-btn-d, .paint-btn, .paint-btn-d {
+    width: 28px !important;
+    height: 28px !important;
   }
   
   /* Oyun içi - kontroller biraz küçük */
+  #leaderboard {
+    width: 160px !important;
+    padding: 8px 10px !important;
+  }
+  
   .joystick-area {
-    width: 100px !important;
-    height: 100px !important;
+    width: 105px !important;
+    height: 105px !important;
     bottom: 15px !important;
     left: 15px !important;
   }
   
   .joystick-stick {
-    width: 42px !important;
-    height: 42px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+  
+  #weaponHud {
+    bottom: 15px !important;
+    right: 15px !important;
+  }
+  
+  .action-buttons {
+    bottom: 100px !important;
+    right: 15px !important;
+  }
+  
+  .fire-button {
+    width: 68px !important;
+    height: 68px !important;
+  }
+  
+  .fire-button .bullet-icon {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  .reload-button {
+    width: 58px !important;
+    height: 58px !important;
+    font-size: 1.4rem !important;
+  }
+  
+  .weapon-slots-hud {
+    bottom: 185px !important;
+    right: 15px !important;
+  }
   }
   
   .action-buttons {
