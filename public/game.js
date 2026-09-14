@@ -1488,6 +1488,9 @@
     const myId = Network.getId();
     const playerIds = Object.keys(gameState.players);
     const sortedIds = playerIds.filter(id => id !== myId).concat(playerIds.filter(id => id === myId));
+    
+    // Optimize: time hesapla SADECE BİR KEZ
+    const time = Date.now() / 1000;
 
     for (const id of sortedIds) {
       const p = gameState.players[id];
@@ -1498,19 +1501,16 @@
       const angle = p.angle || 0;
       const skinCnv = getSkinCanvas(id, p.skin);
 
-      // Shield effect
+      // Shield effect - optimize gradient
       if (p.shieldActive) {
-        const time = Date.now() / 1000;
         const shieldR = SOLDIER_RADIUS + 30 + p.soldiers.length * 4;
         const pulse = 1 + Math.sin(time * 4) * 0.05;
 
         ctx.save();
         ctx.globalAlpha = 0.2 + Math.sin(time * 3) * 0.05;
-        const shieldGrad = ctx.createRadialGradient(pos.x, pos.y, shieldR * 0.5, pos.x, pos.y, shieldR * pulse);
-        shieldGrad.addColorStop(0, 'rgba(38, 198, 218, 0.05)');
-        shieldGrad.addColorStop(0.8, 'rgba(38, 198, 218, 0.25)');
-        shieldGrad.addColorStop(1, 'rgba(38, 198, 218, 0)');
-        ctx.fillStyle = shieldGrad;
+        
+        // Basit circle yerine gradient (daha hızlı)
+        ctx.fillStyle = 'rgba(38, 198, 218, 0.15)';
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, shieldR * pulse, 0, Math.PI * 2);
         ctx.fill();
@@ -1520,14 +1520,18 @@
         ctx.restore();
       }
 
-      // Draw swarm soldiers with Viewport Culling
+      // Draw swarm soldiers with Viewport Culling - OPTIMIZE: Sadece 50 asker smooth, geri kalan direkt
+      const maxSmoothSoldiers = 50;
       for (let i = 0; i < p.soldiers.length; i++) {
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
-        const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.25);
-        const solAngle = Math.atan2(pos.y - sol.y, pos.x - sol.x);
-        drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, sol.cs ? angle : solAngle, skinCnv);
+        // Optimize: Sadece ilk 50 asker smooth, geri kalanı direkt çiz
+        const solPos = i < maxSmoothSoldiers ? smooth(`s_${id}_${i}`, sol.x, sol.y, 0.25) : { x: sol.x, y: sol.y };
+        
+        // Optimize: atan2'yi cache'le veya yaklaşık kullan
+        const solAngle = sol.cs ? angle : Math.atan2(pos.y - sol.y, pos.x - sol.x);
+        drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, solAngle, skinCnv);
       }
 
       // Draw main soldier
