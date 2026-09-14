@@ -1906,41 +1906,8 @@
 
     frameCounter++;
     
-    // Memory cleanup every 5 seconds (more efficient, less spikes)
-    if (frameCounter - lastCleanupFrame >= 300) {
-      const activeKeys = new Set();
-      
-      // Use for...in for better performance
-      for (const id in gameState.players) {
-        activeKeys.add(`p_${id}`);
-        const soldiers = gameState.players[id].soldiers;
-        for (let i = 0; i < soldiers.length; i++) {
-          activeKeys.add(`s_${id}_${i}`);
-        }
-      }
-      
-      const neutrals = gameState.neutrals;
-      for (let i = 0; i < neutrals.length; i++) {
-        activeKeys.add(`n_${neutrals[i].id}`);
-      }
-      
-      const bullets = gameState.bullets;
-      for (let i = 0; i < bullets.length; i++) {
-        activeKeys.add(`b_${bullets[i].id}`);
-      }
-      
-      // Clean up old positions - THROTTLE: 60 frame'de bir (1 saniye)
-      if (frameCounter % 60 === 0) {
-        for (const key in smoothPositions) {
-          if (!activeKeys.has(key)) {
-            delete smoothPositions[key];
-            smoothPositionsCount--;
-          }
-        }
-      }
-      
-      lastCleanupFrame = frameCounter;
-    }
+    // DISABLED CLEANUP: smooth() fonksiyonu kendi temizliğini yapıyor
+    // Bu cleanup loop çok pahalı ve gereksiz - smooth() içinde zaten var
 
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
@@ -2007,7 +1974,8 @@
     // Update HUD every frame for smooth minimap, throttle only expensive leaderboard
     drawMinimap();
     
-    if (frameCounter % 3 === 0) {
+    // OPTIMIZE: HUD her 10 frame'de bir (6 kez/saniye)
+    if (frameCounter % 10 === 0) {
       updateHUD();
     }
 
