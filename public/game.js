@@ -1526,13 +1526,13 @@
         drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv);
       }
 
-      // Name tag - zoom seviyesine göre büyüt (optimized with font cache)
+      // Name tag - zoom seviyesine göre büyüt
       const baseNameSize = 16;
-      const scaleLevel = isMe ? calculateScaleLevel(me.score) : Math.min(Math.floor(p.score / 10), 14);
+      const scaleLevel = calculateScaleLevel(p.score);
       const nameScale = Math.min(1.0 + scaleLevel * 0.08, 2.2); // Max 2.2x büyüme
       const nameFontSize = Math.floor(baseNameSize * nameScale);
       
-      ctx.font = getCachedFont(nameFontSize);
+      ctx.font = `800 ${nameFontSize}px Montserrat, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       const nameText = `${p.name} [${p.score}]`;
