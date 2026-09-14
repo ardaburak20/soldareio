@@ -171,6 +171,9 @@ body {
   background: radial-gradient(circle at center, #1e1e2f 0%, #12121f 100%);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   z-index: 100;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 #deathScreen {
@@ -179,6 +182,9 @@ body {
   background: rgba(0, 0, 0, 0.75);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   z-index: 100;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .menu-box {
@@ -452,6 +458,7 @@ body {
   padding: 12px 14px;
   backdrop-filter: blur(8px);
   pointer-events: none; /* Mouse event'lerini geçir */
+  overflow: hidden;
 }
 
 .lb-title {
@@ -684,6 +691,7 @@ body {
 
 .lb-name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -899,6 +907,7 @@ body {
   padding: 10px 18px;
   backdrop-filter: blur(12px);
   pointer-events: none; /* Mouse event'lerini geçir */
+  white-space: nowrap;
 }
 
 #myCount {
@@ -1085,48 +1094,52 @@ body {
 
 /* === Mobile Responsive Overrides === */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
-  #soldierCount {
-    bottom: 210px;
-    left: 15px;
-    padding: 6px 14px;
-  }
-  #myCount {
-    font-size: 1.5rem;
-  }
-  .count-label {
-    font-size: 0.8rem;
-  }
-  .controls-info {
-    gap: 12px;
-    font-size: 0.85rem;
-    padding: 0 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-}
-
-/* === MOBILE RESPONSIVE FIX - Prevents UI overlap === */
-@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  /* ============================================ */
   /* ANA MENÜ MOBİL DÜZENLEMELERİ */
+  /* ============================================ */
+  
+  #startScreen {
+    justify-content: flex-start !important;
+    padding: 20px 0 !important;
+  }
+  
+  .start-container {
+    padding: 10px 15px;
+    width: 100%;
+    max-width: 100vw;
+  }
+  
+  .top-bar {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    justify-content: center !important;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  
   .game-title {
     font-size: 2.5rem !important;
+    margin-bottom: 4px !important;
   }
   
   .game-subtitle {
     font-size: 0.85rem !important;
-    margin-bottom: 20px !important;
+    margin-bottom: 18px !important;
   }
   
   .menu-box {
-    min-width: 95vw !important;
-    max-width: 95vw !important;
-    padding: 20px 12px !important;
+    min-width: auto !important;
+    max-width: 92vw !important;
+    width: 92vw !important;
+    padding: 20px 14px !important;
   }
   
   .input-group {
     flex-direction: column !important;
     gap: 8px !important;
     width: 100%;
+    padding: 0 5px;
   }
   
   #nameInput {
@@ -1140,19 +1153,54 @@ body {
   #playBtn, #playBotsBtn, #openRoomModalBtn {
     width: 100% !important;
     border-radius: 8px !important;
-    padding: 12px 16px !important;
+    padding: 14px 16px !important;
     font-size: 0.95rem !important;
   }
   
+  #deathNameInput {
+    width: 100% !important;
+    border-radius: 8px !important;
+    border: 2px solid rgba(255, 255, 255, 0.15) !important;
+    padding: 12px 16px !important;
+    font-size: 1rem !important;
+  }
+  
+  #respawnBtn {
+    width: 100% !important;
+    border-radius: 8px !important;
+    padding: 14px 16px !important;
+  }
+  
+  .death-action-buttons {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .death-action-btn {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  #rewardedAdBtn {
+    width: 90% !important;
+    max-width: 320px;
+  }
+  
   .toggle-custom-btn {
-    font-size: 0.75rem !important;
-    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+    padding: 8px 14px !important;
   }
   
   .customization-panel {
-    padding: 8px !important;
+    padding: 10px !important;
     gap: 8px !important;
     max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  .panels-container {
+    width: 100% !important;
+    padding: 0 5px;
   }
   
   #pixelEditor, #deathPixelEditor {
@@ -1161,17 +1209,35 @@ body {
   }
   
   .color-palette {
-    gap: 4px !important;
+    gap: 6px !important;
   }
   
   .color-btn, .color-btn-d {
-    width: 28px !important;
-    height: 28px !important;
+    width: 30px !important;
+    height: 30px !important;
   }
   
   .paint-btn, .paint-btn-d {
-    width: 28px !important;
-    height: 28px !important;
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  /* Controls info gizle (mobilde joystick var) */
+  .controls-info {
+    display: none !important;
+  }
+  
+  /* Room Modal */
+  #roomModal .menu-box {
+    width: 90vw !important;
+    min-width: auto !important;
+    padding: 20px 15px !important;
+  }
+  
+  #roomCodeInput {
+    width: 150px !important;
+    font-size: 1.5rem !important;
+    padding: 12px !important;
   }
   
   /* ============================================ */
@@ -1180,55 +1246,77 @@ body {
   
   /* Top Center HUD (Kills/Alive) - Orta üst */
   #topCenterHud {
-    top: 10px !important;
-    padding: 8px 14px !important;
-    gap: 18px !important;
+    top: 8px !important;
+    padding: 6px 12px !important;
+    gap: 14px !important;
   }
   
   .top-stat {
-    font-size: 0.8rem !important;
+    font-size: 0.75rem !important;
   }
   
-  /* Leaderboard - Sağ üst, dengeli */
+  /* Leaderboard - Sağ üst, KÜÇÜK ve taşmasız */
   #leaderboard {
-    top: 10px !important;
-    right: 10px !important;
-    width: 150px !important;
-    padding: 8px 10px !important;
-    font-size: 0.7rem !important;
+    top: 8px !important;
+    right: 8px !important;
+    width: 130px !important;
+    padding: 6px 8px !important;
   }
   
   .lb-title {
-    font-size: 0.75rem !important;
-    margin-bottom: 5px !important;
+    font-size: 0.65rem !important;
+    margin-bottom: 4px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .lb-row {
-    font-size: 0.65rem !important;
-    padding: 3px 0 !important;
-    gap: 6px !important;
+    font-size: 0.6rem !important;
+    padding: 2px 0 !important;
+    gap: 4px !important;
   }
   
   .lb-rank {
-    width: 16px !important;
-    font-size: 0.65rem !important;
+    width: 14px !important;
+    font-size: 0.6rem !important;
   }
   
-  /* Soldier Count (6 haneli kod) - Sol üst, KÜÇÜK */
+  .lb-color {
+    width: 7px !important;
+    height: 7px !important;
+  }
+  
+  .lb-score {
+    font-size: 0.6rem !important;
+  }
+  
+  /* Soldier Count — minimap'in hemen üstünde, sol alt */
   #soldierCount {
-    top: 10px !important;
-    left: 10px !important;
-    bottom: auto !important;
-    padding: 6px 10px !important;
-    font-size: 0.7rem !important;
+    top: auto !important;
+    bottom: 200px !important;
+    left: 15px !important;
+    padding: 5px 10px !important;
+    border-radius: 8px !important;
   }
   
   #myCount {
-    font-size: 1rem !important;
+    font-size: 1.2rem !important;
   }
   
   .count-label {
-    font-size: 0.6rem !important;
+    font-size: 0.65rem !important;
+  }
+  
+  /* Room Code HUD — sol üst */
+  #roomCodeHud {
+    top: 8px !important;
+    left: 8px !important;
+    padding: 4px 10px !important;
+  }
+  
+  #roomCodeDisplay {
+    font-size: 0.9rem !important;
   }
   
   /* Joystick - Sol alt */
@@ -1244,11 +1332,6 @@ body {
     height: 46px !important;
   }
   
-  /* ÖNEMLİ: Sağ alt sıralama (aşağıdan yukarı) */
-  /* 1. EN ALTA: Weapon HUD (mermi göstergesi) */
-  /* 2. ORTAYA: Action buttons (ateş/reload) */
-  /* 3. ÜST: Weapon slots */
-  
   /* Bottom Right HUD Container */
   #bottomRightHud {
     bottom: auto !important;
@@ -1260,68 +1343,69 @@ body {
   
   /* Weapon HUD - EN ALTA (mermi göstergesi) */
   #weaponHud {
-    transform: scale(0.9) !important;
+    transform: scale(0.85) !important;
     transform-origin: bottom right !important;
     position: fixed !important;
-    bottom: 15px !important;
-    right: 10px !important;
-    min-width: 210px !important;
+    bottom: 12px !important;
+    right: 8px !important;
+    min-width: 180px !important;
+    padding: 10px 16px !important;
   }
   
   #weaponName {
-    font-size: 0.95rem !important;
+    font-size: 0.85rem !important;
   }
   
   #ammoText {
-    font-size: 1.1rem !important;
+    font-size: 0.95rem !important;
   }
   
   #reloadIndicator {
-    font-size: 0.8rem !important;
+    font-size: 0.7rem !important;
   }
   
   #weaponTimer {
-    font-size: 0.75rem !important;
+    font-size: 0.65rem !important;
   }
   
   /* Action Buttons - Weapon HUD'ın ÜSTÜNDE */
   .action-buttons {
     position: fixed !important;
-    bottom: 105px !important;
+    bottom: 95px !important;
     right: 10px !important;
     gap: 12px !important;
   }
   
   .fire-button {
-    width: 72px !important;
-    height: 72px !important;
+    width: 68px !important;
+    height: 68px !important;
   }
   
   .fire-button .bullet-icon {
-    width: 32px !important;
-    height: 32px !important;
+    width: 30px !important;
+    height: 30px !important;
   }
   
   .reload-button {
-    width: 62px !important;
-    height: 62px !important;
-    font-size: 1.5rem !important;
+    width: 58px !important;
+    height: 58px !important;
+    font-size: 1.4rem !important;
   }
   
   /* Weapon Slots - Action buttons'ın üstünde */
   .weapon-slots-hud {
     position: fixed !important;
-    bottom: 195px !important;
+    bottom: 180px !important;
     right: 10px !important;
   }
   
   .store-slot {
-    width: 46px !important;
-    height: 46px !important;
+    width: 42px !important;
+    height: 42px !important;
   }
   
   .store-slot-count {
-    font-size: 0.75rem !important;
+    font-size: 0.7rem !important;
   }
   
   .stored-pickup-badge {
@@ -1333,159 +1417,162 @@ body {
   
   /* Shield HUD - Alt orta */
   #shieldHud {
-    transform: scale(0.85) !important;
-    padding: 8px 16px !important;
-    bottom: 15px !important;
+    transform: scale(0.8) !important;
+    padding: 6px 14px !important;
+    bottom: 12px !important;
   }
   
-  /* Controls info gizle */
-  .controls-info {
-    display: none !important;
+  /* Eliminated text */
+  .eliminated-text {
+    font-size: 2.5rem !important;
   }
 }
 
-/* Küçük ekranlar (iPhone SE) */
-@media (max-width: 375px) and (max-height: 667px) {
+/* Küçük ekranlar (iPhone SE, küçük Android) */
+@media (max-width: 390px) {
   .game-title {
     font-size: 2rem !important;
   }
   
   .game-subtitle {
     font-size: 0.75rem !important;
+    margin-bottom: 14px !important;
   }
   
   #leaderboard {
-    width: 135px !important;
-    font-size: 0.65rem !important;
+    width: 115px !important;
+    padding: 5px 6px !important;
   }
   
   .lb-title {
-    font-size: 0.7rem !important;
+    font-size: 0.6rem !important;
+  }
+  
+  .lb-row {
+    font-size: 0.55rem !important;
   }
   
   #topCenterHud {
-    padding: 6px 12px !important;
-    gap: 14px !important;
+    padding: 5px 10px !important;
+    gap: 10px !important;
   }
   
   .top-stat {
-    font-size: 0.75rem !important;
+    font-size: 0.65rem !important;
   }
   
   #soldierCount {
-    top: 10px !important;
-    padding: 5px 9px !important;
-    font-size: 0.65rem !important;
+    bottom: 185px !important;
+    padding: 4px 8px !important;
   }
   
   #myCount {
-    font-size: 0.95rem !important;
-  }
-  
-  #weaponHud {
-    transform: scale(0.85) !important;
-    min-width: 190px !important;
-  }
-  
-  .action-buttons {
-    bottom: 95px !important;
-  }
-  
-  .fire-button {
-    width: 66px !important;
-    height: 66px !important;
-  }
-  
-  .fire-button .bullet-icon {
-    width: 30px !important;
-    height: 30px !important;
-  }
-  
-  .reload-button {
-    width: 56px !important;
-    height: 56px !important;
-    font-size: 1.4rem !important;
-  }
-  
-  .joystick-area {
-    width: 100px !important;
-    height: 100px !important;
-  }
-  
-  .joystick-stick {
-    width: 42px !important;
-    height: 42px !important;
-  }
-}
-
-/* Landscape (Yatay) mode */
-@media (max-height: 500px) and (orientation: landscape) {
-  .game-title {
-    font-size: 2rem !important;
-    margin-bottom: 5px !important;
-  }
-  
-  .game-subtitle {
-    font-size: 0.75rem !important;
-    margin-bottom: 15px !important;
-  }
-  
-  .menu-box {
-    padding: 15px 10px !important;
-  }
-  
-  .customization-panel {
-    max-height: 180px !important;
-    overflow-y: auto !important;
-  }
-  
-  #topCenterHud {
-    top: 8px !important;
-    padding: 6px 12px !important;
-  }
-  
-  #leaderboard {
-    top: 8px !important;
-    width: 140px !important;
-  }
-  
-  #soldierCount {
-    top: 8px !important;
-    left: 10px !important;
-    font-size: 0.65rem !important;
+    font-size: 1rem !important;
   }
   
   #weaponHud {
     transform: scale(0.8) !important;
-    bottom: 12px !important;
+    min-width: 160px !important;
   }
   
   .action-buttons {
     bottom: 85px !important;
   }
   
-  .weapon-slots-hud {
-    bottom: 165px !important;
+  .fire-button {
+    width: 62px !important;
+    height: 62px !important;
+  }
+  
+  .fire-button .bullet-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .reload-button {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 1.3rem !important;
   }
   
   .joystick-area {
     width: 95px !important;
     height: 95px !important;
-    bottom: 12px !important;
   }
-}important;
-    left: 115px !important; /* Joystick'in yanında */
+  
+  .joystick-stick {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+
+/* Landscape (Yatay) mode */
+@media (max-height: 500px) and (orientation: landscape) {
+  #startScreen {
+    justify-content: flex-start !important;
+    padding: 10px 0 !important;
+  }
+  
+  .game-title {
+    font-size: 1.8rem !important;
+    margin-bottom: 2px !important;
+  }
+  
+  .game-subtitle {
+    font-size: 0.7rem !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .menu-box {
+    padding: 12px 10px !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .customization-panel {
+    max-height: 150px !important;
+    overflow-y: auto !important;
+  }
+  
+  #topCenterHud {
+    top: 5px !important;
+    padding: 4px 10px !important;
+  }
+  
+  #leaderboard {
+    top: 5px !important;
+    width: 120px !important;
+  }
+  
+  #soldierCount {
+    bottom: 140px !important;
+    left: 8px !important;
+  }
+  
+  #myCount {
+    font-size: 0.9rem !important;
+  }
+  
+  .count-label {
+    font-size: 0.55rem !important;
   }
   
   #weaponHud {
+    transform: scale(0.75) !important;
     bottom: 8px !important;
   }
   
   .action-buttons {
-    bottom: 75px !important;
+    bottom: 70px !important;
+  }
+  
+  .weapon-slots-hud {
+    bottom: 150px !important;
   }
   
   .joystick-area {
+    width: 85px !important;
+    height: 85px !important;
     bottom: 8px !important;
     left: 8px !important;
   }
