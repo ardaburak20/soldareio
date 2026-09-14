@@ -1330,7 +1330,7 @@
     return `rgba(${r},${g},${b},${a})`;
   }
 
-  // === Draw Grid === (OPTIMIZED: Cache grid, update every 30 frames or 500px move)
+  // === Draw Grid === (OPTIMIZED: Update every 20 frames or big camera move)
   let gridCache = null;
   let lastGridCameraX = 0;
   let lastGridCameraY = 0;
@@ -1347,40 +1347,31 @@
 
     const mapSize = Network.getMapSize();
     
-    // OPTIMIZE: Grid sadece 30 frame'de bir veya kamera çok hareket ederse
-    gridFrameCounter++;
-    const cameraMoved = Math.abs(camera.x - lastGridCameraX) > 500 || 
-                        Math.abs(camera.y - lastGridCameraY) > 500;
+    // Grid her frame çiz (geri getirildi)
+    const viewW = canvas.width / zoom;
+    const viewH = canvas.height / zoom;
+    const left = camera.x - viewW / 2;
+    const top = camera.y - viewH / 2;
+    const right = left + viewW;
+    const bottom = top + viewH;
+
+    const startX = Math.floor(left / GRID_SIZE) * GRID_SIZE;
+    const startY = Math.floor(top / GRID_SIZE) * GRID_SIZE;
+
+    ctx.strokeStyle = GRID_COLOR;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
     
-    if (gridFrameCounter % 30 === 0 || cameraMoved) {
-      const viewW = canvas.width / zoom;
-      const viewH = canvas.height / zoom;
-      const left = camera.x - viewW / 2;
-      const top = camera.y - viewH / 2;
-      const right = left + viewW;
-      const bottom = top + viewH;
-
-      const startX = Math.floor(left / GRID_SIZE) * GRID_SIZE;
-      const startY = Math.floor(top / GRID_SIZE) * GRID_SIZE;
-
-      ctx.strokeStyle = GRID_COLOR;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      
-      // OPTIMIZE: Daha az line çiz
-      for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE * 2) {
-        ctx.moveTo(x, top - 100);
-        ctx.lineTo(x, bottom + 100);
-      }
-      for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE * 2) {
-        ctx.moveTo(left - 100, y);
-        ctx.lineTo(right + 100, y);
-      }
-      ctx.stroke();
-      
-      lastGridCameraX = camera.x;
-      lastGridCameraY = camera.y;
+    // Tüm grid çizgileri (eski hali)
+    for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE) {
+      ctx.moveTo(x, top - 100);
+      ctx.lineTo(x, bottom + 100);
     }
+    for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE) {
+      ctx.moveTo(left - 100, y);
+      ctx.lineTo(right + 100, y);
+    }
+    ctx.stroke();
 
     ctx.strokeStyle = '#2a2a50';
     ctx.lineWidth = 6;
