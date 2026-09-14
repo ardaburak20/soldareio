@@ -1199,33 +1199,51 @@ body {
   
   .customization-panel {
     padding: 10px !important;
-    gap: 8px !important;
+    gap: 12px !important;
     max-width: 100% !important;
     width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   .panels-container {
     width: 100% !important;
     padding: 0 5px;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 15px !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
   }
   
-  #pixelEditor, #deathPixelEditor {
-    width: 140px !important;
-    height: 140px !important;
+  .editor-panel, .death-editor-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
   }
   
   .color-palette {
+    display: flex !important;
+    flex-direction: column !important;
     gap: 6px !important;
+    order: 1 !important;
+  }
+  
+  #pixelEditor, #deathPixelEditor {
+    width: 160px !important;
+    height: 160px !important;
+    order: 2 !important;
   }
   
   .color-btn, .color-btn-d {
-    width: 30px !important;
-    height: 30px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
   
   .paint-btn, .paint-btn-d {
-    width: 30px !important;
-    height: 30px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
   
   /* Controls info gizle (mobilde joystick var) */
@@ -1347,78 +1365,78 @@ body {
     position: fixed !important;
   }
   
-  /* Weapon HUD - EN ALTA (mermi göstergesi) */
+  /* Weapon HUD - EN ALTA (mermi göstergesi) - BÜYÜK */
   #weaponHud {
-    transform: scale(0.85) !important;
+    transform: scale(1.0) !important;
     transform-origin: bottom right !important;
     position: fixed !important;
     bottom: 12px !important;
     right: 8px !important;
-    min-width: 180px !important;
-    padding: 10px 16px !important;
+    min-width: 220px !important;
+    padding: 12px 18px !important;
   }
   
   #weaponName {
-    font-size: 0.85rem !important;
+    font-size: 1rem !important;
   }
   
   #ammoText {
-    font-size: 0.95rem !important;
+    font-size: 1.3rem !important;
   }
   
   #reloadIndicator {
-    font-size: 0.7rem !important;
+    font-size: 0.85rem !important;
   }
   
   #weaponTimer {
-    font-size: 0.65rem !important;
+    font-size: 0.75rem !important;
   }
   
   /* Action Buttons - Weapon HUD'ın ÜSTÜNDE */
   .action-buttons {
     position: fixed !important;
-    bottom: 95px !important;
+    bottom: 110px !important;
     right: 10px !important;
     gap: 12px !important;
   }
   
   .fire-button {
-    width: 68px !important;
-    height: 68px !important;
+    width: 70px !important;
+    height: 70px !important;
   }
   
   .fire-button .bullet-icon {
-    width: 30px !important;
-    height: 30px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
   
   .reload-button {
-    width: 58px !important;
-    height: 58px !important;
-    font-size: 1.4rem !important;
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 1.5rem !important;
   }
   
   /* Weapon Slots - Action buttons'ın üstünde */
   .weapon-slots-hud {
     position: fixed !important;
-    bottom: 180px !important;
+    bottom: 198px !important;
     right: 10px !important;
   }
   
   .store-slot {
-    width: 42px !important;
-    height: 42px !important;
+    width: 44px !important;
+    height: 44px !important;
   }
   
   .store-slot-count {
-    font-size: 0.7rem !important;
+    font-size: 0.75rem !important;
   }
   
   .stored-pickup-badge {
-    min-width: 14px !important;
-    height: 14px !important;
-    font-size: 0.5rem !important;
-    line-height: 14px !important;
+    min-width: 15px !important;
+    height: 15px !important;
+    font-size: 0.55rem !important;
+    line-height: 15px !important;
   }
   
   /* Shield HUD - Alt orta */
@@ -1507,36 +1525,36 @@ body {
   }
   
   #weaponHud {
-    transform: scale(0.75) !important;
-    min-width: 150px !important;
+    transform: scale(0.9) !important;
+    min-width: 190px !important;
     bottom: 10px !important;
     right: 6px !important;
   }
   
   .action-buttons {
-    bottom: 75px !important;
+    bottom: 95px !important;
     right: 8px !important;
-    gap: 8px !important;
+    gap: 10px !important;
   }
   
   .fire-button {
-    width: 58px !important;
-    height: 58px !important;
+    width: 64px !important;
+    height: 64px !important;
   }
   
   .fire-button .bullet-icon {
-    width: 26px !important;
-    height: 26px !important;
+    width: 29px !important;
+    height: 29px !important;
   }
   
   .reload-button {
-    width: 48px !important;
-    height: 48px !important;
-    font-size: 1.2rem !important;
+    width: 54px !important;
+    height: 54px !important;
+    font-size: 1.35rem !important;
   }
   
   .weapon-slots-hud {
-    bottom: 155px !important;
+    bottom: 180px !important;
     right: 8px !important;
   }
   
@@ -1650,16 +1668,29 @@ body {
   }
   
   #weaponHud {
-    transform: scale(0.88) !important;
-    min-width: 185px !important;
+    transform: scale(0.95) !important;
+    min-width: 210px !important;
   }
   
   .action-buttons {
-    bottom: 98px !important;
+    bottom: 108px !important;
   }
   
   .fire-button {
-    width: 70px !important;
+    width: 72px !important;
+    height: 72px !important;
+  }
+  
+  .fire-button .bullet-icon {
+    width: 33px !important;
+    height: 33px !important;
+  }
+  
+  .reload-button {
+    width: 62px !important;
+    height: 62px !important;
+    font-size: 1.5rem !important;
+  }
     height: 70px !important;
   }
   
