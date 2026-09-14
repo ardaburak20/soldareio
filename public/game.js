@@ -1284,22 +1284,24 @@
   resize();
 
   let smoothPositionsCount = 0;
+  let smoothCleanupCounter = 0;
+  
   function smooth(key, tx, ty, factor) {
-    if (!smoothPositions[key]) {
+    let p = smoothPositions[key];
+    if (!p) {
       smoothPositionsCount++;
-      // Gradual cleanup instead of hard reset (prevents stutter)
-      if (smoothPositionsCount > 2000) {
-        // Clean up only 25% oldest entries instead of everything
-        const keys = Object.keys(smoothPositions);
-        const toDelete = Math.floor(keys.length * 0.25);
-        for (let i = 0; i < toDelete; i++) {
-          delete smoothPositions[keys[i]];
-        }
-        smoothPositionsCount = keys.length - toDelete;
-      }
-      smoothPositions[key] = { x: tx, y: ty };
+      p = smoothPositions[key] = { x: tx, y: ty };
     }
-    const p = smoothPositions[key];
+    
+    // OPTIMIZE: Cleanup sadece 5 saniyede bir (300 frame)
+    smoothCleanupCounter++;
+    if (smoothCleanupCounter > 300 && smoothPositionsCount > 3000) {
+      // Tümünü temizle - oyun loop dışında olacak
+      smoothPositions = {};
+      smoothPositionsCount = 0;
+      smoothCleanupCounter = 0;
+    }
+    
     p.x += (tx - p.x) * (factor * 1.5);
     p.y += (ty - p.y) * (factor * 1.5);
     return p;
@@ -1553,16 +1555,19 @@
         ctx.restore();
       }
 
-      // Draw swarm soldiers with Viewport Culling - OPTIMIZE: Sadece 50 asker smooth, geri kalan direkt
-      const maxSmoothSoldiers = 50;
-      for (let i = 0; i < p.soldiers.length; i++) {
+      // Draw swarm soldiers with Viewport Culling - ULTRA OPTIMIZE
+      const maxSmoothSoldiers = 30; // 50'den 30'a düşür
+      const maxDrawnSoldiers = 100; // Maksimum çizilecek asker sayısı
+      const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
+      
+      for (let i = 0; i < soldiersToDraw; i++) {
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
-        // Optimize: Sadece ilk 50 asker smooth, geri kalanı direkt çiz
-        const solPos = i < maxSmoothSoldiers ? smooth(`s_${id}_${i}`, sol.x, sol.y, 0.25) : { x: sol.x, y: sol.y };
+        // Optimize: Sadece ilk 30 asker smooth
+        const solPos = i < maxSmoothSoldiers ? smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15) : { x: sol.x, y: sol.y };
         
-        // Optimize: atan2'yi cache'le veya yaklaşık kullan
+        // Optimize: Angle hesabı basitleştirildi
         const solAngle = sol.cs ? angle : Math.atan2(pos.y - sol.y, pos.x - sol.x);
         drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, solAngle, skinCnv);
       }
@@ -1922,10 +1927,13 @@
         activeKeys.add(`b_${bullets[i].id}`);
       }
       
-      // Clean up old positions
-      for (const key in smoothPositions) {
-        if (!activeKeys.has(key)) {
-          delete smoothPositions[key];
+      // Clean up old positions - THROTTLE: 60 frame'de bir (1 saniye)
+      if (frameCounter % 60 === 0) {
+        for (const key in smoothPositions) {
+          if (!activeKeys.has(key)) {
+            delete smoothPositions[key];
+            smoothPositionsCount--;
+          }
         }
       }
       
