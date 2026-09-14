@@ -1526,21 +1526,21 @@
         drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv);
       }
 
-      // Name tag - zoom seviyesine göre büyüt
+      // Name tag - zoom seviyesine göre tüm isimler büyüsün
       const baseNameSize = 16;
-      const scaleLevel = calculateScaleLevel(p.score);
-      const nameScale = Math.min(1.0 + scaleLevel * 0.08, 2.2); // Max 2.2x büyüme
-      const nameFontSize = Math.floor(baseNameSize * nameScale);
+      const zoomScale = 1.0 / zoom; // Zoom out olunca büyüt
+      const nameFontSize = Math.floor(baseNameSize * zoomScale);
       
       ctx.font = `800 ${nameFontSize}px Montserrat, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       const nameText = `${p.name} [${p.score}]`;
       const nameW = ctx.measureText(nameText).width + 16;
-      const nameY = pos.y - SOLDIER_RADIUS - 16 - (scaleLevel * 2);
+      const nameBoxHeight = Math.floor(22 * zoomScale);
+      const nameY = pos.y - SOLDIER_RADIUS - (16 * zoomScale);
       
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      roundRect(ctx, pos.x - nameW / 2, nameY - (18 + scaleLevel), nameW, 22 + scaleLevel, 6);
+      roundRect(ctx, pos.x - nameW / 2, nameY - nameBoxHeight + 4, nameW, nameBoxHeight, 6);
       ctx.fill();
       ctx.fillStyle = isMe ? '#4fc3f7' : '#fff';
       ctx.fillText(nameText, pos.x, nameY + 2);
