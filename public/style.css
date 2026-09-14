@@ -1218,18 +1218,22 @@ body {
   
   .editor-panel, .death-editor-panel {
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 12px !important;
   }
   
+  /* Renk paletleri YATAY (solda) */
   .color-palette {
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
     gap: 6px !important;
+    max-width: 100px !important;
     order: 1 !important;
   }
   
+  /* Asker boyama sağda */
   #pixelEditor, #deathPixelEditor {
     width: 160px !important;
     height: 160px !important;
@@ -1237,13 +1241,13 @@ body {
   }
   
   .color-btn, .color-btn-d {
-    width: 32px !important;
-    height: 32px !important;
+    width: 28px !important;
+    height: 28px !important;
   }
   
   .paint-btn, .paint-btn-d {
-    width: 32px !important;
-    height: 32px !important;
+    width: 28px !important;
+    height: 28px !important;
   }
   
   /* Controls info gizle (mobilde joystick var) */
@@ -1372,8 +1376,8 @@ body {
     position: fixed !important;
     bottom: 12px !important;
     right: 8px !important;
-    min-width: 220px !important;
-    padding: 12px 18px !important;
+    min-width: 250px !important;
+    padding: 12px 20px !important;
   }
   
   #weaponName {
@@ -1381,14 +1385,16 @@ body {
   }
   
   #ammoText {
-    font-size: 1.3rem !important;
+    font-size: 1.4rem !important;
   }
   
   #reloadIndicator {
-    font-size: 0.85rem !important;
+    font-size: 0.9rem !important;
   }
   
   #weaponTimer {
+    font-size: 0.8rem !important;
+  }
     font-size: 0.75rem !important;
   }
   
