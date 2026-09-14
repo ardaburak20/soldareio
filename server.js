@@ -219,6 +219,11 @@ function computeFormation(count, stretch, angle) {
   while (formationResultPool.length < count) {
     formationResultPool.push({ ox: 0, oy: 0 });
   }
+  
+  // MEMORY LEAK FIX: Pool çok büyürse küçült
+  if (formationResultPool.length > count + 500) {
+    formationResultPool.length = count + 100;
+  }
 
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
