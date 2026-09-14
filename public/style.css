@@ -1269,192 +1269,47 @@ body {
   }
   
   /* ============================================ */
-  /* OYUN İÇİ MOBİL - BALANCED & NO OVERLAP */
+  /* OYUN İÇİ MOBİL - PC GİBİ (HUD'lar aynı, sadece kontroller eklendi) */
   /* ============================================ */
   
-  /* Top Center HUD (Kills/Alive) - Orta üst */
-  #topCenterHud {
-    top: 8px !important;
-    padding: 6px 12px !important;
-    gap: 14px !important;
-  }
-  
-  .top-stat {
-    font-size: 0.75rem !important;
-  }
-  
-  /* Leaderboard - Sağ üst, KÜÇÜK ve taşmasız */
-  #leaderboard {
-    top: 8px !important;
-    right: 8px !important;
-    width: 130px !important;
-    padding: 6px 8px !important;
-  }
-  
-  .lb-title {
-    font-size: 0.65rem !important;
-    margin-bottom: 4px !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .lb-row {
-    font-size: 0.6rem !important;
-    padding: 2px 0 !important;
-    gap: 4px !important;
-  }
-  
-  .lb-rank {
-    width: 14px !important;
-    font-size: 0.6rem !important;
-  }
-  
-  .lb-color {
-    width: 7px !important;
-    height: 7px !important;
-  }
-  
-  .lb-score {
-    font-size: 0.6rem !important;
-  }
-  
-  /* Soldier Count — minimap'in hemen üstünde, sol alt */
-  #soldierCount {
-    top: auto !important;
-    bottom: 200px !important;
-    left: 15px !important;
-    padding: 5px 10px !important;
-    border-radius: 8px !important;
-  }
-  
-  #myCount {
-    font-size: 1.2rem !important;
-  }
-  
-  .count-label {
-    font-size: 0.65rem !important;
-  }
-  
-  /* Room Code HUD — sol üst */
-  #roomCodeHud {
-    top: 8px !important;
-    left: 8px !important;
-    padding: 4px 10px !important;
-  }
-  
-  #roomCodeDisplay {
-    font-size: 0.9rem !important;
-  }
+  /* TÜM HUD'LAR PC İLE AYNI BOYUTTA - Değişiklik yok! */
+  /* Sadece joystick ve action butonları eklenecek */
   
   /* Joystick - Sol alt */
   .joystick-area {
-    width: 110px !important;
-    height: 110px !important;
-    bottom: 15px !important;
-    left: 15px !important;
+    width: 120px !important;
+    height: 120px !important;
+    bottom: 20px !important;
+    left: 20px !important;
   }
   
   .joystick-stick {
-    width: 46px !important;
-    height: 46px !important;
+    width: 50px !important;
+    height: 50px !important;
   }
   
-  /* Bottom Right HUD Container */
-  #bottomRightHud {
-    bottom: auto !important;
-    top: auto !important;
-    right: 10px !important;
-    transform: none !important;
-    position: fixed !important;
-  }
-  
-  /* Weapon HUD - EN ALTA (mermi göstergesi) - BÜYÜK */
-  #weaponHud {
-    transform: scale(1.0) !important;
-    transform-origin: bottom right !important;
-    position: fixed !important;
-    bottom: 12px !important;
-    right: 8px !important;
-    min-width: 250px !important;
-    padding: 12px 20px !important;
-  }
-  
-  #weaponName {
-    font-size: 1rem !important;
-  }
-  
-  #ammoText {
-    font-size: 1.4rem !important;
-  }
-  
-  #reloadIndicator {
-    font-size: 0.9rem !important;
-  }
-  
-  #weaponTimer {
-    font-size: 0.8rem !important;
-  }
-    font-size: 0.75rem !important;
-  }
-  
-  /* Action Buttons - Weapon HUD'ın ÜSTÜNDE */
+  /* Action Buttons - Sağ alt */
   .action-buttons {
     position: fixed !important;
-    bottom: 110px !important;
-    right: 10px !important;
-    gap: 12px !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    gap: 15px !important;
   }
   
   .fire-button {
-    width: 70px !important;
-    height: 70px !important;
+    width: 75px !important;
+    height: 75px !important;
   }
   
   .fire-button .bullet-icon {
-    width: 32px !important;
-    height: 32px !important;
+    width: 34px !important;
+    height: 34px !important;
   }
   
   .reload-button {
-    width: 60px !important;
-    height: 60px !important;
-    font-size: 1.5rem !important;
-  }
-  
-  /* Weapon Slots - Action buttons'ın üstünde */
-  .weapon-slots-hud {
-    position: fixed !important;
-    bottom: 198px !important;
-    right: 10px !important;
-  }
-  
-  .store-slot {
-    width: 44px !important;
-    height: 44px !important;
-  }
-  
-  .store-slot-count {
-    font-size: 0.75rem !important;
-  }
-  
-  .stored-pickup-badge {
-    min-width: 15px !important;
-    height: 15px !important;
-    font-size: 0.55rem !important;
-    line-height: 15px !important;
-  }
-  
-  /* Shield HUD - Alt orta */
-  #shieldHud {
-    transform: scale(0.8) !important;
-    padding: 6px 14px !important;
-    bottom: 12px !important;
-  }
-  
-  /* Eliminated text */
-  .eliminated-text {
-    font-size: 2.5rem !important;
+    width: 65px !important;
+    height: 65px !important;
+    font-size: 1.6rem !important;
   }
 }
 
@@ -1482,109 +1337,41 @@ body {
     min-width: 85px !important;
   }
   
-  /* Oyun içi - küçük ekran */
-  #leaderboard {
-    width: 110px !important;
-    padding: 5px 6px !important;
-    font-size: 0.55rem !important;
-  }
-  
-  .lb-title {
-    font-size: 0.6rem !important;
-  }
-  
-  .lb-row {
-    font-size: 0.5rem !important;
-  }
-  
-  #topCenterHud {
-    padding: 4px 8px !important;
-    gap: 8px !important;
-  }
-  
-  .top-stat {
-    font-size: 0.65rem !important;
-  }
-  
-  #soldierCount {
-    bottom: 165px !important;
-    padding: 4px 8px !important;
-    left: 10px !important;
-  }
-  
-  #myCount {
-    font-size: 0.95rem !important;
-  }
-  
-  .count-label {
-    font-size: 0.55rem !important;
-  }
-  
-  #roomCodeHud {
-    top: 6px !important;
-    left: 6px !important;
-    padding: 3px 8px !important;
-  }
-  
-  #roomCodeDisplay {
-    font-size: 0.75rem !important;
-  }
-  
-  #weaponHud {
-    transform: scale(0.9) !important;
-    min-width: 190px !important;
-    bottom: 10px !important;
-    right: 6px !important;
-  }
-  
-  .action-buttons {
-    bottom: 95px !important;
-    right: 8px !important;
-    gap: 10px !important;
-  }
-  
-  .fire-button {
-    width: 64px !important;
-    height: 64px !important;
-  }
-  
-  .fire-button .bullet-icon {
-    width: 29px !important;
-    height: 29px !important;
-  }
-  
-  .reload-button {
-    width: 54px !important;
-    height: 54px !important;
-    font-size: 1.35rem !important;
-  }
-  
-  .weapon-slots-hud {
-    bottom: 180px !important;
-    right: 8px !important;
-  }
-  
-  .store-slot {
-    width: 38px !important;
-    height: 38px !important;
-  }
-  
+  /* Oyun içi - kontroller biraz küçük */
   .joystick-area {
-    width: 90px !important;
-    height: 90px !important;
-    bottom: 10px !important;
-    left: 10px !important;
+    width: 100px !important;
+    height: 100px !important;
+    bottom: 15px !important;
+    left: 15px !important;
   }
   
   .joystick-stick {
-    width: 38px !important;
-    height: 38px !important;
+    width: 42px !important;
+    height: 42px !important;
   }
   
-  #shieldHud {
-    transform: scale(0.7) !important;
-    bottom: 10px !important;
+  .action-buttons {
+    bottom: 15px !important;
+    right: 15px !important;
+    gap: 12px !important;
   }
+  
+  .fire-button {
+    width: 65px !important;
+    height: 65px !important;
+  }
+  
+  .fire-button .bullet-icon {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  .reload-button {
+    width: 55px !important;
+    height: 55px !important;
+    font-size: 1.4rem !important;
+  }
+}
 }
 
 /* Orta boy telefonlar (iPhone 12/13, Galaxy S - 391px-430px) */
@@ -1598,6 +1385,77 @@ body {
     font-size: 0.8rem !important;
     padding: 11px 8px !important;
   }
+  
+  /* Oyun içi - kontroller orta boy */
+  .joystick-area {
+    width: 115px !important;
+    height: 115px !important;
+  }
+  
+  .joystick-stick {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  
+  .action-buttons {
+    gap: 14px !important;
+  }
+  
+  .fire-button {
+    width: 72px !important;
+    height: 72px !important;
+  }
+  
+  .fire-button .bullet-icon {
+    width: 33px !important;
+    height: 33px !important;
+  }
+  
+  .reload-button {
+    width: 62px !important;
+    height: 62px !important;
+    font-size: 1.55rem !important;
+  }
+}
+
+/* Büyük telefonlar (iPhone Pro Max, Galaxy Ultra - 431px+) */
+@media (min-width: 431px) {
+  /* Ana menü */
+  #nameInput {
+    font-size: 0.95rem !important;
+  }
+  
+  #playBtn, #playBotsBtn, #openRoomModalBtn {
+    font-size: 0.85rem !important;
+  }
+  
+  /* Oyun içi - kontroller büyük */
+  .joystick-area {
+    width: 125px !important;
+    height: 125px !important;
+  }
+  
+  .joystick-stick {
+    width: 52px !important;
+    height: 52px !important;
+  }
+  
+  .fire-button {
+    width: 78px !important;
+    height: 78px !important;
+  }
+  
+  .fire-button .bullet-icon {
+    width: 35px !important;
+    height: 35px !important;
+  }
+  
+  .reload-button {
+    width: 68px !important;
+    height: 68px !important;
+    font-size: 1.65rem !important;
+  }
+}
   
   /* Oyun içi - orta ekran */
   #leaderboard {
@@ -1695,166 +1553,46 @@ body {
   .reload-button {
     width: 62px !important;
     height: 62px !important;
-    font-size: 1.5rem !important;
-  }
-    height: 70px !important;
-  }
-  
-  .fire-button .bullet-icon {
-    width: 31px !important;
-    height: 31px !important;
-  }
-  
-  .reload-button {
-    width: 60px !important;
-    height: 60px !important;
-    font-size: 1.45rem !important;
-  }
-  
-  .weapon-slots-hud {
-    bottom: 185px !important;
-  }
-  
-  .store-slot {
-    width: 44px !important;
-    height: 44px !important;
-  }
-  
-  .joystick-area {
-    width: 115px !important;
-    height: 115px !important;
-  }
-  
-  .joystick-stick {
-    width: 48px !important;
-    height: 48px !important;
+    font-size: 1.55rem !important;
   }
 }
 
-/* Tabletler (iPad Mini, küçük tabletler - 501px-768px) */
-@media (min-width: 501px) and (max-width: 768px) {
+/* Büyük telefonlar (iPhone Pro Max, Galaxy Ultra - 431px+) */
+@media (min-width: 431px) {
   /* Ana menü */
-  .game-title {
-    font-size: 3rem !important;
-  }
-  
-  .game-subtitle {
-    font-size: 1rem !important;
-  }
-  
   #nameInput {
-    font-size: 1.05rem !important;
-    padding: 14px 18px !important;
+    font-size: 0.95rem !important;
   }
   
   #playBtn, #playBotsBtn, #openRoomModalBtn {
-    font-size: 0.95rem !important;
-    padding: 14px 12px !important;
-  }
-  
-  /* Oyun içi - tablet */
-  #leaderboard {
-    width: 160px !important;
-    padding: 8px 10px !important;
-  }
-  
-  .lb-title {
-    font-size: 0.75rem !important;
-  }
-  
-  .lb-row {
-    font-size: 0.7rem !important;
-  }
-  
-  #topCenterHud {
-    padding: 8px 14px !important;
-    gap: 18px !important;
-  }
-  
-  .top-stat {
     font-size: 0.85rem !important;
   }
   
-  #soldierCount {
-    bottom: 220px !important;
-    padding: 8px 14px !important;
+  /* Oyun içi - kontroller büyük */
+  .joystick-area {
+    width: 125px !important;
+    height: 125px !important;
   }
   
-  #myCount {
-    font-size: 1.4rem !important;
-  }
-  
-  .count-label {
-    font-size: 0.75rem !important;
-  }
-  
-  #roomCodeHud {
-    padding: 6px 12px !important;
-  }
-  
-  #roomCodeDisplay {
-    font-size: 1.05rem !important;
-  }
-  
-  #weaponHud {
-    transform: scale(1) !important;
-    min-width: 220px !important;
-    bottom: 18px !important;
-    right: 12px !important;
-  }
-  
-  .action-buttons {
-    bottom: 120px !important;
-    right: 14px !important;
-    gap: 14px !important;
-  }
-  
-  .fire-button {
-    width: 80px !important;
-    height: 80px !important;
-  }
-  
-  .fire-button .bullet-icon {
-    width: 36px !important;
-    height: 36px !important;
-  }
-  
-  .reload-button {
-    width: 70px !important;
-    height: 70px !important;
-    font-size: 1.6rem !important;
-  }
-  
-  .weapon-slots-hud {
-    bottom: 220px !important;
-    right: 14px !important;
-  }
-  
-  .store-slot {
+  .joystick-stick {
     width: 52px !important;
     height: 52px !important;
   }
   
-  .store-slot-count {
-    font-size: 0.85rem !important;
+  .fire-button {
+    width: 78px !important;
+    height: 78px !important;
   }
   
-  .joystick-area {
-    width: 130px !important;
-    height: 130px !important;
-    bottom: 18px !important;
-    left: 18px !important;
+  .fire-button .bullet-icon {
+    width: 35px !important;
+    height: 35px !important;
   }
   
-  .joystick-stick {
-    width: 54px !important;
-    height: 54px !important;
-  }
-  
-  #shieldHud {
-    transform: scale(0.95) !important;
-    padding: 10px 18px !important;
-    bottom: 18px !important;
+  .reload-button {
+    width: 68px !important;
+    height: 68px !important;
+    font-size: 1.65rem !important;
   }
 }
 
@@ -1902,112 +1640,41 @@ body {
     height: 120px !important;
   }
   
-  /* Oyun içi - yatay mod, kompakt */
-  #topCenterHud {
-    top: 4px !important;
-    padding: 3px 8px !important;
-    gap: 10px !important;
-  }
-  
-  .top-stat {
-    font-size: 0.65rem !important;
-  }
-  
-  #leaderboard {
-    top: 4px !important;
-    width: 110px !important;
-    padding: 4px 6px !important;
-  }
-  
-  .lb-title {
-    font-size: 0.6rem !important;
-  }
-  
-  .lb-row {
-    font-size: 0.55rem !important;
-  }
-  
-  #soldierCount {
-    bottom: 125px !important;
-    left: 6px !important;
-    padding: 3px 7px !important;
-  }
-  
-  #myCount {
-    font-size: 0.85rem !important;
-  }
-  
-  .count-label {
-    font-size: 0.5rem !important;
-  }
-  
-  #roomCodeHud {
-    top: 4px !important;
-    left: 6px !important;
-    padding: 2px 6px !important;
-  }
-  
-  #roomCodeDisplay {
-    font-size: 0.7rem !important;
-  }
-  
-  #weaponHud {
-    transform: scale(0.7) !important;
-    bottom: 6px !important;
-    right: 6px !important;
-    min-width: 140px !important;
-  }
-  
-  .action-buttons {
-    bottom: 62px !important;
-    right: 8px !important;
-    gap: 8px !important;
-  }
-  
-  .fire-button {
-    width: 54px !important;
-    height: 54px !important;
-  }
-  
-  .fire-button .bullet-icon {
-    width: 24px !important;
-    height: 24px !important;
-  }
-  
-  .reload-button {
-    width: 46px !important;
-    height: 46px !important;
-    font-size: 1.1rem !important;
-  }
-  
-  .weapon-slots-hud {
-    bottom: 135px !important;
-    right: 8px !important;
-  }
-  
-  .store-slot {
-    width: 36px !important;
-    height: 36px !important;
-  }
-  
-  .store-slot-count {
-    font-size: 0.65rem !important;
-  }
-  
+  /* Oyun içi - yatay mod, kontroller kompakt */
   .joystick-area {
-    width: 80px !important;
-    height: 80px !important;
-    bottom: 6px !important;
-    left: 6px !important;
+    width: 90px !important;
+    height: 90px !important;
+    bottom: 10px !important;
+    left: 10px !important;
   }
   
   .joystick-stick {
-    width: 34px !important;
-    height: 34px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
   
-  #shieldHud {
-    transform: scale(0.65) !important;
-    bottom: 6px !important;
+  .action-buttons {
+    bottom: 10px !important;
+    right: 10px !important;
+    gap: 10px !important;
+  }
+  
+  .fire-button {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  
+  .fire-button .bullet-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .reload-button {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.3rem !important;
+  }
+}
+
   }
 }
