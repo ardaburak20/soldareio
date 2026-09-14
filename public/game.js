@@ -1377,9 +1377,8 @@
     ctx.lineWidth = 6;
     ctx.strokeRect(0, 0, mapSize, mapSize);
 
-    // Out of bounds shading - simplified
-    const viewW = canvas.width / zoom;
-    const viewH = canvas.height / zoom;
+    // Out of bounds shading - simplified (use existing viewW/viewH)
+    // const viewW and viewH already defined above
     const left = camera.x - viewW / 2;
     const top = camera.y - viewH / 2;
     const right = left + viewW;
