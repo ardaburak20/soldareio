@@ -1110,11 +1110,11 @@ body {
     /* OYUN İÇİ - LANDSCAPE ORANTILI LAYOUT */
     /* ============================================ */
     
-    /* Minimap (Soldier Count) - Sol alt k��e, TAM KARE */
+    /* Minimap (Soldier Count) - TAM SOL ALT KÖŞE */
     #soldierCount {
       position: fixed !important;
-      bottom: calc(2vh + 130px) !important; /* Joystick'in �st�nde */
-      left: 2vw !important;
+      bottom: 0px !important;
+      left: 0px !important;
       width: min(20vh, 140px) !important;
       height: min(20vh, 140px) !important;
       padding: 8px !important;
@@ -1122,7 +1122,7 @@ body {
       flex-direction: column !important;
       align-items: center !important;
       justify-content: center !important;
-      border-radius: 10px !important;
+      border-radius: 0 10px 0 0 !important;
     }
     
     #myCount {
@@ -1210,11 +1210,11 @@ body {
       height: 10px !important;
     }
     
-    /* Joystick - Sol alt */
+    /* Joystick - Minimap'in sağında */
     .joystick-area {
       position: fixed !important;
       bottom: 2vh !important;
-      left: 2vw !important;
+      left: calc(min(20vh, 140px) + 2vw) !important;
       width: 130px !important;
       height: 130px !important;
       z-index: 100 !important;
