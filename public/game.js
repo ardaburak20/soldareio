@@ -1452,39 +1452,96 @@
     }
   }
 
+  // === Soldier Unit Canvas Cache ===
+  const soldierCanvasCache = {};
+  
+  function getSoldierCanvas(color, hasGun, isMain) {
+    const key = `${color}_${hasGun}_${isMain}`;
+    if (soldierCanvasCache[key]) return soldierCanvasCache[key];
+    
+    const size = SOLDIER_RADIUS * 3;
+    const c = document.createElement('canvas');
+    c.width = size;
+    c.height = size;
+    const cx = c.getContext('2d', { alpha: true });
+    
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const r = SOLDIER_RADIUS;
+    
+    // Shadow
+    cx.fillStyle = 'rgba(0,0,0,0.25)';
+    cx.beginPath();
+    cx.arc(centerX, centerY + r * 0.5, r * 0.7, 0, Math.PI * 2);
+    cx.fill();
+    
+    // Body circle
+    cx.fillStyle = color;
+    cx.beginPath();
+    cx.arc(centerX, centerY, r, 0, Math.PI * 2);
+    cx.fill();
+    cx.strokeStyle = isMain ? '#fff' : 'rgba(0,0,0,0.4)';
+    cx.lineWidth = isMain ? 2 : 1.5;
+    cx.stroke();
+    
+    // Highlight (no skin)
+    cx.fillStyle = 'rgba(255,255,255,0.2)';
+    cx.beginPath();
+    cx.arc(centerX - r * 0.2, centerY - r * 0.2, r * 0.45, 0, Math.PI * 2);
+    cx.fill();
+    
+    // Gun barrel (pointing right)
+    if (hasGun || isMain) {
+      cx.strokeStyle = '#555';
+      cx.lineWidth = 3;
+      cx.beginPath();
+      cx.moveTo(centerX + (r - 2), centerY);
+      cx.lineTo(centerX + (r + 10), centerY);
+      cx.stroke();
+    }
+    
+    soldierCanvasCache[key] = c;
+    return c;
+  }
+
   function drawSoldierUnit(sx, sy, color, canShoot, isMain, angle, skinCanvas) {
     const r = SOLDIER_RADIUS;
 
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath();
-    ctx.arc(sx, sy + r * 0.5, r * 0.7, 0, Math.PI * 2);
-    ctx.fill();
+    if (skinCanvas) {
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath();
+      ctx.arc(sx, sy + r * 0.5, r * 0.7, 0, Math.PI * 2);
+      ctx.fill();
 
-    drawCircle(sx, sy, r, color, isMain ? '#fff' : hexToRgba('#000', 0.4), isMain ? 2 : 1.5);
+      drawCircle(sx, sy, r, color, isMain ? '#fff' : hexToRgba('#000', 0.4), isMain ? 2 : 1.5);
 
-    // OPTIMIZE: Skin sadece main soldier ve ilk 20 asker için
-    if (skinCanvas && (isMain || canShoot)) {
+      // Skin (with rotation)
       ctx.save();
       ctx.translate(sx, sy);
       ctx.rotate(angle);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(skinCanvas, -r, -r, r * 2, r * 2);
       ctx.restore();
-    } else if (!skinCanvas) {
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.beginPath();
-      ctx.arc(sx - r * 0.2, sy - r * 0.2, r * 0.45, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    if (canShoot || isMain) {
-      const a = angle || 0;
-      ctx.strokeStyle = '#555';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(sx + Math.cos(a) * (r - 2), sy + Math.sin(a) * (r - 2));
-      ctx.lineTo(sx + Math.cos(a) * (r + 10), sy + Math.sin(a) * (r + 10));
-      ctx.stroke();
+      
+      // Gun barrel
+      if (canShoot || isMain) {
+        const a = angle || 0;
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(sx + Math.cos(a) * (r - 2), sy + Math.sin(a) * (r - 2));
+        ctx.lineTo(sx + Math.cos(a) * (r + 10), sy + Math.sin(a) * (r + 10));
+        ctx.stroke();
+      }
+    } else {
+      // ULTRA OPTIMIZE: Use cached canvas and rotate
+      const cached = getSoldierCanvas(color, canShoot, isMain);
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(angle || 0);
+      ctx.drawImage(cached, -SOLDIER_RADIUS * 1.5, -SOLDIER_RADIUS * 1.5);
+      ctx.restore();
     }
   }
 
@@ -1604,28 +1661,38 @@
   function drawBullets() {
     if (!gameState || !gameState.bullets || gameState.bullets.length === 0) return;
 
-    // OPTIMIZE: Batch all fill operations, then all stroke operations
     const bullets = gameState.bullets;
     const len = bullets.length;
     
-    // Draw all fills first
+    // ULTRA OPTIMIZE: Single path for all bullets (fill)
     ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
     for (let i = 0; i < len; i++) {
       const b = bullets[i];
       if (!isInViewport(b.x, b.y)) continue;
-      ctx.beginPath();
+      ctx.moveTo(b.x + 3.5, b.y);
       ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
-      ctx.fill();
+    }
+    ctx.fill();
+    
+    // ULTRA OPTIMIZE: Single path for all bullets (stroke) - group by color
+    const colorGroups = {};
+    for (let i = 0; i < len; i++) {
+      const b = bullets[i];
+      if (!isInViewport(b.x, b.y)) continue;
+      const c = b.c || '#4fc3f7';
+      if (!colorGroups[c]) colorGroups[c] = [];
+      colorGroups[c].push(b);
     }
     
-    // Draw all strokes after (group by color)
     ctx.lineWidth = 1.5;
-    for (let i = 0; i < len; i++) {
-      const b = bullets[i];
-      if (!isInViewport(b.x, b.y)) continue;
-      ctx.strokeStyle = b.c || '#4fc3f7';
+    for (const color in colorGroups) {
+      ctx.strokeStyle = color;
       ctx.beginPath();
-      ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
+      for (const b of colorGroups[color]) {
+        ctx.moveTo(b.x + 4.5, b.y);
+        ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
+      }
       ctx.stroke();
     }
   }
