@@ -1606,8 +1606,8 @@
       }
 
       // Draw swarm soldiers with Viewport Culling - ULTRA OPTIMIZE
-      const maxSmoothSoldiers = 200; // Tüm askerler smooth (titreme yok)
-      const maxDrawnSoldiers = 200; // Max 200 asker çiz (formation için yeterli)
+      const maxSmoothSoldiers = 2000; // Tüm askerler smooth (titreme yok)
+      const maxDrawnSoldiers = 2000; // Limit kaldırıldı - tüm askerler çizilsin
       const maxSkinnedSoldiers = 20; // Sadece 20 asker skin'li
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
       
