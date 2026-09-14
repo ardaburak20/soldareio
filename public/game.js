@@ -416,9 +416,10 @@
     return cachedFont;
   }
   
-  // Performance: Minimap throttling
+  // Performance: Minimap throttling - sadece pozisyonları cache'le
   let lastMinimapUpdate = 0;
-  const MINIMAP_UPDATE_INTERVAL = 1000; // 1 saniyede bir güncelle
+  let cachedMinimapPositions = [];
+  const MINIMAP_UPDATE_INTERVAL = 1000; // 1 saniyede bir pozisyon güncelle
   let mouseScreen = { x: 0, y: 0 };
   let smoothPositions = {};
   let lastTime = 0;
@@ -1773,11 +1774,6 @@
   function drawMinimap() {
     if (!gameState) return;
     
-    // Throttle: 1 saniyede bir güncelle
-    const now = Date.now();
-    if (now - lastMinimapUpdate < MINIMAP_UPDATE_INTERVAL) return;
-    lastMinimapUpdate = now;
-    
     const myId = Network.getId();
     const mapSize = Network.getMapSize();
     const mmSize = isMobile ? 110 : 160;
@@ -1787,30 +1783,47 @@
     const mmY = canvas.height - mmSize - mmPadY;
     const scale = mmSize / mapSize;
 
+    // Pozisyonları 1 saniyede bir güncelle
+    const now = Date.now();
+    if (now - lastMinimapUpdate >= MINIMAP_UPDATE_INTERVAL) {
+      cachedMinimapPositions = [];
+      for (const id in gameState.players) {
+        const p = gameState.players[id];
+        if (!p.alive) continue;
+        cachedMinimapPositions.push({
+          x: p.x,
+          y: p.y,
+          color: p.color,
+          isMe: id === myId
+        });
+      }
+      lastMinimapUpdate = now;
+    }
+
+    // Her frame minimap'i çiz (arka plan + cache'lenmiş pozisyonlar)
     ctx.save();
     ctx.fillStyle = 'rgba(10,10,30,0.85)';
-    ctx.fillRect(mmX, mmY, mmSize, mmSize); // roundRect yerine fillRect (daha hızlı)
+    ctx.fillRect(mmX, mmY, mmSize, mmSize);
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 2;
     ctx.strokeRect(mmX, mmY, mmSize, mmSize);
 
-    for (const id in gameState.players) {
-      const p = gameState.players[id];
-      if (!p.alive) continue;
+    // Cache'lenmiş pozisyonları çiz
+    for (const p of cachedMinimapPositions) {
       const px = mmX + p.x * scale;
       const py = mmY + p.y * scale;
-      const isMe = id === myId;
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(px, py, isMe ? 4 : 2.5, 0, Math.PI * 2);
+      ctx.arc(px, py, p.isMe ? 4 : 2.5, 0, Math.PI * 2);
       ctx.fill();
-      if (isMe) {
+      if (p.isMe) {
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
     }
 
+    // Viewport rectangle (her zaman güncel)
     const viewW = canvas.width / zoom;
     const viewH = canvas.height / zoom;
     const vpX = mmX + (camera.x - viewW/2) * scale;
