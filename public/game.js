@@ -456,7 +456,7 @@
     let isMinigunFiring = false;
     let isMainThemePlaying = false;
     let hasInteracted = false;
-    let isMuted = false;
+    let isMusicMuted = false; // Sadece ana müzik için
 
     let revolverReloadTimers = [];
     let isRevolverReloadingSound = false;
@@ -517,31 +517,31 @@
       if (!hasInteracted) {
         hasInteracted = true;
         getAudioContext();
-        if (!playing && !isMainThemePlaying && !isMuted) {
+        if (!playing && !isMainThemePlaying && !isMusicMuted) {
           playMainTheme();
         }
       }
     }
 
     function toggleMute() {
-      isMuted = !isMuted;
-      if (isMuted) {
+      isMusicMuted = !isMusicMuted;
+      if (isMusicMuted) {
         stopMainTheme();
-        stopAllWeaponSounds();
+        // Silah seslerini kapatma - sadece ana müziği kapat
       } else {
         if (!playing) {
           playMainTheme();
         }
       }
       updateMuteButtonUI();
-      return isMuted;
+      return isMusicMuted;
     }
 
     function updateMuteButtonUI() {
       const muteIcon = document.getElementById('muteIcon');
       const muteText = document.getElementById('muteText');
       const dict = I18N[currentLang] || I18N.tr;
-      if (isMuted) {
+      if (isMusicMuted) {
         if (muteIcon) muteIcon.textContent = '🔇';
         if (muteText) muteText.textContent = dict.unmuteMusic || 'Müziği Aç';
       } else {
@@ -551,7 +551,7 @@
     }
 
     function playMainTheme() {
-      if (isMuted || isMainThemePlaying) return;
+      if (isMusicMuted || isMainThemePlaying) return;
       isMainThemePlaying = true;
       
       const ctx = getAudioContext();
@@ -601,7 +601,7 @@
     }
 
     function playRevolver(volume = 0.6) {
-      if (isMuted) return;
+      // Silah sesleri her zaman çalsın
       try {
         const spatialRevolver = new Audio(encodeURI('./sounds/revolver.wav'));
         spatialRevolver.volume = volume;
@@ -620,7 +620,7 @@
 
     function playRevolverReloadSequence(startAmmo, missingCount) {
       clearRevolverReloadSequence();
-      if (isMuted) return;
+      // Silah sesleri her zaman çalsın
       isRevolverReloadingSound = true;
       revolverIsInterrupting = false;
       revolverReloadStartTime = Date.now();
@@ -635,7 +635,7 @@
       for (let i = 0; i < count; i++) {
         const delay = i * 400; // 0.4s per bullet
         const timer1 = setTimeout(() => {
-          if (!isRevolverReloadingSound || isMuted || revolverIsInterrupting) return;
+          if (!isRevolverReloadingSound || revolverIsInterrupting) return;
           try {
             const clone = revolverReloadAudio.cloneNode();
             clone.volume = 0.75;
@@ -647,7 +647,7 @@
         // Update ammo display after each bullet is inserted (at (i+1)*400ms)
         const stepAmmo = Math.min(6, startAmmo + i + 1);
         const timer2 = setTimeout(() => {
-          if (!isRevolverReloadingSound || isMuted || revolverIsInterrupting) return;
+          if (!isRevolverReloadingSound || revolverIsInterrupting) return;
           if (ammoTextEl) ammoTextEl.textContent = `${stepAmmo} / 6`;
           if (ammoFillEl) {
             const pct = Math.round((stepAmmo / 6) * 100);
@@ -660,7 +660,7 @@
       // After all missing bullets are inserted, play 'revolver reload finish.wav' (0.5s)
       const finishDelay = count * 400;
       const finishTimer = setTimeout(() => {
-        if (!isRevolverReloadingSound || isMuted || revolverIsInterrupting) return;
+        if (!isRevolverReloadingSound || revolverIsInterrupting) return;
         try {
           const clone = revolverReloadFinishAudio.cloneNode();
           clone.volume = 0.75;
@@ -693,13 +693,12 @@
           const pct = Math.round((finalAmmo / 6) * 100);
           ammoFillEl.style.width = `${pct}%`;
         }
-        if (!isMuted) {
-          try {
-            const clone = revolverReloadFinishAudio.cloneNode();
-            clone.volume = 0.75;
-            clone.play().catch(() => {});
-          } catch (e) {}
-        }
+        // Silah sesleri her zaman çalsın
+        try {
+          const clone = revolverReloadFinishAudio.cloneNode();
+          clone.volume = 0.75;
+          clone.play().catch(() => {});
+        } catch (e) {}
         isRevolverReloadingSound = false;
         revolverIsInterrupting = false;
       }, currentBulletFinishDelay);
@@ -707,7 +706,7 @@
     }
 
     function playAutoReloadSound() {
-      if (isMuted) return;
+      // Silah sesleri her zaman çalsın
       try {
         const clone = autoReloadAudio.cloneNode();
         clone.volume = 0.75;
@@ -716,7 +715,7 @@
     }
 
     function startSmgFire() {
-      if (isMuted) return;
+      // Silah sesleri her zaman çalsın
       
       // Eğer zaten çalışıyorsa hiçbir şey yapma
       if (isSmgFiring) return;
@@ -741,7 +740,7 @@
     function stopSmgFire(playEndSound = false) {
       if (!isSmgFiring) return;
       
-      if (playEndSound && !isMuted) {
+      if (playEndSound) {
         // Flag'i hemen false yap ki tekrar başlatılabilsin
         isSmgFiring = false;
         
@@ -773,7 +772,7 @@
     }
 
     function startM4Ak47Fire() {
-      if (isMuted) return;
+      // Silah sesleri her zaman çalsın
       
       // Eğer zaten çalışıyorsa hiçbir şey yapma
       if (isM4Ak47Firing) return;
@@ -798,7 +797,7 @@
     function stopM4Ak47Fire(playEndSound = false) {
       if (!isM4Ak47Firing) return;
       
-      if (playEndSound && !isMuted) {
+      if (playEndSound) {
         // Flag'i hemen false yap
         isM4Ak47Firing = false;
         
@@ -830,7 +829,7 @@
     }
 
     function startMinigunFire() {
-      if (isMuted) return;
+      // Silah sesleri her zaman çalsın
       
       // Eğer zaten çalışıyorsa hiçbir şey yapma
       if (isMinigunFiring) return;
@@ -855,7 +854,7 @@
     function stopMinigunFire(playEndSound = false) {
       if (!isMinigunFiring) return;
       
-      if (playEndSound && !isMuted) {
+      if (playEndSound) {
         // Flag'i hemen false yap
         isMinigunFiring = false;
         
@@ -961,7 +960,7 @@
               if (shooter && shooter.alive && shooter.weapon === 'revolver') {
                 const vol = getSpatialVolume(shooter.x, shooter.y, myPlayer.x, myPlayer.y, 0.6);
                 
-                if (vol > 0.02 && !isMuted) {
+                if (vol > 0.02) {
                   // Play spatial revolver sound
                   playRevolver(vol);
                 }
@@ -992,7 +991,7 @@
           if (isFiring) {
             const baseVol = isMinigun ? 0.48 : 0.6;
             const vol = getSpatialVolume(op.x, op.y, myPlayer.x, myPlayer.y, baseVol);
-            if (vol > 0.02 && !isMuted) {
+            if (vol > 0.02) {
               activeOtherShooters.add(otherId);
               let entry = spatialAudioMap.get(otherId);
               const ctx = getAudioContext();
