@@ -402,6 +402,15 @@
   let isCameraSnapped = false;
   let isCurrentGameBotMatch = false;
   let zoom = 1.0;
+  
+  // Font cache for performance
+  const fontCache = {};
+  function getCachedFont(size) {
+    if (!fontCache[size]) {
+      fontCache[size] = `800 ${size}px Montserrat, sans-serif`;
+    }
+    return fontCache[size];
+  }
   let mouseScreen = { x: 0, y: 0 };
   let smoothPositions = {};
   let lastTime = 0;
@@ -603,7 +612,8 @@
     function playRevolver(volume = 0.6) {
       // Silah sesleri her zaman çalsın
       try {
-        const spatialRevolver = new Audio(encodeURI('./sounds/revolver.wav'));
+        // Clone yerine pool kullan - daha performanslı
+        const spatialRevolver = revolverAudio.cloneNode();
         spatialRevolver.volume = volume;
         spatialRevolver.play().catch(() => {});
       } catch (e) {
@@ -1516,16 +1526,21 @@
         drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv);
       }
 
-      // Name tag
-      ctx.font = '800 16px Montserrat, sans-serif';
+      // Name tag - zoom seviyesine göre büyüt (optimized with font cache)
+      const baseNameSize = 16;
+      const scaleLevel = isMe ? calculateScaleLevel(me.score) : Math.min(Math.floor(p.score / 10), 14);
+      const nameScale = Math.min(1.0 + scaleLevel * 0.08, 2.2); // Max 2.2x büyüme
+      const nameFontSize = Math.floor(baseNameSize * nameScale);
+      
+      ctx.font = getCachedFont(nameFontSize);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       const nameText = `${p.name} [${p.score}]`;
       const nameW = ctx.measureText(nameText).width + 16;
-      const nameY = pos.y - SOLDIER_RADIUS - 16;
+      const nameY = pos.y - SOLDIER_RADIUS - 16 - (scaleLevel * 2);
       
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      roundRect(ctx, pos.x - nameW / 2, nameY - 18, nameW, 22, 6);
+      roundRect(ctx, pos.x - nameW / 2, nameY - (18 + scaleLevel), nameW, 22 + scaleLevel, 6);
       ctx.fill();
       ctx.fillStyle = isMe ? '#4fc3f7' : '#fff';
       ctx.fillText(nameText, pos.x, nameY + 2);
