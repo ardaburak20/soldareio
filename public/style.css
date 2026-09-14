@@ -1091,87 +1091,17 @@ body {
 }
 
 
-/* === MOBILE LANDSCAPE ONLY - Sadece Yatay Mod === */
+/* === MOBILE RESPONSIVE === */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
-  /* Dikey mod uyar�s� - oyun sadece yatay modda oynan�r */
-  @media (orientation: portrait) {
-    body::before {
-      content: "?? L�tfen cihaz�n�z� yatay konuma �evirin\A\APlease rotate your device to landscape";
-      white-space: pre-wrap;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 99999;
-      font-size: 1.5rem;
-      text-align: center;
-      padding: 20px;
-      font-family: 'Montserrat', sans-serif;
-      line-height: 1.8;
-    }
-    
-    #gameCanvas, #startScreen, #deathScreen, #roomModal {
-      display: none !important;
-    }
+  /* Controls info her zaman gizle (mobilde joystick var) */
+  .controls-info {
+    display: none !important;
   }
   
-  /* === LANDSCAPE MODE (YATAY) - Orant�l� Layout === */
+  /* === LANDSCAPE MODE (YATAY) - Oyun için optimize edilmiş layout === */
   @media (orientation: landscape) {
-    /* Ana men� d�zenlemeleri */
-    .game-title {
-      font-size: 2.5rem !important;
-    }
-    
-    .game-subtitle {
-      font-size: 0.9rem !important;
-    }
-    
-    .menu-box {
-      max-width: 450px !important;
-      padding: 20px !important;
-    }
-    
-    .input-group {
-      width: 100% !important;
-      gap: 8px !important;
-      flex-direction: row !important;
-      flex-wrap: wrap !important;
-    }
-    
-    #nameInput {
-      flex: 1 1 100% !important;
-      padding: 12px 16px !important;
-    }
-    
-    #playBtn {
-      flex: 1 1 calc(50% - 4px) !important;
-      padding: 14px 10px !important;
-      font-size: 0.9rem !important;
-    }
-    
-    #playBotsBtn, #openRoomModalBtn {
-      flex: 1 1 calc(50% - 4px) !important;
-      padding: 14px 10px !important;
-      font-size: 0.9rem !important;
-    }
-    
-    .customization-panel {
-      max-height: 60vh !important;
-      overflow-y: auto !important;
-    }
-    
-    .controls-info {
-      display: none !important;
-    }
-    
     /* ============================================ */
-    /* OYUN ��� - LANDSCAPE ORANTILI LAYOUT */
+    /* OYUN İÇİ - LANDSCAPE ORANTILI LAYOUT */
     /* ============================================ */
     
     /* Minimap (Soldier Count) - Sol alt k��e, TAM KARE */
