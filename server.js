@@ -827,27 +827,33 @@ function gameLoop() {
 
       // Formation
       const formation = computeFormation(p.soldiers.length, p.stretch, p.angle);
-      for (let i = 0; i < p.soldiers.length; i++) {
-        const s = p.soldiers[i];
-        const tx = p.x + formation[i].ox;
-        const ty = p.y + formation[i].oy;
-        const sdx = tx - s.x;
-        const sdy = ty - s.y;
-        const sdSq = sdx*sdx + sdy*sdy;
-        
-        if (sdSq > 10000) { // 100^2
-          const sd = Math.sqrt(sdSq);
-          const moveSpd = PLAYER_SPEED * 3 * dt;
-          s.x += (sdx / sd) * moveSpd;
-          s.y += (sdy / sd) * moveSpd;
-        } else {
-          s.x += sdx * 0.3;
-          s.y += sdy * 0.3;
+      
+      // OPTIMIZE: Sadece her 2. tick'te update et (30 FPS → 15 FPS soldier update)
+      const shouldUpdateSoldiers = (Math.floor(Date.now() / 66)) % 2 === 0;
+      
+      if (shouldUpdateSoldiers) {
+        for (let i = 0; i < p.soldiers.length; i++) {
+          const s = p.soldiers[i];
+          const tx = p.x + formation[i].ox;
+          const ty = p.y + formation[i].oy;
+          const sdx = tx - s.x;
+          const sdy = ty - s.y;
+          const sdSq = sdx*sdx + sdy*sdy;
+          
+          if (sdSq > 10000) { // 100^2
+            const sd = Math.sqrt(sdSq);
+            const moveSpd = PLAYER_SPEED * 3 * dt * 2; // 2x hızlı (her 2 tick'te 1)
+            s.x += (sdx / sd) * moveSpd;
+            s.y += (sdy / sd) * moveSpd;
+          } else {
+            s.x += sdx * 0.6; // 2x hızlı
+            s.y += sdy * 0.6;
+          }
+          
+          // Clamp soldier position to map boundaries
+          s.x = clamp(s.x, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
+          s.y = clamp(s.y, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
         }
-        
-        // Clamp soldier position to map boundaries
-        s.x = clamp(s.x, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
-        s.y = clamp(s.y, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
       }
 
       // Recruit neutrals - OPTIMIZE: Early break on recruit
