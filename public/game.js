@@ -1470,14 +1470,15 @@
 
     drawCircle(sx, sy, r, color, isMain ? '#fff' : hexToRgba('#000', 0.4), isMain ? 2 : 1.5);
 
-    if (skinCanvas) {
+    // OPTIMIZE: Skin sadece main soldier ve ilk 20 asker için
+    if (skinCanvas && (isMain || canShoot)) {
       ctx.save();
       ctx.translate(sx, sy);
       ctx.rotate(angle);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(skinCanvas, -r, -r, r * 2, r * 2);
       ctx.restore();
-    } else {
+    } else if (!skinCanvas) {
       ctx.fillStyle = 'rgba(255,255,255,0.2)';
       ctx.beginPath();
       ctx.arc(sx - r * 0.2, sy - r * 0.2, r * 0.45, 0, Math.PI * 2);
@@ -1556,20 +1557,21 @@
       }
 
       // Draw swarm soldiers with Viewport Culling - ULTRA OPTIMIZE
-      const maxSmoothSoldiers = 30; // 50'den 30'a düşür
-      const maxDrawnSoldiers = 100; // Maksimum çizilecek asker sayısı
+      const maxSmoothSoldiers = 30;
+      const maxDrawnSoldiers = 100;
+      const maxSkinnedSoldiers = 20; // Sadece 20 asker skin'li
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
       
       for (let i = 0; i < soldiersToDraw; i++) {
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
-        // Optimize: Sadece ilk 30 asker smooth
         const solPos = i < maxSmoothSoldiers ? smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15) : { x: sol.x, y: sol.y };
-        
-        // Optimize: Angle hesabı basitleştirildi
         const solAngle = sol.cs ? angle : Math.atan2(pos.y - sol.y, pos.x - sol.x);
-        drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, solAngle, skinCnv);
+        
+        // Sadece ilk 20 askere skin ver
+        const useSkin = i < maxSkinnedSoldiers ? skinCnv : null;
+        drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, solAngle, useSkin);
       }
 
       // Draw main soldier
