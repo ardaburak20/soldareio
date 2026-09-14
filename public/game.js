@@ -403,14 +403,22 @@
   let isCurrentGameBotMatch = false;
   let zoom = 1.0;
   
-  // Font cache for performance
-  const fontCache = {};
-  function getCachedFont(size) {
-    if (!fontCache[size]) {
-      fontCache[size] = `800 ${size}px Montserrat, sans-serif`;
+  // Performance: Font cache
+  let cachedFont = null;
+  let cachedZoomScale = 0;
+  
+  function getCachedFont(zoomScale) {
+    if (cachedZoomScale !== zoomScale) {
+      const fontSize = Math.floor(16 * zoomScale);
+      cachedFont = `800 ${fontSize}px Montserrat, sans-serif`;
+      cachedZoomScale = zoomScale;
     }
-    return fontCache[size];
+    return cachedFont;
   }
+  
+  // Performance: Minimap throttling
+  let lastMinimapUpdate = 0;
+  const MINIMAP_UPDATE_INTERVAL = 1000; // 1 saniyede bir güncelle
   let mouseScreen = { x: 0, y: 0 };
   let smoothPositions = {};
   let lastTime = 0;
@@ -1526,12 +1534,9 @@
         drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv);
       }
 
-      // Name tag - zoom seviyesine göre tüm isimler büyüsün
-      const baseNameSize = 16;
-      const zoomScale = 1.0 / zoom; // Zoom out olunca büyüt
-      const nameFontSize = Math.floor(baseNameSize * zoomScale);
-      
-      ctx.font = `800 ${nameFontSize}px Montserrat, sans-serif`;
+      // Name tag - optimized font caching
+      const zoomScale = 1.0 / zoom;
+      ctx.font = getCachedFont(zoomScale);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       const nameText = `${p.name} [${p.score}]`;
@@ -1540,8 +1545,7 @@
       const nameY = pos.y - SOLDIER_RADIUS - (16 * zoomScale);
       
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      roundRect(ctx, pos.x - nameW / 2, nameY - nameBoxHeight + 4, nameW, nameBoxHeight, 6);
-      ctx.fill();
+      ctx.fillRect(pos.x - nameW / 2, nameY - nameBoxHeight + 4, nameW, nameBoxHeight); // roundRect yerine fillRect (daha hızlı)
       ctx.fillStyle = isMe ? '#4fc3f7' : '#fff';
       ctx.fillText(nameText, pos.x, nameY + 2);
     }
@@ -1768,22 +1772,27 @@
 
   function drawMinimap() {
     if (!gameState) return;
+    
+    // Throttle: 1 saniyede bir güncelle
+    const now = Date.now();
+    if (now - lastMinimapUpdate < MINIMAP_UPDATE_INTERVAL) return;
+    lastMinimapUpdate = now;
+    
     const myId = Network.getId();
     const mapSize = Network.getMapSize();
     const mmSize = isMobile ? 110 : 160;
     const mmPadX = isMobile ? 15 : 20;
-    const mmPadY = isMobile ? 15 : 20; // Mobilde de ALTA yerleştir (joystick'in üstünde)
+    const mmPadY = isMobile ? 15 : 20;
     const mmX = mmPadX;
     const mmY = canvas.height - mmSize - mmPadY;
     const scale = mmSize / mapSize;
 
     ctx.save();
     ctx.fillStyle = 'rgba(10,10,30,0.85)';
-    roundRect(ctx, mmX, mmY, mmSize, mmSize, 8);
-    ctx.fill();
+    ctx.fillRect(mmX, mmY, mmSize, mmSize); // roundRect yerine fillRect (daha hızlı)
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.strokeRect(mmX, mmY, mmSize, mmSize);
 
     for (const id in gameState.players) {
       const p = gameState.players[id];
