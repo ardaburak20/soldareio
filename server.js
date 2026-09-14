@@ -1,10 +1,12 @@
 // ==========================================
-//  SOLDARE.IO - Game Server (v5.0 - Optimized + Bot Rework)
+//  SOLDARE.IO - Game Server (v5.0 - Optimized + Bot Rework + Multi-CPU Cluster)
 // ==========================================
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const { createAdapter } = require("@socket.io/redis-adapter");
+const { createClient } = require("redis");
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +18,53 @@ const io = new Server(server, {
   // Reconnection settings - daha uzun timeout
   pingTimeout: 60000,    // 60 saniye (default: 5000)
   pingInterval: 25000    // 25 saniye ping gönder (default: 25000)
+});
+
+// ==========================================
+//  REDIS ADAPTER - Multi-CPU Cluster Support
+// ==========================================
+const redisClient = createClient({ 
+  url: 'redis://localhost:6379',
+  socket: {
+    reconnectStrategy: (retries) => {
+      const delay = Math.min(retries * 50, 500);
+      console.log(`🔄 Redis reconnection attempt ${retries}, delay: ${delay}ms`);
+      return delay;
+    }
+  }
+});
+
+const subClient = redisClient.duplicate();
+
+// Redis bağlantısı kur
+Promise.all([redisClient.connect(), subClient.connect()])
+  .then(() => {
+    io.adapter(createAdapter(redisClient, subClient));
+    console.log('✅ Redis adapter connected - Multi-CPU cluster mode ACTIVE');
+    console.log('📊 Rooms will be distributed across 2 CPUs automatically');
+  })
+  .catch((err) => {
+    console.error('❌ Redis connection failed:', err.message);
+    console.log('⚠️  FALLBACK: Running in single-CPU mode (Redis not required)');
+    console.log('💡 To enable cluster mode: Install Redis and restart server');
+  });
+
+// Redis error handling (non-blocking)
+redisClient.on('error', (err) => {
+  console.error('Redis Client Error:', err.message);
+});
+
+subClient.on('error', (err) => {
+  console.error('Redis Sub Client Error:', err.message);
+});
+
+// Redis reconnection success
+redisClient.on('connect', () => {
+  console.log('✅ Redis client reconnected');
+});
+
+subClient.on('connect', () => {
+  console.log('✅ Redis sub client reconnected');
 });
 
 // CORS middleware + iframe headers for CrazyGames
