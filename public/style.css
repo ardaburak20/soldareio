@@ -1093,6 +1093,12 @@ body {
 
 /* === MOBILE RESPONSIVE === */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  /* Rotation animation for orientation warning */
+  @keyframes rotate {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+  }
+  
   /* Controls info her zaman gizle (mobilde joystick var) */
   .controls-info {
     display: none !important;
@@ -1228,13 +1234,13 @@ body {
       position: fixed !important;
       bottom: 2vh !important;
       right: 2vw !important;
-      width: 25vw !important;
-      max-width: 280px !important;
-      min-width: 200px !important;
+      width: 22vw !important;
+      max-width: 240px !important;
+      min-width: 170px !important;
       height: 20vh !important;
       min-height: 80px !important;
       max-height: 140px !important;
-      padding: 14px 18px !important;
+      padding: 14px 14px !important;
       transform: none !important;
       display: flex !important;
       flex-direction: column !important;
@@ -1270,20 +1276,20 @@ body {
     }
     
     .fire-button {
-      width: clamp(60px, 10vh, 90px) !important;
-      height: clamp(60px, 10vh, 90px) !important;
+      width: clamp(72px, 12vh, 108px) !important;
+      height: clamp(72px, 12vh, 108px) !important;
       border-radius: 50% !important;
     }
     
     .fire-button .bullet-icon {
-      width: clamp(28px, 5vh, 45px) !important;
-      height: clamp(28px, 5vh, 45px) !important;
+      width: clamp(34px, 6vh, 54px) !important;
+      height: clamp(34px, 6vh, 54px) !important;
     }
     
     .reload-button {
-      width: clamp(55px, 9vh, 80px) !important;
-      height: clamp(55px, 9vh, 80px) !important;
-      font-size: clamp(1.2rem, 2.5vh, 2rem) !important;
+      width: clamp(66px, 11vh, 96px) !important;
+      height: clamp(66px, 11vh, 96px) !important;
+      font-size: clamp(1.4rem, 3vh, 2.4rem) !important;
       border-radius: 50% !important;
     }
     

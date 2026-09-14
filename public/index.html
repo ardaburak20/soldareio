@@ -6,6 +6,10 @@
   <meta name="description" content="Soldare.IO - Multiplayer 2D top-down .io game">
   <meta name="screen-orientation" content="landscape">
   <meta name="mobile-web-app-capable" content="yes">
+  <!-- Force desktop mode on mobile browsers -->
+  <meta name="format-detection" content="telephone=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
   <title>soldare.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&family=Russo+One&display=swap" rel="stylesheet">
@@ -56,6 +60,13 @@
   </script>
 </head>
 <body>
+  <!-- Portrait Orientation Warning (Mobile only) -->
+  <div id="orientationWarning" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; text-align: center; padding: 20px;">
+    <div style="font-size: 4rem; margin-bottom: 20px; animation: rotate 2s ease-in-out infinite;">📱</div>
+    <h2 style="color: #4caf50; font-family: 'Russo One', sans-serif; font-size: 1.8rem; margin-bottom: 15px;">Please Rotate Your Device</h2>
+    <p style="color: #fff; font-family: 'Montserrat', sans-serif; font-size: 1.1rem; max-width: 400px;">This game is best played in <strong style="color: #4caf50;">landscape mode</strong>. Please rotate your device horizontally.</p>
+  </div>
+  
   <!-- Room Join Modal -->
   <div id="roomModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center;">
     <div class="menu-box" style="text-align: center; background: rgba(40,40,40,0.95); border: 2px solid #4caf50; border-radius: 15px; padding: 30px; box-shadow: 0 0 30px rgba(76,175,80,0.3);">

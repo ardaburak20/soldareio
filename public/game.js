@@ -2492,3 +2492,26 @@
   requestAnimationFrame(render);
 
 })();
+
+// ==========================================
+// ORIENTATION WARNING FOR MOBILE
+// ==========================================
+function checkOrientation() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const orientationWarning = document.getElementById('orientationWarning');
+  
+  if (isMobile && orientationWarning) {
+    if (window.innerHeight > window.innerWidth) {
+      // Portrait mode - show warning
+      orientationWarning.style.display = 'flex';
+    } else {
+      // Landscape mode - hide warning
+      orientationWarning.style.display = 'none';
+    }
+  }
+}
+
+// Check on load and on orientation change
+window.addEventListener('load', checkOrientation);
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
