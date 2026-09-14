@@ -850,12 +850,17 @@ function gameLoop() {
         s.y = clamp(s.y, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
       }
 
-      // Recruit neutrals
+      // Recruit neutrals - OPTIMIZE: Sadece en yakın 10 soldier'a bak
       const recruitRadSq = RECRUIT_RADIUS * RECRUIT_RADIUS;
       const armyBoundRadN = Math.ceil(Math.sqrt((p.soldiers.length || 1) / 3)) * 30 + 80 + RECRUIT_RADIUS;
       const armyBoundSqN = armyBoundRadN * armyBoundRadN;
+      
+      // OPTIMIZE: Sadece 50 neutral check per tick (400 → 50)
+      const neutralCheckLimit = Math.min(50, neutralSoldiers.length);
+      const neutralStartIndex = Math.floor(Math.random() * Math.max(1, neutralSoldiers.length - neutralCheckLimit));
 
-      for (let j = neutralSoldiers.length - 1; j >= 0; j--) {
+      for (let j = neutralStartIndex + neutralCheckLimit - 1; j >= neutralStartIndex; j--) {
+        if (j >= neutralSoldiers.length || j < 0) continue;
         const ns = neutralSoldiers[j];
         const dSqP = distSq(p, ns);
         if (dSqP > armyBoundSqN) continue;
@@ -863,8 +868,10 @@ function gameLoop() {
         let recruited = false;
         if (dSqP < recruitRadSq) recruited = true;
         else {
-          for (const s of p.soldiers) {
-            if (distSq(s, ns) < recruitRadSq) { recruited = true; break; }
+          // OPTIMIZE: Sadece en yakın 10 soldier'a bak (100 → 10)
+          const checkLimit = Math.min(10, p.soldiers.length);
+          for (let s = 0; s < checkLimit; s++) {
+            if (distSq(p.soldiers[s], ns) < recruitRadSq) { recruited = true; break; }
           }
         }
         if (recruited) {
@@ -975,7 +982,7 @@ function gameLoop() {
       }
       p.clickShoot = false;
 
-      // Pickup collision
+      // Pickup collision - OPTIMIZE: Sadece ilk 10 soldier'a bak
       const pickupRadSq = (SOLDIER_RADIUS + PICKUP_RADIUS) * (SOLDIER_RADIUS + PICKUP_RADIUS);
       const armyBoundRadP = Math.ceil(Math.sqrt((p.soldiers.length || 1) / 3)) * 30 + 80 + PICKUP_RADIUS;
       const armyBoundSqP = armyBoundRadP * armyBoundRadP;
@@ -988,8 +995,10 @@ function gameLoop() {
         let collected = false;
         if (dSqP < pickupRadSq) collected = true;
         else {
-          for (const s of p.soldiers) {
-            if (distSq(s, pk) < pickupRadSq) { collected = true; break; }
+          // OPTIMIZE: Sadece en yakın 10 soldier'a bak
+          const checkLimit = Math.min(10, p.soldiers.length);
+          for (let s = 0; s < checkLimit; s++) {
+            if (distSq(p.soldiers[s], pk) < pickupRadSq) { collected = true; break; }
           }
         }
         if (collected) {
