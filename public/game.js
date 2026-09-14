@@ -1321,7 +1321,12 @@
     return `rgba(${r},${g},${b},${a})`;
   }
 
-  // === Draw Grid ===
+  // === Draw Grid === (OPTIMIZED: Cache grid, update every 10 frames)
+  let gridCache = null;
+  let lastGridCameraX = 0;
+  let lastGridCameraY = 0;
+  let gridFrameCounter = 0;
+  
   function drawGrid() {
     ctx.fillStyle = BG_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1332,33 +1337,52 @@
     ctx.translate(-camera.x, -camera.y);
 
     const mapSize = Network.getMapSize();
+    
+    // Cache grid: Sadece kamera çok hareket ederse yeniden çiz
+    gridFrameCounter++;
+    const cameraMoved = Math.abs(camera.x - lastGridCameraX) > 200 || 
+                        Math.abs(camera.y - lastGridCameraY) > 200;
+    
+    if (gridFrameCounter % 10 === 0 || cameraMoved || !gridCache) {
+      const viewW = canvas.width / zoom;
+      const viewH = canvas.height / zoom;
+      const left = camera.x - viewW / 2;
+      const top = camera.y - viewH / 2;
+      const right = left + viewW;
+      const bottom = top + viewH;
+
+      const startX = Math.floor(left / GRID_SIZE) * GRID_SIZE;
+      const startY = Math.floor(top / GRID_SIZE) * GRID_SIZE;
+
+      ctx.strokeStyle = GRID_COLOR;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE) {
+        ctx.moveTo(x, top - 100);
+        ctx.lineTo(x, bottom + 100);
+      }
+      for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE) {
+        ctx.moveTo(left - 100, y);
+        ctx.lineTo(right + 100, y);
+      }
+      ctx.stroke();
+      
+      lastGridCameraX = camera.x;
+      lastGridCameraY = camera.y;
+    }
+
+    ctx.strokeStyle = '#2a2a50';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(0, 0, mapSize, mapSize);
+
+    // Out of bounds shading - simplified
     const viewW = canvas.width / zoom;
     const viewH = canvas.height / zoom;
     const left = camera.x - viewW / 2;
     const top = camera.y - viewH / 2;
     const right = left + viewW;
     const bottom = top + viewH;
-
-    const startX = Math.floor(left / GRID_SIZE) * GRID_SIZE;
-    const startY = Math.floor(top / GRID_SIZE) * GRID_SIZE;
-
-    ctx.strokeStyle = GRID_COLOR;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE) {
-      ctx.moveTo(x, top - 100);
-      ctx.lineTo(x, bottom + 100);
-    }
-    for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE) {
-      ctx.moveTo(left - 100, y);
-      ctx.lineTo(right + 100, y);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle = '#2a2a50';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(0, 0, mapSize, mapSize);
-
+    
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     if (left < 0) ctx.fillRect(left-100, top-100, -left+100, viewH+200);
     if (top < 0) ctx.fillRect(left-100, top-100, viewW+200, -top+100);
@@ -1486,8 +1510,17 @@
   function drawPlayers() {
     if (!gameState) return;
     const myId = Network.getId();
-    const playerIds = Object.keys(gameState.players);
-    const sortedIds = playerIds.filter(id => id !== myId).concat(playerIds.filter(id => id === myId));
+    
+    // OPTIMIZE: Direkt array yerine cache kullan
+    const players = gameState.players;
+    const sortedIds = [];
+    
+    // İlk önce diğer oyuncular
+    for (const id in players) {
+      if (id !== myId) sortedIds.push(id);
+    }
+    // Sonra ben (en üstte)
+    if (players[myId]) sortedIds.push(myId);
     
     // Optimize: time hesapla SADECE BİR KEZ
     const time = Date.now() / 1000;
@@ -1559,20 +1592,26 @@
   function drawBullets() {
     if (!gameState || !gameState.bullets || gameState.bullets.length === 0) return;
 
-    // Single loop optimization - draw both fill and stroke in one pass
+    // OPTIMIZE: Batch all fill operations, then all stroke operations
+    const bullets = gameState.bullets;
+    const len = bullets.length;
+    
+    // Draw all fills first
     ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < gameState.bullets.length; i++) {
-      const b = gameState.bullets[i];
+    for (let i = 0; i < len; i++) {
+      const b = bullets[i];
       if (!isInViewport(b.x, b.y)) continue;
-      
-      // Draw white fill
       ctx.beginPath();
       ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
       ctx.fill();
-      
-      // Draw colored stroke
+    }
+    
+    // Draw all strokes after (group by color)
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < len; i++) {
+      const b = bullets[i];
+      if (!isInViewport(b.x, b.y)) continue;
       ctx.strokeStyle = b.c || '#4fc3f7';
-      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
       ctx.stroke();
