@@ -1377,13 +1377,7 @@
     ctx.lineWidth = 6;
     ctx.strokeRect(0, 0, mapSize, mapSize);
 
-    // Out of bounds shading - simplified (use existing viewW/viewH)
-    // const viewW and viewH already defined above
-    const left = camera.x - viewW / 2;
-    const top = camera.y - viewH / 2;
-    const right = left + viewW;
-    const bottom = top + viewH;
-    
+    // Out of bounds shading - use existing viewW, viewH, left, top, right, bottom
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     if (left < 0) ctx.fillRect(left-100, top-100, -left+100, viewH+200);
     if (top < 0) ctx.fillRect(left-100, top-100, viewW+200, -top+100);
