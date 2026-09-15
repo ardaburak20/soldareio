@@ -1574,9 +1574,6 @@
     // Sonra ben (en üstte)
     if (players[myId]) sortedIds.push(myId);
     
-    // Optimize: Angle cache PER FRAME (her oyuncu için ayrı)
-    const playerAngleCaches = {};
-
     for (const id of sortedIds) {
       const p = gameState.players[id];
       if (!p.alive) continue;
@@ -1611,10 +1608,6 @@
       const maxSkinnedSoldiers = 2000; // TÜM askerlere skin ver
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
       
-      // OPTIMIZE: Angle cache - frame başına bir kere (dışarıda tanımlı)
-      if (!playerAngleCaches[id]) playerAngleCaches[id] = {};
-      const angleCache = playerAngleCaches[id];
-      
       for (let i = 0; i < soldiersToDraw; i++) {
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
@@ -1622,17 +1615,10 @@
         // Tüm askerler smooth olsun (titreme yok)
         const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15);
         
-        // OPTIMIZE: Angle sadece canShoot için hesapla
-        let solAngle = angle;
-        if (!sol.cs) {
-          const key = `${Math.floor(sol.x/10)}_${Math.floor(sol.y/10)}`;
-          if (!angleCache[key]) {
-            angleCache[key] = Math.atan2(pos.y - sol.y, pos.x - sol.x);
-          }
-          solAngle = angleCache[key];
-        }
+        // Asker açısı: canShoot ise player açısı, değilse player'a bakacak şekilde
+        const solAngle = sol.cs ? angle : Math.atan2(pos.y - sol.y, pos.x - sol.x);
         
-        // Sadece ilk 20 askere skin ver
+        // Tüm askerlere skin ver
         const useSkin = i < maxSkinnedSoldiers ? skinCnv : null;
         drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, solAngle, useSkin);
       }
