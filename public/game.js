@@ -1615,8 +1615,8 @@
         // Tüm askerler smooth olsun (titreme yok)
         const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15);
         
-        // Asker açısı: canShoot ise player açısı, değilse player'a bakacak şekilde
-        const solAngle = sol.cs ? angle : Math.atan2(pos.y - sol.y, pos.x - sol.x);
+        // Asker açısı: canShoot ise player açısı, değilse GERÇEK player pozisyonuna bakacak şekilde
+        const solAngle = sol.cs ? angle : Math.atan2(p.y - sol.y, p.x - sol.x);
         
         // Tüm askerlere skin ver
         const useSkin = i < maxSkinnedSoldiers ? skinCnv : null;
