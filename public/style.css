@@ -801,10 +801,79 @@ body {
   line-height: 1;
 }
 
-.store-item-icon {
+/* === Room Code & Ping HUD === */
+#roomCodeHud {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: rgba(15, 20, 35, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 8px 14px;
+  border-radius: 10px;
+  z-index: 1000;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#roomCodeDisplay {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.15rem;
+  color: #ffffff;
+  font-style: italic;
+  letter-spacing: 0.8px;
+}
+
+.ping-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 5px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ping-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.ping-bar {
+  width: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1px;
+  transition: background 0.2s ease;
+}
+
+.ping-bar.bar-1 { height: 4px; }
+.ping-bar.bar-2 { height: 7px; }
+.ping-bar.bar-3 { height: 10px; }
+.ping-bar.bar-4 { height: 14px; }
+
+/* Active States */
+.ping-bars.good .ping-bar { background: #00e676; }
+.ping-bars.medium .ping-bar { background: #ffeb3b; }
+.ping-bars.medium .ping-bar.bar-4 { background: rgba(255, 255, 255, 0.2); }
+.ping-bars.poor .ping-bar { background: #ff9800; }
+.ping-bars.poor .ping-bar.bar-3,
+.ping-bars.poor .ping-bar.bar-4 { background: rgba(255, 255, 255, 0.2); }
+.ping-bars.bad .ping-bar { background: #ff3333; }
+.ping-bars.bad .ping-bar.bar-2,
+.ping-bars.bad .ping-bar.bar-3,
+.ping-bars.bad .ping-bar.bar-4 { background: rgba(255, 255, 255, 0.2); }
+
+.ping-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #a0aec0;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 #weaponHud {

@@ -442,6 +442,7 @@
   let isMouseDown = false;
   let isMobileFireActive = false;
   let lastRevolverAmmo = undefined;
+  let pingInterval = null;
 
   // === Mobile Detection ===
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -2467,11 +2468,16 @@
       mobileControls.classList.add('active');
     }
 
-    if (data.roomCode) {
+    if (data.roomCode && !isCurrentGameBotMatch) {
       document.getElementById('roomCodeDisplay').textContent = '#' + data.roomCode;
       document.getElementById('roomCodeHud').classList.remove('hidden');
+      startPingMeasurement();
+    } else if (isCurrentGameBotMatch) {
+      document.getElementById('roomCodeHud').classList.add('hidden');
+      stopPingMeasurement();
     } else {
       document.getElementById('roomCodeHud').classList.add('hidden');
+      stopPingMeasurement();
     }
 
     if (mouseSendInterval) clearInterval(mouseSendInterval);
@@ -2520,6 +2526,7 @@
       mobileControls.classList.remove('active');
     }
 
+    stopPingMeasurement();
     Network.stopShooting();
     isMouseDown = false;
     playing = false;
@@ -2548,6 +2555,50 @@
 
   function hideDisconnectOverlay() {
     if (disconnectOverlay) disconnectOverlay.classList.add('hidden');
+  }
+
+  // === Ping HUD Logic ===
+  const pingHud = document.getElementById('pingHud');
+  const pingBars = document.getElementById('pingBars');
+  const pingValue = document.getElementById('pingValue');
+
+  function updatePingUI(pingMs) {
+    if (!pingValue || !pingBars) return;
+    pingValue.textContent = pingMs;
+    
+    pingBars.classList.remove('good', 'medium', 'poor', 'bad');
+    if (pingMs < 60) {
+      pingBars.classList.add('good');
+    } else if (pingMs < 110) {
+      pingBars.classList.add('medium');
+    } else if (pingMs < 200) {
+      pingBars.classList.add('poor');
+    } else {
+      pingBars.classList.add('bad');
+    }
+  }
+
+  function startPingMeasurement() {
+    if (pingInterval) clearInterval(pingInterval);
+    if (isCurrentGameBotMatch) {
+      stopPingMeasurement();
+      return;
+    }
+    if (pingHud) pingHud.classList.remove('hidden');
+    Network.measurePing(updatePingUI);
+    pingInterval = setInterval(() => {
+      if (playing && !isCurrentGameBotMatch) {
+        Network.measurePing(updatePingUI);
+      }
+    }, 1500);
+  }
+
+  function stopPingMeasurement() {
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = null;
+    }
+    if (pingHud) pingHud.classList.add('hidden');
   }
 
   Network.onDisconnect((reason) => {
@@ -2582,6 +2633,7 @@
       
       SoundManager.stopAllWeaponSounds();
       SoundManager.playMainTheme();
+      stopPingMeasurement();
       
       startScreen.classList.remove('hidden');
       deathScreen.classList.add('hidden');
@@ -2661,6 +2713,7 @@
   
   backToMenuBtn.addEventListener('click', () => {
     crazyGameplayStop();
+    stopPingMeasurement();
     deathScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
     playing = false;

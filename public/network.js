@@ -172,6 +172,15 @@ const Network = (() => {
     if (socket) socket.emit('cancelRevolverReload');
   }
 
+  function measurePing(callback) {
+    if (!socket || !socket.connected) return;
+    const start = Date.now();
+    socket.emit('pingCheck', start, () => {
+      const ping = Date.now() - start;
+      if (callback) callback(ping);
+    });
+  }
+
   function getId() { return myId; }
   function getMapSize() { return mapSize; }
 
@@ -189,7 +198,7 @@ const Network = (() => {
   return {
     connect, disconnect, isConnected, join, joinWithBots, joinRoom, sendMouse, 
     startShooting, stopShooting, clickShoot, manualReload, cancelRevolverReload,
-    equipRevolver,
+    equipRevolver, measurePing,
     getId, getMapSize,
     onState, onJoined, onEliminated, onServerFull, onRoomNotFound, onRoomFull,
     onDisconnect, onReconnectAttempt, onReconnectSuccess, onReconnectFailed

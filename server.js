@@ -798,6 +798,12 @@ io.on('connection', (socket) => {
     if (p.weapon !== 'revolver') switchToRevolver(p);
   });
 
+  socket.on('pingCheck', (clientTime, callback) => {
+    if (typeof callback === 'function') {
+      callback(clientTime);
+    }
+  });
+
   socket.on('disconnect', () => {
     const roomCode = socketToRoom[socket.id];
     if (!roomCode || !rooms[roomCode]) return;

@@ -239,8 +239,17 @@
   <canvas id="gameCanvas"></canvas>
 
   <!-- HUD Overlays -->
-  <div id="roomCodeHud" class="hud hidden" style="position: fixed; top: 10px; left: 10px; background: white; padding: 8px 14px; border-radius: 8px; z-index: 1000; border: 2px solid #333; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">
-    <span id="roomCodeDisplay" style="font-family: 'Russo One', sans-serif; font-size: 1.26rem; color: black; font-style: italic; font-weight: bold; letter-spacing: 0.7px;">#000000</span>
+  <div id="roomCodeHud" class="hud hidden">
+    <span id="roomCodeDisplay">#000000</span>
+    <div id="pingHud" class="ping-hud hidden">
+      <div class="ping-bars good" id="pingBars">
+        <div class="ping-bar bar-1"></div>
+        <div class="ping-bar bar-2"></div>
+        <div class="ping-bar bar-3"></div>
+        <div class="ping-bar bar-4"></div>
+      </div>
+      <div class="ping-text"><span id="pingValue">--</span> ms</div>
+    </div>
   </div>
 
   <div id="topCenterHud" class="hud hidden">
