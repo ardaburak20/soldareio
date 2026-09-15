@@ -189,7 +189,6 @@ function calculateScaleLevel(score) {
 // ==========================================
 const formationCache = new Map();
 const FORMATION_CACHE_MAX = 300;
-const formationResultPool = [];
 
 // Formation cache per player (stretch + angle cache)
 const playerFormationCache = new Map();
@@ -219,10 +218,6 @@ function computeFormation(count, stretch, angle) {
     formationCache.set(count, baseFormation);
   }
 
-  while (formationResultPool.length < count) {
-    formationResultPool.push({ ox: 0, oy: 0 });
-  }
-
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
   const invSqrtStretch = 1 / Math.sqrt(stretch);
@@ -230,10 +225,10 @@ function computeFormation(count, stretch, angle) {
   for (let i = 0; i < count; i++) {
     const ox = baseFormation[i].baseX * stretch;
     const oy = baseFormation[i].baseY * invSqrtStretch;
-    const item = formationResultPool[i];
-    item.ox = ox * cos - oy * sin;
-    item.oy = ox * sin + oy * cos;
-    result[i] = item;
+    result[i] = {
+      ox: ox * cos - oy * sin,
+      oy: ox * sin + oy * cos
+    };
   }
   return result;
 }
