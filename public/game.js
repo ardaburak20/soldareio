@@ -428,7 +428,7 @@
   // Performance: Minimap throttling - sadece pozisyonları cache'le
   let lastMinimapUpdate = 0;
   let cachedMinimapPositions = [];
-  const MINIMAP_UPDATE_INTERVAL = 1000; // 1 saniyede bir pozisyon güncelle
+  const MINIMAP_UPDATE_INTERVAL = 100; // 100ms zaman aralığı ile harita verilerini güncelle
   let mouseScreen = { x: 0, y: 0 };
   let smoothPositions = {};
   let lastTime = 0;
@@ -1858,23 +1858,36 @@
     const mmY = canvas.height - mmSize - mmPadY;
     const scale = mmSize / mapSize;
 
-    // Pozisyonları 1 saniyede bir güncelle
+    // Pozisyonları 100ms aralıkla güncelle (Harita verisini optimize filtrele)
     if (cachedNow - lastMinimapUpdate >= MINIMAP_UPDATE_INTERVAL) {
       cachedMinimapPositions = [];
-      for (const id in gameState.players) {
-        const p = gameState.players[id];
-        if (!p.alive) continue;
-        cachedMinimapPositions.push({
-          x: p.x,
-          y: p.y,
-          color: p.color,
-          isMe: id === myId
-        });
+      if (gameState.minimap && Array.isArray(gameState.minimap)) {
+        for (let i = 0; i < gameState.minimap.length; i++) {
+          const mp = gameState.minimap[i];
+          if (mp.id === myId) continue; // Kendi oyuncumuzu her karede canlı çizeceğiz
+          cachedMinimapPositions.push({
+            x: mp.x,
+            y: mp.y,
+            color: mp.color
+          });
+        }
+      } else if (gameState.players) {
+        // Fallback: gameState.players
+        for (const id in gameState.players) {
+          if (id === myId) continue;
+          const p = gameState.players[id];
+          if (!p.alive) continue;
+          cachedMinimapPositions.push({
+            x: p.x,
+            y: p.y,
+            color: p.color
+          });
+        }
       }
       lastMinimapUpdate = cachedNow;
     }
 
-    // Her frame minimap'i çiz (arka plan + cache'lenmiş pozisyonlar)
+    // Her frame minimap'i çiz (arka plan + cache'lenmiş pozisyonlar - Yanıp sönme olmaz)
     ctx.save();
     ctx.fillStyle = 'rgba(10,10,30,0.85)';
     ctx.fillRect(mmX, mmY, mmSize, mmSize);
@@ -1882,20 +1895,31 @@
     ctx.lineWidth = 2;
     ctx.strokeRect(mmX, mmY, mmSize, mmSize);
 
-    // Cache'lenmiş pozisyonları çiz
+    // Cache'lenmiş diğer oyuncuların pozisyonlarını çiz
     for (const p of cachedMinimapPositions) {
       const px = mmX + p.x * scale;
       const py = mmY + p.y * scale;
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(px, py, p.isMe ? 4 : 2.5, 0, Math.PI * 2);
+      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
       ctx.fill();
-      if (p.isMe) {
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
     }
+
+    // Kendi oyuncumuz için %100 canlı ve pürüzsüz nokta çizimi
+    const myPlayer = gameState.players ? gameState.players[myId] : null;
+    const myX = myPlayer ? myPlayer.x : camera.x;
+    const myY = myPlayer ? myPlayer.y : camera.y;
+    const myColor = myPlayer ? myPlayer.color : '#4ecdc4';
+
+    const myPx = mmX + myX * scale;
+    const myPy = mmY + myY * scale;
+    ctx.fillStyle = myColor;
+    ctx.beginPath();
+    ctx.arc(myPx, myPy, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
     // Viewport rectangle (her zaman güncel)
     const viewW = canvas.width / zoom;

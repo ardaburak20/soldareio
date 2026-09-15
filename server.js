@@ -1234,8 +1234,17 @@ function gameLoop() {
 
     // Build full player data once (object pooling for better performance)
     const allPlayerData = {};
+    const minimapData = [];
     for (const id in players) {
       const p = players[id];
+      if (p.alive) {
+        minimapData.push({
+          id: p.id,
+          x: Math.round(p.x),
+          y: Math.round(p.y),
+          color: p.color
+        });
+      }
       const solLen = p.soldiers.length;
       const solArr = new Array(solLen);
       for (let sIdx = 0; sIdx < solLen; sIdx++) {
@@ -1329,6 +1338,7 @@ function gameLoop() {
         bullets: nearBullets,
         leaderboard,
         totalPlayers,
+        minimap: minimapData,
         roomCode: room.isPrivate ? null : roomCode
       };
 
