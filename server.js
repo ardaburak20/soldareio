@@ -1,24 +1,43 @@
 // ==========================================
-//  SOLDARE.IO - Game Server (v5.0 - Optimized + Bot Rework + Multi-CPU Cluster)
+//  SOLDARE.IO - Game Server (v5.0 - Multi-CPU Cluster Mode)
 // ==========================================
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const path = require('path');
-const { createAdapter } = require("@socket.io/redis-adapter");
-const { createClient } = require("redis");
+const cluster = require('cluster');
+const numCPUs = 2; // 2 CPU Cores (DigitalOcean Droplet)
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { 
-    origin: '*',
-    methods: ['GET', 'POST']
-  },
-  // Reconnection settings - daha uzun timeout
-  pingTimeout: 60000,    // 60 saniye (default: 5000)
-  pingInterval: 25000    // 25 saniye ping gönder (default: 25000)
-});
+if (cluster.isPrimary || cluster.isMaster) {
+  console.log(`🚀 Primary Process ${process.pid} is running.`);
+  console.log(`⚡ Forking ${numCPUs} CPU Workers (CPU 1 = Tek Sayılı Odalar, CPU 2 = Çift Sayılı Odalar)...`);
+
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork({ WORKER_INDEX: i + 1 });
+  }
+
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`⚠️ Worker process ${worker.process.pid} exited. Restarting worker...`);
+    const workerIndex = worker.id || 1;
+    cluster.fork({ WORKER_INDEX: workerIndex });
+  });
+} else {
+  const WORKER_INDEX = parseInt(process.env.WORKER_INDEX || 1, 10);
+  console.log(`⚡ [CPU ${WORKER_INDEX}] Worker process ${process.pid} initialized.`);
+
+  const express = require('express');
+  const http = require('http');
+  const { Server } = require('socket.io');
+  const path = require('path');
+  const { createAdapter } = require("@socket.io/redis-adapter");
+  const { createClient } = require("redis");
+
+  const app = express();
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: { 
+      origin: '*',
+      methods: ['GET', 'POST']
+    },
+    pingTimeout: 60000,
+    pingInterval: 25000
+  });
 
 // ==========================================
 //  REDIS ADAPTER - Multi-CPU Cluster Support
@@ -174,7 +193,15 @@ function weightedRandom() {
 }
 
 function generateRoomCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  let num = Math.floor(100000 + Math.random() * 900000);
+  // CPU 1 (Worker 1): Tek Sayılı Odalar (Odd)
+  // CPU 2 (Worker 2): Çift Sayılı Odalar (Even)
+  if (WORKER_INDEX % 2 === 1) {
+    if (num % 2 === 0) num += 1;
+  } else {
+    if (num % 2 !== 0) num += 1;
+  }
+  return num.toString();
 }
 
 function calculateScaleLevel(score) {
@@ -1319,5 +1346,6 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 server.listen(PORT, () => {
-  console.log(`Soldare.IO server running on http://localhost:${PORT}`);
+  console.log(`⚡ [CPU ${WORKER_INDEX}] Worker process ${process.pid} listening on http://localhost:${PORT}`);
 });
+} // End of Worker process block
