@@ -12,10 +12,9 @@ const Network = (() => {
   let onRoomNotFoundCallback = null;
   let onRoomFullCallback = null;
 
-  let onDisconnectCallback = null;
-  let onReconnectAttemptCallback = null;
-  let onReconnectSuccessCallback = null;
-  let onReconnectFailedCallback = null;
+  let sessionToken = null;
+  let currentRoomCode = null;
+  let isPlayingMatch = false;
 
   function connect() {
     if (socket) return;
@@ -33,16 +32,15 @@ const Network = (() => {
     socket.on('connect', () => {
       console.log('⚡ Socket connected to backend!');
       
-      // Reconnect sonrası kullanıcıya bildir
-      if (myId && onStateCallback) {
-        console.log('✅ Reconnected successfully!');
-      }
-      if (onReconnectSuccessCallback) onReconnectSuccessCallback();
-      
-      if (pendingJoin) {
+      if (sessionToken && isPlayingMatch) {
+        console.log('🔄 Reconnecting player session with token:', sessionToken);
+        socket.emit('reconnectPlayer', { token: sessionToken, roomCode: currentRoomCode });
+      } else if (pendingJoin) {
         socket.emit(pendingJoin.event, pendingJoin.payload);
         pendingJoin = null;
       }
+      
+      if (onReconnectSuccessCallback) onReconnectSuccessCallback();
     });
 
     socket.on('disconnect', (reason) => {
@@ -57,12 +55,24 @@ const Network = (() => {
 
     socket.on('reconnect_failed', () => {
       console.log('❌ Reconnection failed. Please refresh the page.');
+      isPlayingMatch = false;
+      sessionToken = null;
+      if (onReconnectFailedCallback) onReconnectFailedCallback();
+    });
+
+    socket.on('reconnectFailed', () => {
+      console.log('❌ Reconnect rejected by server.');
+      isPlayingMatch = false;
+      sessionToken = null;
       if (onReconnectFailedCallback) onReconnectFailedCallback();
     });
 
     socket.on('joined', (data) => {
       myId = data.id;
       mapSize = data.mapSize;
+      if (data.token) sessionToken = data.token;
+      if (data.roomCode !== undefined) currentRoomCode = data.roomCode;
+      isPlayingMatch = true;
       if (onJoinedCallback) onJoinedCallback(data);
     });
 
@@ -71,6 +81,9 @@ const Network = (() => {
     });
 
     socket.on('eliminated', (data) => {
+      isPlayingMatch = false;
+      sessionToken = null;
+      currentRoomCode = null;
       if (onEliminatedCallback) onEliminatedCallback(data);
     });
 
@@ -79,6 +92,8 @@ const Network = (() => {
     });
 
     socket.on('roomNotFound', () => {
+      isPlayingMatch = false;
+      sessionToken = null;
       if (onRoomNotFoundCallback) onRoomNotFoundCallback();
     });
 
@@ -88,6 +103,9 @@ const Network = (() => {
   }
 
   function disconnect() {
+    isPlayingMatch = false;
+    sessionToken = null;
+    currentRoomCode = null;
     if (socket) {
       try { socket.disconnect(); } catch(e){}
       socket = null;

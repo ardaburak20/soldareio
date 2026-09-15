@@ -400,11 +400,12 @@ function spawnPickups(pickups) {
 // ==========================================
 //  PLAYER HELPERS
 // ==========================================
-function createPlayer(id, name, color, skin, hasAdBonus) {
+function createPlayer(id, name, color, skin, hasAdBonus, token) {
   const pos = randPos();
   const w = WEAPONS.revolver;
+  const userToken = token || `token_${id}_${Date.now()}_${Math.random()}`;
   const p = {
-    id, name: (name || 'Soldier').substring(0, 16),
+    id, token: userToken, name: (name || 'Soldier').substring(0, 16),
     color: color || '#3498db', skin: skin || null,
     x: pos.x, y: pos.y, angle: 0, mouseX: pos.x, mouseY: pos.y,
     soldiers: [], weapon: 'revolver', ammo: w.magSize,
@@ -625,13 +626,15 @@ io.on('connection', (socket) => {
     if (!room) { socket.emit('serverFull'); return; }
     
     const name = (data.name || 'Soldier').substring(0, 16);
-    room.players[socket.id] = createPlayer(socket.id, name, data.color, data.skin, data.hasAdBonus);
+    const p = createPlayer(socket.id, name, data.color, data.skin, data.hasAdBonus, data.token);
+    room.players[socket.id] = p;
     socketToRoom[socket.id] = room.code;
+    socket.join(room.code);
     room.playerCount++;
     room.lastActivity = Date.now();
 
     console.log(`👤 Player ${name} joined room ${room.code} (${room.playerCount}/${MAX_PLAYERS})`);
-    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code });
+    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code, token: p.token });
   });
 
   // Join with bots - private offline room
@@ -649,8 +652,10 @@ io.on('connection', (socket) => {
     const room = rooms[code];
     
     const name = (data.name || 'Soldier').substring(0, 16);
-    room.players[socket.id] = createPlayer(socket.id, name, data.color, data.skin, data.hasAdBonus);
+    const p = createPlayer(socket.id, name, data.color, data.skin, data.hasAdBonus, data.token);
+    room.players[socket.id] = p;
     socketToRoom[socket.id] = code;
+    socket.join(code);
     room.playerCount++;
     room.lastActivity = Date.now();
     
@@ -658,7 +663,7 @@ io.on('connection', (socket) => {
     addBotsToRoom(room);
 
     console.log(`🤖 Player ${name} started bot game in private room ${code}`);
-    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: null }); // Don't show room code
+    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: null, token: p.token }); // Don't show room code
   });
 
   // Join specific room by code
@@ -683,13 +688,15 @@ io.on('connection', (socket) => {
     if (room.playerCount >= MAX_PLAYERS) { socket.emit('roomFull'); return; }
     
     const name = (data.name || 'Soldier').substring(0, 16);
-    room.players[socket.id] = createPlayer(socket.id, name, data.color, data.skin, data.hasAdBonus);
+    const p = createPlayer(socket.id, name, data.color, data.skin, data.hasAdBonus, data.token);
+    room.players[socket.id] = p;
     socketToRoom[socket.id] = room.code;
+    socket.join(room.code);
     room.playerCount++;
     room.lastActivity = Date.now();
 
     console.log(`👤 Player ${name} joined room ${roomCode} (${room.playerCount}/${MAX_PLAYERS})`);
-    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code });
+    socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code, token: p.token });
   });
 
   socket.on('mouseMove', (data) => {
@@ -799,41 +806,85 @@ io.on('connection', (socket) => {
     const player = room.players[socket.id];
     
     if (player && !player.isBot) {
-      // Oyuncuyu hemen silme, 30 saniye bekle (reconnect şansı ver)
-      console.log(`⚠️ Player ${player.name} disconnected, waiting for reconnect...`);
+      const token = player.token || socket.id;
+      console.log(`⚠️ Player ${player.name} (${token}) disconnected, waiting for reconnect...`);
       
-      disconnectedPlayers.set(socket.id, {
-        player: JSON.parse(JSON.stringify(player)), // Deep copy
+      disconnectedPlayers.set(token, {
+        player: player,
         roomCode: roomCode,
+        oldSocketId: socket.id,
         disconnectTime: Date.now()
       });
       
       // 30 saniye sonra hala geri dönmediyse sil
       setTimeout(() => {
-        if (disconnectedPlayers.has(socket.id)) {
-          console.log(`❌ Player timeout, removing from game`);
-          disconnectedPlayers.delete(socket.id);
-          leaveCurrentRoom(socket.id);
+        if (disconnectedPlayers.has(token)) {
+          const dData = disconnectedPlayers.get(token);
+          if (dData && dData.oldSocketId === socket.id) {
+            console.log(`❌ Player ${player.name} timeout, removing from game`);
+            disconnectedPlayers.delete(token);
+            leaveCurrentRoom(socket.id);
+          }
         }
       }, RECONNECT_TIMEOUT);
     } else {
-      // Bot ise direkt sil
       leaveCurrentRoom(socket.id);
     }
   });
 
-  socket.on('connect', () => {
-    // Eğer bu socket ID daha önce disconnect olduysa, geri yükle
-    if (disconnectedPlayers.has(socket.id)) {
-      const data = disconnectedPlayers.get(socket.id);
+  socket.on('reconnectPlayer', (data) => {
+    const token = data ? data.token : null;
+    if (!token) {
+      socket.emit('reconnectFailed');
+      return;
+    }
+
+    let dData = disconnectedPlayers.get(token);
+    
+    // Fallback: Check if player is still in room under token
+    if (!dData && data.roomCode && rooms[data.roomCode]) {
       const room = rooms[data.roomCode];
-      
-      if (room && room.players[socket.id]) {
-        console.log(`✅ Player reconnected successfully!`);
-        disconnectedPlayers.delete(socket.id);
-        socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: data.roomCode });
+      for (const pId in room.players) {
+        if (room.players[pId].token === token) {
+          dData = { player: room.players[pId], roomCode: data.roomCode, oldSocketId: pId };
+          break;
+        }
       }
     }
+
+    if (dData) {
+      const room = rooms[dData.roomCode];
+      if (room) {
+        const oldId = dData.oldSocketId;
+        const player = dData.player;
+
+        // Update player reference in room
+        if (oldId !== socket.id) {
+          delete room.players[oldId];
+          delete socketToRoom[oldId];
+        }
+
+        player.id = socket.id;
+        room.players[socket.id] = player;
+        socketToRoom[socket.id] = dData.roomCode;
+        socket.join(dData.roomCode);
+
+        disconnectedPlayers.delete(token);
+
+        console.log(`✅ Player ${player.name} reconnected successfully! (New socket: ${socket.id})`);
+
+        socket.emit('joined', {
+          id: socket.id,
+          mapSize: MAP_SIZE,
+          roomCode: room.isPrivate ? (room.isBotRoom ? null : room.code) : room.code,
+          token: token
+        });
+        return;
+      }
+    }
+
+    console.log(`❌ Reconnect failed for token ${token}`);
+    socket.emit('reconnectFailed');
   });
 });
 

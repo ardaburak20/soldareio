@@ -2447,6 +2447,7 @@
   // === Game Events ===
   Network.onJoined((data) => {
     crazyGameplayStart();
+    hideDisconnectOverlay();
     gameState = null;
     smoothPositions = {};
     isCameraSnapped = false;
