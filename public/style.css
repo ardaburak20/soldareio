@@ -949,6 +949,67 @@ body {
   animation: pulseText 0.5s ease;
 }
 
+/* === Disconnect Overlay === */
+#disconnectOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 25, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease;
+}
+
+.disconnect-card {
+  background: rgba(20, 24, 40, 0.95);
+  border: 1px solid rgba(255, 152, 0, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 152, 0, 0.2);
+  border-radius: 16px;
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+}
+
+.disconnect-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid rgba(255, 152, 0, 0.2);
+  border-top-color: #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#disconnectTitle {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.6rem;
+  color: #ff9800;
+  margin: 0 0 10px 0;
+  letter-spacing: 1px;
+}
+
+#disconnectMessage {
+  font-size: 1rem;
+  color: #e0e6ed;
+  margin: 0 0 24px 0;
+}
+
+#disconnectBackBtn {
+  margin-top: 10px;
+  width: 100%;
+}
+
 @keyframes pulseText {
   0%   { transform: scale(0.5); opacity: 0; }
   60%  { transform: scale(1.1); opacity: 1; }

@@ -46,7 +46,8 @@
       joinRoom: "ODAYA GİR", joinRoomTitle: "ODAYA GİR", roomCodePrompt: "Oda kodunu girin (6 haneli sayı)", 
       roomCodePlaceholder: "000000", joinRoomBtnText: "GİR", cancel: "İPTAL",
       muteMusic: "Müziği Kapat", unmuteMusic: "Müziği Aç",
-      watchAdBonus: "🎬 REKLAM İZLE: Ödül Al!", adBonusActive: "⚡ REKLAM ÖDÜLÜ AKTİF!"
+      watchAdBonus: "🎬 REKLAM İZLE: Ödül Al!", adBonusActive: "⚡ REKLAM ÖDÜLÜ AKTİF!",
+      disconnectedTitle: "BAĞLANTI KESİLDİ", reconnecting: "Yeniden bağlanılıyor...", sessionExpired: "Oturum süresi doldu.", backToMenuBtn: "Ana Menüye Dön"
     },
     en: {
       subtitle: "Build your army. Dominate the map!", placeholder: "Enter name...", play: "PLAY", playBots: "PLAY WITH BOTS",
@@ -59,7 +60,8 @@
       joinRoom: "JOIN ROOM", joinRoomTitle: "JOIN ROOM", roomCodePrompt: "Enter room code (6 digits)", 
       roomCodePlaceholder: "000000", joinRoomBtnText: "JOIN", cancel: "CANCEL",
       muteMusic: "Mute Music", unmuteMusic: "Unmute Music",
-      watchAdBonus: "🎬 WATCH AD: Get Bonus!", adBonusActive: "⚡ AD BONUS ACTIVE!"
+      watchAdBonus: "🎬 WATCH AD: Get Bonus!", adBonusActive: "⚡ AD BONUS ACTIVE!",
+      disconnectedTitle: "DISCONNECTED", reconnecting: "Reconnecting...", sessionExpired: "Session expired.", backToMenuBtn: "Back to Menu"
     },
     ru: {
       subtitle: "Создай армию. Доминируй на карте!", placeholder: "Введите имя...", play: "ИГРАТЬ", playBots: "ИГРАТЬ С БОТАМИ",
@@ -72,7 +74,8 @@
       joinRoom: "ВОЙТИ В КОМНАТУ", joinRoomTitle: "ВОЙТИ В КОМНАТУ", roomCodePrompt: "Введите код комнаты (6 цифр)", 
       roomCodePlaceholder: "000000", joinRoomBtnText: "ВОЙТИ", cancel: "ОТМЕНА",
       muteMusic: "Выкл. музыку", unmuteMusic: "Вкл. музыку",
-      watchAdBonus: "🎬 СМОТРЕТЬ РЕКЛАМУ: Бонус!", adBonusActive: "⚡ БОНУС АКТИВЕН!"
+      watchAdBonus: "🎬 СМОТРЕТЬ РЕКЛАМУ: Бонус!", adBonusActive: "⚡ БОНУС АКТИВЕН!",
+      disconnectedTitle: "СОЕДИНЕНИЕ ПРЕРВАНО", reconnecting: "Переподключение...", sessionExpired: "Сессия истекла.", backToMenuBtn: "В главное меню"
     },
     zh: {
       subtitle: "建立你的军队。统治地图！", placeholder: "输入名字...", play: "开始游戏", playBots: "与机器人玩",
@@ -85,7 +88,8 @@
       joinRoom: "加入房间", joinRoomTitle: "加入房间", roomCodePrompt: "输入房间代码 (6位数字)", 
       roomCodePlaceholder: "000000", joinRoomBtnText: "加入", cancel: "取消",
       muteMusic: "静音音乐", unmuteMusic: "开启音乐",
-      watchAdBonus: "🎬 观看广告: 获得奖励!", adBonusActive: "⚡ 奖励已激活!"
+      watchAdBonus: "🎬 观看广告: 获得奖励!", adBonusActive: "⚡ 奖励已激活!",
+      disconnectedTitle: "网络连接中断", reconnecting: "正在重新连接...", sessionExpired: "会话已过期。", backToMenuBtn: "返回主菜单"
     },
     de: {
       subtitle: "Baue deine Armee auf. Beherrsche die Karte!", placeholder: "Name eingeben...", play: "SPIELEN", playBots: "MIT BOTS SPIELEN",
@@ -98,7 +102,8 @@
       joinRoom: "RAUM BEITRETEN", joinRoomTitle: "RAUM BEITRETEN", roomCodePrompt: "Raumcode eingeben (6 Ziffern)", 
       roomCodePlaceholder: "000000", joinRoomBtnText: "BEITRETEN", cancel: "ABBRECHEN",
       muteMusic: "Musik aus", unmuteMusic: "Musik an",
-      watchAdBonus: "🎬 WERBUNG ANSEHEN: Bonus!", adBonusActive: "⚡ BONUS AKTIV!"
+      watchAdBonus: "🎬 WERBUNG ANSEHEN: Bonus!", adBonusActive: "⚡ BONUS AKTIV!",
+      disconnectedTitle: "VERBINDUNG GETRENNT", reconnecting: "Verbindung wird wiederhergestellt...", sessionExpired: "Sitzung abgelaufen.", backToMenuBtn: "Hauptmenü"
     },
     fr: {
       subtitle: "Construisez votre armée. Dominez la carte!", placeholder: "Entrez votre nom...", play: "JOUER", playBots: "JOUER AVEC BOTS",
@@ -111,7 +116,8 @@
       joinRoom: "REJOINDRE SALLE", joinRoomTitle: "REJOINDRE SALLE", roomCodePrompt: "Entrez le code de la salle (6 chiffres)", 
       roomCodePlaceholder: "000000", joinRoomBtnText: "REJOINDRE", cancel: "ANNULER",
       muteMusic: "Couper musique", unmuteMusic: "Activer musique",
-      watchAdBonus: "🎬 REGARDER PUB: Bonus!", adBonusActive: "⚡ BONUS ACTIF!"
+      watchAdBonus: "🎬 REGARDER PUB: Bonus!", adBonusActive: "⚡ BONUS ACTIF!",
+      disconnectedTitle: "DECONNEXION", reconnecting: "Reconnexion en cours...", sessionExpired: "Session expirée.", backToMenuBtn: "Menu principal"
     }
   };
 
@@ -2521,6 +2527,97 @@
 
   Network.onServerFull(() => {
     alert("Sunucu dolu! / Server full!");
+  });
+
+  // === Disconnect & Reconnect Overlay Logic ===
+  const disconnectOverlay = document.getElementById('disconnectOverlay');
+  const disconnectTitle = document.getElementById('disconnectTitle');
+  const disconnectMessage = document.getElementById('disconnectMessage');
+  const disconnectSpinner = document.getElementById('disconnectSpinner');
+  const disconnectBackBtn = document.getElementById('disconnectBackBtn');
+
+  function showDisconnectOverlay(title, message, showSpinner = true) {
+    if (!playing) return;
+    const dict = I18N[currentLang] || I18N.tr;
+    if (disconnectTitle) disconnectTitle.textContent = title || dict.disconnectedTitle || 'BAĞLANTI KESİLDİ';
+    if (disconnectMessage) disconnectMessage.textContent = message || dict.reconnecting || 'Yeniden bağlanılıyor...';
+    if (disconnectSpinner) disconnectSpinner.style.display = showSpinner ? 'block' : 'none';
+    if (disconnectOverlay) disconnectOverlay.classList.remove('hidden');
+  }
+
+  function hideDisconnectOverlay() {
+    if (disconnectOverlay) disconnectOverlay.classList.add('hidden');
+  }
+
+  Network.onDisconnect((reason) => {
+    if (!playing) return;
+    const dict = I18N[currentLang] || I18N.tr;
+    showDisconnectOverlay(dict.disconnectedTitle, dict.reconnecting, true);
+  });
+
+  Network.onReconnectAttempt((attempt) => {
+    if (!playing) return;
+    const dict = I18N[currentLang] || I18N.tr;
+    showDisconnectOverlay(dict.disconnectedTitle, `${dict.reconnecting} (${attempt}/50)`, true);
+  });
+
+  Network.onReconnectSuccess(() => {
+    hideDisconnectOverlay();
+  });
+
+  Network.onReconnectFailed(() => {
+    if (!playing) return;
+    const dict = I18N[currentLang] || I18N.tr;
+    showDisconnectOverlay(dict.disconnectedTitle, dict.sessionExpired, false);
+  });
+
+  if (disconnectBackBtn) {
+    disconnectBackBtn.addEventListener('click', () => {
+      hideDisconnectOverlay();
+      Network.disconnect();
+      playing = false;
+      gameState = null;
+      if (mouseSendInterval) clearInterval(mouseSendInterval);
+      
+      SoundManager.stopAllWeaponSounds();
+      SoundManager.playMainTheme();
+      
+      startScreen.classList.remove('hidden');
+      deathScreen.classList.add('hidden');
+      leaderboardEl.classList.add('hidden');
+      topCenterHud.classList.add('hidden');
+      bottomRightHud.classList.add('hidden');
+      soldierCountEl.classList.add('hidden');
+      const roomCodeHud = document.getElementById('roomCodeHud');
+      if (roomCodeHud) roomCodeHud.classList.add('hidden');
+      if (isMobile && mobileControls) {
+        mobileControls.classList.remove('active');
+      }
+    });
+  }
+
+  // Handle mobile backgrounding / tab switching & network online/offline events
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && playing) {
+      if (!Network.isConnected()) {
+        const dict = I18N[currentLang] || I18N.tr;
+        showDisconnectOverlay(dict.disconnectedTitle, dict.reconnecting, true);
+        Network.connect();
+      }
+    }
+  });
+
+  window.addEventListener('offline', () => {
+    if (playing) {
+      const dict = I18N[currentLang] || I18N.tr;
+      showDisconnectOverlay(dict.disconnectedTitle, dict.reconnecting, true);
+    }
+  });
+
+  window.addEventListener('online', () => {
+    if (playing) {
+      Network.connect();
+    }
   });
 
   // === Start Game ===

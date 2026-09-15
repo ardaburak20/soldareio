@@ -12,6 +12,11 @@ const Network = (() => {
   let onRoomNotFoundCallback = null;
   let onRoomFullCallback = null;
 
+  let onDisconnectCallback = null;
+  let onReconnectAttemptCallback = null;
+  let onReconnectSuccessCallback = null;
+  let onReconnectFailedCallback = null;
+
   function connect() {
     if (socket) return;
     const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
@@ -32,6 +37,7 @@ const Network = (() => {
       if (myId && onStateCallback) {
         console.log('✅ Reconnected successfully!');
       }
+      if (onReconnectSuccessCallback) onReconnectSuccessCallback();
       
       if (pendingJoin) {
         socket.emit(pendingJoin.event, pendingJoin.payload);
@@ -39,16 +45,19 @@ const Network = (() => {
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log('⚠️ Connection lost. Reconnecting...');
+    socket.on('disconnect', (reason) => {
+      console.log('⚠️ Connection lost. Reconnecting... Reason:', reason);
+      if (onDisconnectCallback) onDisconnectCallback(reason);
     });
 
     socket.on('reconnect_attempt', (attempt) => {
       console.log(`🔄 Reconnection attempt ${attempt}/50`);
+      if (onReconnectAttemptCallback) onReconnectAttemptCallback(attempt);
     });
 
     socket.on('reconnect_failed', () => {
       console.log('❌ Reconnection failed. Please refresh the page.');
+      if (onReconnectFailedCallback) onReconnectFailedCallback();
     });
 
     socket.on('joined', (data) => {
@@ -76,6 +85,18 @@ const Network = (() => {
     socket.on('roomFull', () => {
       if (onRoomFullCallback) onRoomFullCallback();
     });
+  }
+
+  function disconnect() {
+    if (socket) {
+      try { socket.disconnect(); } catch(e){}
+      socket = null;
+      myId = null;
+    }
+  }
+
+  function isConnected() {
+    return !!(socket && socket.connected);
   }
 
   let pendingJoin = null;
@@ -142,12 +163,17 @@ const Network = (() => {
   function onServerFull(cb) { onServerFullCallback = cb; }
   function onRoomNotFound(cb) { onRoomNotFoundCallback = cb; }
   function onRoomFull(cb) { onRoomFullCallback = cb; }
+  function onDisconnect(cb) { onDisconnectCallback = cb; }
+  function onReconnectAttempt(cb) { onReconnectAttemptCallback = cb; }
+  function onReconnectSuccess(cb) { onReconnectSuccessCallback = cb; }
+  function onReconnectFailed(cb) { onReconnectFailedCallback = cb; }
 
   return {
-    connect, join, joinWithBots, joinRoom, sendMouse, 
+    connect, disconnect, isConnected, join, joinWithBots, joinRoom, sendMouse, 
     startShooting, stopShooting, clickShoot, manualReload, cancelRevolverReload,
     equipRevolver,
     getId, getMapSize,
-    onState, onJoined, onEliminated, onServerFull, onRoomNotFound, onRoomFull
+    onState, onJoined, onEliminated, onServerFull, onRoomNotFound, onRoomFull,
+    onDisconnect, onReconnectAttempt, onReconnectSuccess, onReconnectFailed
   };
 })();
