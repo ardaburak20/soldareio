@@ -17,7 +17,7 @@ const Network = (() => {
     const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
     console.log('🔌 Connecting to backend:', backendUrl);
     socket = io(backendUrl, { 
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 50,        // 25 → 50 (daha fazla deneme)
