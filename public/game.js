@@ -2381,14 +2381,8 @@
   joinRoomBtn.addEventListener('click', () => {
     const roomCode = roomCodeInput.value.trim();
     
-    if (roomCode.length !== 6) {
-      alert(I18N[currentLang].roomCodePrompt || 'Oda kodu 6 haneli olmalıdır');
-      roomCodeInput.focus();
-      return;
-    }
-    
-    if (!/^\d{6}$/.test(roomCode)) {
-      alert('Oda kodu sadece sayılardan oluşmalıdır');
+    if (roomCode.startsWith('0') || !/^[1-9]\d{5}$/.test(roomCode)) {
+      alert('Oda kodu 6 haneli olmalı ve 0 ile başlamamalıdır');
       roomCodeInput.focus();
       return;
     }

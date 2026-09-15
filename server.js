@@ -202,7 +202,11 @@ function generateRoomCode() {
   } else {
     if (num % 2 !== 0) num += 1;
   }
-  return num.toString();
+  let str = num.toString();
+  if (str.startsWith('0')) {
+    str = '1' + str.substring(1);
+  }
+  return str;
 }
 
 function calculateScaleLevel(score) {
@@ -329,19 +333,23 @@ function createRoomObj(code, isPrivate, isBotRoom) {
 }
 
 function getOrCreateRoom() {
-  // Find first PUBLIC room with space
-  for (const code in rooms) {
-    const room = rooms[code];
-    if (!room.isPrivate && room.playerCount < MAX_PLAYERS) {
-      return room;
-    }
+  // Find oldest PUBLIC room with space (fill current room completely before opening a new room)
+  const availablePublicRooms = Object.values(rooms)
+    .filter(r => !r.isPrivate && !r.isBotRoom && r.playerCount < MAX_PLAYERS)
+    .sort((a, b) => a.createdAt - b.createdAt);
+
+  if (availablePublicRooms.length > 0) {
+    return availablePublicRooms[0];
   }
   
   if (Object.keys(rooms).length >= MAX_ROOMS) return null;
   
   let code = generateRoomCode();
   let attempts = 0;
-  while (rooms[code] && attempts < 100) { code = generateRoomCode(); attempts++; }
+  while ((rooms[code] || code.startsWith('0')) && attempts < 100) { 
+    code = generateRoomCode(); 
+    attempts++; 
+  }
   if (attempts >= 100) return null;
   
   rooms[code] = createRoomObj(code, false, false);
@@ -657,7 +665,8 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (data) => {
     leaveCurrentRoom(socket.id);
     const roomCode = data.roomCode;
-    if (!roomCode || !/^\d{6}$/.test(roomCode)) { socket.emit('roomNotFound'); return; }
+    // Reject empty, non-6-digit, or room codes starting with '0'
+    if (!roomCode || !/^[1-9]\d{5}$/.test(roomCode)) { socket.emit('roomNotFound'); return; }
     
     let room = getRoomByCode(roomCode);
     
