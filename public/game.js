@@ -1455,8 +1455,8 @@
   // === Soldier Unit Canvas Cache ===
   const soldierCanvasCache = {};
   
-  function getSoldierCanvas(color, hasGun, isMain) {
-    const key = `${color}_${hasGun}_${isMain}`;
+  function getSoldierCanvas(color, hasGun, isMain, skinCanvas, skinKey) {
+    const key = `${color}_${hasGun}_${isMain}_${skinKey || 'none'}`;
     if (soldierCanvasCache[key]) return soldierCanvasCache[key];
     
     const size = SOLDIER_RADIUS * 3;
@@ -1484,11 +1484,19 @@
     cx.lineWidth = isMain ? 2 : 1.5;
     cx.stroke();
     
-    // Highlight (no skin)
-    cx.fillStyle = 'rgba(255,255,255,0.2)';
-    cx.beginPath();
-    cx.arc(centerX - r * 0.2, centerY - r * 0.2, r * 0.45, 0, Math.PI * 2);
-    cx.fill();
+    if (skinCanvas) {
+      cx.save();
+      cx.translate(centerX, centerY);
+      cx.imageSmoothingEnabled = false;
+      cx.drawImage(skinCanvas, -r, -r, r * 2, r * 2);
+      cx.restore();
+    } else {
+      // Highlight (no skin)
+      cx.fillStyle = 'rgba(255,255,255,0.2)';
+      cx.beginPath();
+      cx.arc(centerX - r * 0.2, centerY - r * 0.2, r * 0.45, 0, Math.PI * 2);
+      cx.fill();
+    }
     
     // Gun barrel (pointing right)
     if (hasGun || isMain) {
@@ -1504,45 +1512,13 @@
     return c;
   }
 
-  function drawSoldierUnit(sx, sy, color, canShoot, isMain, angle, skinCanvas) {
-    const r = SOLDIER_RADIUS;
-
-    if (skinCanvas) {
-      // Shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.beginPath();
-      ctx.arc(sx, sy + r * 0.5, r * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-
-      drawCircle(sx, sy, r, color, isMain ? '#fff' : hexToRgba('#000', 0.4), isMain ? 2 : 1.5);
-
-      // Skin (with rotation)
-      ctx.save();
-      ctx.translate(sx, sy);
-      ctx.rotate(angle);
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(skinCanvas, -r, -r, r * 2, r * 2);
-      ctx.restore();
-      
-      // Gun barrel
-      if (canShoot || isMain) {
-        const a = angle || 0;
-        ctx.strokeStyle = '#555';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(sx + Math.cos(a) * (r - 2), sy + Math.sin(a) * (r - 2));
-        ctx.lineTo(sx + Math.cos(a) * (r + 10), sy + Math.sin(a) * (r + 10));
-        ctx.stroke();
-      }
-    } else {
-      // ULTRA OPTIMIZE: Use cached canvas and rotate
-      const cached = getSoldierCanvas(color, canShoot, isMain);
-      ctx.save();
-      ctx.translate(sx, sy);
-      ctx.rotate(angle || 0);
-      ctx.drawImage(cached, -SOLDIER_RADIUS * 1.5, -SOLDIER_RADIUS * 1.5);
-      ctx.restore();
-    }
+  function drawSoldierUnit(sx, sy, color, canShoot, isMain, angle, skinCanvas, skinKey) {
+    const cached = getSoldierCanvas(color, canShoot, isMain, skinCanvas, skinKey);
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(angle || 0);
+    ctx.drawImage(cached, -SOLDIER_RADIUS * 1.5, -SOLDIER_RADIUS * 1.5);
+    ctx.restore();
   }
 
   function roundRect(ctx, x, y, w, h, r) {
@@ -1582,6 +1558,7 @@
       const pos = smooth(`p_${id}`, p.x, p.y, isMe ? 0.35 : 0.2);
       const angle = p.angle || 0;
       const skinCnv = getSkinCanvas(id, p.skin);
+      const skinKey = skinCnv ? (id + '_' + (p.skin ? p.skin.length : '0')) : 'none';
 
       // Shield effect - optimize gradient
       if (p.shieldActive) {
@@ -1591,7 +1568,6 @@
         ctx.save();
         ctx.globalAlpha = 0.2 + Math.sin(cachedTime * 3) * 0.05;
         
-        // Basit circle yerine gradient (daha hızlı)
         ctx.fillStyle = 'rgba(38, 198, 218, 0.15)';
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, shieldR * pulse, 0, Math.PI * 2);
@@ -1603,29 +1579,24 @@
       }
 
       // Draw swarm soldiers with Viewport Culling - ULTRA OPTIMIZE
-      const maxSmoothSoldiers = 2000; // Tüm askerler smooth (titreme yok)
-      const maxDrawnSoldiers = 2000; // Limit kaldırıldı - tüm askerler çizilsin
-      const maxSkinnedSoldiers = 2000; // TÜM askerlere skin ver
+      const maxDrawnSoldiers = 2000;
+      const maxSkinnedSoldiers = 2000;
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
       
       for (let i = 0; i < soldiersToDraw; i++) {
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
-        // Tüm askerler smooth olsun (titreme yok)
         const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15);
-        
-        // Asker açısı: HER ZAMAN oyuncunun baktığı yöne (mouse yönü / ileriye) baksın
         const solAngle = angle;
-        
-        // Tüm askerlere skin ver
         const useSkin = i < maxSkinnedSoldiers ? skinCnv : null;
-        drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, solAngle, useSkin);
+        const useSkinKey = useSkin ? skinKey : 'none';
+        drawSoldierUnit(solPos.x, solPos.y, p.color, sol.cs, false, solAngle, useSkin, useSkinKey);
       }
 
       // Draw main soldier
       if (isInViewport(pos.x, pos.y)) {
-        drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv);
+        drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv, skinCnv ? skinKey : 'none');
       }
 
       // Name tag - optimized font caching
@@ -1639,7 +1610,7 @@
       const nameY = pos.y - SOLDIER_RADIUS - (16 * zoomScale);
       
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(pos.x - nameW / 2, nameY - nameBoxHeight + 4, nameW, nameBoxHeight); // roundRect yerine fillRect (daha hızlı)
+      ctx.fillRect(pos.x - nameW / 2, nameY - nameBoxHeight + 4, nameW, nameBoxHeight);
       ctx.fillStyle = isMe ? '#4fc3f7' : '#fff';
       ctx.fillText(nameText, pos.x, nameY + 2);
     }
@@ -1651,7 +1622,7 @@
     const bullets = gameState.bullets;
     const len = bullets.length;
     
-    // ULTRA OPTIMIZE: Single path for all bullets (fill)
+    // ULTRA OPTIMIZE: Single path for inner bullet fills
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     for (let i = 0; i < len; i++) {
@@ -1662,24 +1633,14 @@
     }
     ctx.fill();
     
-    // ULTRA OPTIMIZE: Single path for all bullets (stroke) - group by color
-    const colorGroups = {};
+    // ULTRA OPTIMIZE: Fast stroke for bullet outlines without allocating object/array buckets
+    ctx.lineWidth = 1.5;
     for (let i = 0; i < len; i++) {
       const b = bullets[i];
       if (!isInViewport(b.x, b.y)) continue;
-      const c = b.c || '#4fc3f7';
-      if (!colorGroups[c]) colorGroups[c] = [];
-      colorGroups[c].push(b);
-    }
-    
-    ctx.lineWidth = 1.5;
-    for (const color in colorGroups) {
-      ctx.strokeStyle = color;
+      ctx.strokeStyle = b.c || '#4fc3f7';
       ctx.beginPath();
-      for (const b of colorGroups[color]) {
-        ctx.moveTo(b.x + 4.5, b.y);
-        ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
-      }
+      ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
       ctx.stroke();
     }
   }

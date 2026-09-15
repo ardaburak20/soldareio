@@ -112,12 +112,12 @@ const BOT_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#fd7
 const BOT_VISION_RANGE = 500;
 const BOT_SHOOT_RANGE = 450;
 const MAX_BOTS = 7;
-const VIEW_RANGE = 10000; // Full map view (optimized with zones)
+const VIEW_RANGE = 3500; // Optimized viewport range for fast networking and zero flicker
 
 // Zone-based update throttling for performance
-const ZONE_CLOSE = 2500;      // 0-2500: Update every frame
-const ZONE_MID = 5000;        // 2500-5000: Update every 2 frames
-const ZONE_FAR = 10000;       // 5000-10000: Update every 4 frames
+const ZONE_CLOSE = 2000;
+const ZONE_MID = 3500;
+const ZONE_FAR = 5000;
 
 const ZONE_CLOSE_SQ = ZONE_CLOSE * ZONE_CLOSE;
 const ZONE_MID_SQ = ZONE_MID * ZONE_MID;
@@ -1249,39 +1249,15 @@ function gameLoop() {
         }
       }
       
-      // Filter neutrals with zone-based throttling + precision reduction
+      // Filter neutrals in viewport (consistent broadcast to prevent flickering)
       const nearNeutrals = [];
       const neutralLen = neutralSoldiers.length;
       for (let i = 0; i < neutralLen; i++) {
         const n = neutralSoldiers[i];
         const dx = me.x - n.x;
         const dy = me.y - n.y;
-        const dSq = dx * dx + dy * dy;
-        
-        if (dSq > viewRangeSq) continue;
-        
-        // Zone-based throttling
-        let shouldUpdate = false;
-        if (dSq < ZONE_CLOSE_SQ) {
-          shouldUpdate = true; // Close zone: every frame
-        } else if (dSq < ZONE_MID_SQ) {
-          shouldUpdate = (me.updateFrame % 2 === 0); // Mid zone: every 2 frames
-        } else {
-          shouldUpdate = (me.updateFrame % 4 === 0); // Far zone: every 4 frames
-        }
-        
-        if (shouldUpdate) {
-          // Precision reduction for far objects
-          if (dSq > ZONE_CLOSE_SQ) {
-            nearNeutrals.push({ 
-              id: n.id, 
-              x: Math.round(n.x / 10) * 10, // Round to nearest 10
-              y: Math.round(n.y / 10) * 10, 
-              cs: n.canShoot 
-            });
-          } else {
-            nearNeutrals.push({ id: n.id, x: n.x, y: n.y, cs: n.canShoot });
-          }
+        if ((dx * dx + dy * dy) <= viewRangeSq) {
+          nearNeutrals.push({ id: n.id, x: Math.round(n.x), y: Math.round(n.y), cs: n.canShoot });
         }
       }
       
@@ -1292,44 +1268,20 @@ function gameLoop() {
         const b = bullets[i];
         const dx = me.x - b.x;
         const dy = me.y - b.y;
-        if ((dx * dx + dy * dy) < viewRangeSq) {
-          nearBullets.push({ id: b.id, x: b.x, y: b.y, c: b.color, weapon: b.weapon, ownerId: b.ownerId });
+        if ((dx * dx + dy * dy) <= viewRangeSq) {
+          nearBullets.push({ id: b.id, x: Math.round(b.x), y: Math.round(b.y), c: b.color, weapon: b.weapon, ownerId: b.ownerId });
         }
       }
       
-      // Filter pickups with zone-based throttling
+      // Filter pickups in viewport (consistent broadcast)
       const nearPickups = [];
       const pickupLen = pickups.length;
       for (let i = 0; i < pickupLen; i++) {
         const pk = pickups[i];
         const dx = me.x - pk.x;
         const dy = me.y - pk.y;
-        const dSq = dx * dx + dy * dy;
-        
-        if (dSq > viewRangeSq) continue;
-        
-        // Zone-based throttling for pickups
-        let shouldUpdate = false;
-        if (dSq < ZONE_CLOSE_SQ) {
-          shouldUpdate = true;
-        } else if (dSq < ZONE_MID_SQ) {
-          shouldUpdate = (me.updateFrame % 2 === 0);
-        } else {
-          shouldUpdate = (me.updateFrame % 4 === 0);
-        }
-        
-        if (shouldUpdate) {
-          // Precision reduction for far pickups
-          if (dSq > ZONE_CLOSE_SQ) {
-            nearPickups.push({ 
-              id: pk.id, 
-              x: Math.round(pk.x / 10) * 10, 
-              y: Math.round(pk.y / 10) * 10, 
-              type: pk.type 
-            });
-          } else {
-            nearPickups.push({ id: pk.id, x: pk.x, y: pk.y, type: pk.type });
-          }
+        if ((dx * dx + dy * dy) <= viewRangeSq) {
+          nearPickups.push({ id: pk.id, x: Math.round(pk.x), y: Math.round(pk.y), type: pk.type });
         }
       }
 
