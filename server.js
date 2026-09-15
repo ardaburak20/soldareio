@@ -191,6 +191,9 @@ const formationCache = new Map();
 const FORMATION_CACHE_MAX = 300;
 const formationResultPool = [];
 
+// Formation cache per player (stretch + angle cache)
+const playerFormationCache = new Map();
+
 function computeFormation(count, stretch, angle) {
   if (count === 0) return [];
   
@@ -233,6 +236,29 @@ function computeFormation(count, stretch, angle) {
     result[i] = item;
   }
   return result;
+}
+
+function getCachedFormation(playerId, count, stretch, angle) {
+  const cacheKey = `${playerId}_${count}`;
+  const cached = playerFormationCache.get(cacheKey);
+  
+  // Cache if stretch and angle haven't changed much (0.01 threshold)
+  if (cached && 
+      Math.abs(cached.stretch - stretch) < 0.01 && 
+      Math.abs(cached.angle - angle) < 0.01) {
+    return cached.formation;
+  }
+  
+  const formation = computeFormation(count, stretch, angle);
+  playerFormationCache.set(cacheKey, { stretch, angle, formation });
+  
+  // Limit cache size
+  if (playerFormationCache.size > 100) {
+    const firstKey = playerFormationCache.keys().next().value;
+    playerFormationCache.delete(firstKey);
+  }
+  
+  return formation;
 }
 
 function getSoldierBulletRanges(player, aimAngle) {
@@ -825,8 +851,8 @@ function gameLoop() {
       const curCount = p.soldiers.length + 1;
       if (curCount > p.maxSoldiers) p.maxSoldiers = curCount;
 
-      // Formation
-      const formation = computeFormation(p.soldiers.length, p.stretch, p.angle);
+      // Formation - USE CACHED VERSION
+      const formation = getCachedFormation(id, p.soldiers.length, p.stretch, p.angle);
       for (let i = 0; i < p.soldiers.length; i++) {
         const s = p.soldiers[i];
         const tx = p.x + formation[i].ox;
@@ -850,13 +876,23 @@ function gameLoop() {
         s.y = clamp(s.y, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
       }
 
-      // Recruit neutrals
+      // Recruit neutrals - VIEWPORT CULLING: Only check visible area
       const recruitRadSq = RECRUIT_RADIUS * RECRUIT_RADIUS;
       const armyBoundRadN = Math.ceil(Math.sqrt((p.soldiers.length || 1) / 3)) * 30 + 80 + RECRUIT_RADIUS;
       const armyBoundSqN = armyBoundRadN * armyBoundRadN;
+      
+      // Viewport culling: Calculate player's view area (based on scale)
+      const scaleLevel = calculateScaleLevel(p.soldiers.length + 1);
+      const viewRadius = (1000 * Math.pow(1.1, scaleLevel)) + armyBoundRadN; // Player's view range
+      const viewRadiusSq = viewRadius * viewRadius;
 
       for (let j = neutralSoldiers.length - 1; j >= 0; j--) {
         const ns = neutralSoldiers[j];
+        
+        // OPTIMIZE: Skip if outside viewport
+        const dSqView = distSq(p, ns);
+        if (dSqView > viewRadiusSq) continue;
+        
         const dSqP = distSq(p, ns);
         if (dSqP > armyBoundSqN) continue;
 
@@ -975,13 +1011,18 @@ function gameLoop() {
       }
       p.clickShoot = false;
 
-      // Pickup collision
+      // Pickup collision - VIEWPORT CULLING
       const pickupRadSq = (SOLDIER_RADIUS + PICKUP_RADIUS) * (SOLDIER_RADIUS + PICKUP_RADIUS);
       const armyBoundRadP = Math.ceil(Math.sqrt((p.soldiers.length || 1) / 3)) * 30 + 80 + PICKUP_RADIUS;
       const armyBoundSqP = armyBoundRadP * armyBoundRadP;
 
       for (let i = pickups.length - 1; i >= 0; i--) {
         const pk = pickups[i];
+        
+        // OPTIMIZE: Skip if outside viewport (reuse viewRadiusSq from above)
+        const dSqView = distSq(p, pk);
+        if (dSqView > viewRadiusSq) continue;
+        
         const dSqP = distSq(p, pk);
         if (dSqP > armyBoundSqP) continue;
 
