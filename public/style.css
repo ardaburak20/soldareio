@@ -1273,18 +1273,40 @@ body {
       top: 2vh !important;
       left: 2vw !important;
       width: auto !important;
-      min-width: 80px !important;
-      max-width: 10vw !important;
-      padding: 6px 10px !important;
+      min-width: auto !important;
+      max-width: none !important;
+      padding: 5px 10px !important;
       display: flex !important;
       align-items: center !important;
-      justify-content: center !important;
+      gap: 8px !important;
       border-radius: 8px !important;
     }
     
     #roomCodeDisplay {
-      font-size: clamp(0.7rem, 1.8vh, 1.1rem) !important;
+      font-size: clamp(0.75rem, 1.8vh, 1.1rem) !important;
       white-space: nowrap !important;
+    }
+
+    .ping-hud {
+      padding-left: 6px !important;
+    }
+
+    .ping-bars {
+      height: 11px !important;
+      gap: 1.5px !important;
+    }
+
+    .ping-bar {
+      width: 2.5px !important;
+    }
+
+    .ping-bar.bar-1 { height: 3px !important; }
+    .ping-bar.bar-2 { height: 5px !important; }
+    .ping-bar.bar-3 { height: 8px !important; }
+    .ping-bar.bar-4 { height: 11px !important; }
+
+    .ping-text {
+      font-size: clamp(0.55rem, 1.2vh, 0.65rem) !important;
     }
     
     /* Kill/Alive - Tam orta �st, yanyana say�lar */
