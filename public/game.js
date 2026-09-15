@@ -1608,7 +1608,7 @@
       // Draw swarm soldiers with Viewport Culling - ULTRA OPTIMIZE
       const maxSmoothSoldiers = 2000; // Tüm askerler smooth (titreme yok)
       const maxDrawnSoldiers = 2000; // Limit kaldırıldı - tüm askerler çizilsin
-      const maxSkinnedSoldiers = 20; // Sadece 20 asker skin'li
+      const maxSkinnedSoldiers = 2000; // TÜM askerlere skin ver
       const soldiersToDraw = Math.min(p.soldiers.length, maxDrawnSoldiers);
       
       // OPTIMIZE: Angle cache - frame başına bir kere (dışarıda tanımlı)
