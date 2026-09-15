@@ -1207,13 +1207,13 @@ function gameLoop() {
       }
       allPlayerData[id] = {
         id: p.id, name: p.name, color: p.color, skin: p.skin,
-        x: Math.round(p.x), y: Math.round(p.y), angle: p.angle,
+        x: Math.round(p.x), y: Math.round(p.y), angle: Math.round((p.angle || 0) * 100) / 100,
         soldiers: solArr,
         weapon: p.weapon, weaponName: WEAPONS[p.weapon].name,
         ammo: p.ammo, maxAmmo: WEAPONS[p.weapon].magSize,
         isReloading: p.isReloading, isShooting: !!p.isShooting, clickShoot: !!p.clickShoot,
-        shieldActive: p.shieldActive, shieldTimer: p.shieldTimer,
-        weaponTimer: p.weaponTimer,
+        shieldActive: p.shieldActive, shieldTimer: Math.round((p.shieldTimer || 0) * 10) / 10,
+        weaponTimer: Math.round((p.weaponTimer || 0) * 10) / 10,
         score: p.soldiers.length + 1, alive: p.alive, kills: p.kills || 0,
         hasStoredPickup: !!p.storedPickup
       };

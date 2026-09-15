@@ -1599,13 +1599,18 @@
         drawSoldierUnit(pos.x, pos.y, p.color, true, true, angle, skinCnv, skinCnv ? skinKey : 'none');
       }
 
-      // Name tag - optimized font caching
+      // Name tag - optimized font caching & text measurement caching
       const zoomScale = 1.0 / zoom;
       ctx.font = getCachedFont(zoomScale);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       const nameText = `${p.name} [${p.score}]`;
-      const nameW = ctx.measureText(nameText).width + 16;
+      if (p._cachedNameText !== nameText || p._cachedZoomScale !== zoomScale) {
+        p._cachedNameText = nameText;
+        p._cachedZoomScale = zoomScale;
+        p._nameW = ctx.measureText(nameText).width + 16;
+      }
+      const nameW = p._nameW;
       const nameBoxHeight = Math.floor(22 * zoomScale);
       const nameY = pos.y - SOLDIER_RADIUS - (16 * zoomScale);
       
