@@ -1615,8 +1615,8 @@
         // Tüm askerler smooth olsun (titreme yok)
         const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15);
         
-        // Asker açısı: HER ZAMAN GERÇEK player pozisyonuna bakacak şekilde (formation çemberinde dışa bakarlar)
-        const solAngle = Math.atan2(p.y - sol.y, p.x - sol.x);
+        // Asker açısı: HER ZAMAN oyuncunun baktığı yöne (mouse yönü / ileriye) baksın
+        const solAngle = angle;
         
         // Tüm askerlere skin ver
         const useSkin = i < maxSkinnedSoldiers ? skinCnv : null;
