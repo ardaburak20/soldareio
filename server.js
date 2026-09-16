@@ -1391,15 +1391,25 @@ function gameLoop() {
         }
       }
       
-      // Filter neutrals in viewport (consistent broadcast to prevent flickering)
+      // Filter neutrals in viewport using Spatial Grid (dramatically lowers CPU & JSON payload)
       const nearNeutrals = [];
-      const neutralLen = neutralSoldiers.length;
-      for (let i = 0; i < neutralLen; i++) {
-        const n = neutralSoldiers[i];
-        const dx = me.x - n.x;
-        const dy = me.y - n.y;
-        if ((dx * dx + dy * dy) <= viewRangeSq) {
-          nearNeutrals.push({ id: n.id, x: Math.round(n.x), y: Math.round(n.y), cs: n.canShoot });
+      const minNCX = Math.max(0, Math.floor((me.x - VIEW_RANGE) / 1000));
+      const maxNCX = Math.min(9, Math.floor((me.x + VIEW_RANGE) / 1000));
+      const minNCY = Math.max(0, Math.floor((me.y - VIEW_RANGE) / 1000));
+      const maxNCY = Math.min(9, Math.floor((me.y + VIEW_RANGE) / 1000));
+
+      for (let cx = minNCX; cx <= maxNCX; cx++) {
+        for (let cy = minNCY; cy <= maxNCY; cy++) {
+          const cellN = neutralGrid[cx + cy * 10];
+          const cellNLen = cellN.length;
+          for (let i = 0; i < cellNLen; i++) {
+            const n = cellN[i];
+            const dx = me.x - n.x;
+            const dy = me.y - n.y;
+            if ((dx * dx + dy * dy) <= viewRangeSq) {
+              nearNeutrals.push({ id: n.id, x: Math.round(n.x), y: Math.round(n.y), cs: n.canShoot });
+            }
+          }
         }
       }
       
