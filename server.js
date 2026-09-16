@@ -43,13 +43,18 @@ if (cluster.isPrimary || cluster.isMaster) {
 // ==========================================
 //  REDIS ADAPTER - Multi-CPU Cluster Support
 // ==========================================
+const MAX_REDIS_RETRIES = 3;
 const redisClient = createClient({ 
   url: 'redis://localhost:6379',
   socket: {
     reconnectStrategy: (retries) => {
-      const delay = Math.min(retries * 50, 500);
-      console.log(`🔄 Redis reconnection attempt ${retries}, delay: ${delay}ms`);
-      return delay;
+      if (retries > MAX_REDIS_RETRIES) {
+        if (retries === MAX_REDIS_RETRIES + 1) {
+          console.log(`⚠️ Redis not detected after ${MAX_REDIS_RETRIES} attempts. Running in single-CPU fallback mode.`);
+        }
+        return false; // Stop reconnecting after 3 attempts
+      }
+      return Math.min(retries * 1000, 3000);
     }
   }
 });
@@ -64,27 +69,25 @@ Promise.all([redisClient.connect(), subClient.connect()])
     console.log('📊 Rooms will be distributed across 2 CPUs automatically');
   })
   .catch((err) => {
-    console.error('❌ Redis connection failed:', err.message);
-    console.log('⚠️  FALLBACK: Running in single-CPU mode (Redis not required)');
-    console.log('💡 To enable cluster mode: Install Redis and restart server');
+    console.log('⚠️ Redis offline: Running in single-CPU mode (Redis not required)');
   });
 
 // Redis error handling (non-blocking)
 redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err.message);
+  // Silent error logs after fallback mode is active
 });
 
 subClient.on('error', (err) => {
-  console.error('Redis Sub Client Error:', err.message);
+  // Silent error logs after fallback mode is active
 });
 
 // Redis reconnection success
 redisClient.on('connect', () => {
-  console.log('✅ Redis client reconnected');
+  console.log('✅ Redis client connected');
 });
 
 subClient.on('connect', () => {
-  console.log('✅ Redis sub client reconnected');
+  console.log('✅ Redis sub client connected');
 });
 
 // CORS middleware + iframe headers for CrazyGames
@@ -265,24 +268,31 @@ function computeFormation(count, stretch, angle) {
   return result;
 }
 
-function getCachedFormation(playerId, count, stretch, angle) {
-  const cacheKey = `${playerId}_${count}`;
-  const cached = playerFormationCache.get(cacheKey);
+function getCachedFormation(playerOrId, count, stretch, angle) {
+  if (count === 0) return [];
+  
+  const player = typeof playerOrId === 'object' ? playerOrId : null;
+  const cached = player ? player._fCache : playerFormationCache.get(`${playerOrId}_${count}`);
   
   // Cache if stretch and angle haven't changed much (0.01 threshold)
   if (cached && 
+      cached.count === count &&
       Math.abs(cached.stretch - stretch) < 0.01 && 
       Math.abs(cached.angle - angle) < 0.01) {
     return cached.formation;
   }
   
   const formation = computeFormation(count, stretch, angle);
-  playerFormationCache.set(cacheKey, { stretch, angle, formation });
+  const cacheObj = { count, stretch, angle, formation };
   
-  // Limit cache size
-  if (playerFormationCache.size > 100) {
-    const firstKey = playerFormationCache.keys().next().value;
-    playerFormationCache.delete(firstKey);
+  if (player) {
+    player._fCache = cacheObj;
+  } else {
+    playerFormationCache.set(`${playerOrId}_${count}`, cacheObj);
+    if (playerFormationCache.size > 100) {
+      const firstKey = playerFormationCache.keys().next().value;
+      playerFormationCache.delete(firstKey);
+    }
   }
   
   return formation;
@@ -894,9 +904,10 @@ io.on('connection', (socket) => {
   });
 });
 
-// ==========================================
-//  GAME LOOP (Optimized)
-// ==========================================
+// Spatial Grid Pool for Zero-GC Bullet Collision Detection
+const globalSpatialGrid = new Map();
+const spatialGridPool = [];
+
 function gameLoop() {
   const dt = 1 / TICK_RATE;
 
@@ -907,8 +918,25 @@ function gameLoop() {
     const neutralSoldiers = room.neutralSoldiers;
     const pickups = room.pickups;
 
+    // Skip empty rooms with no active players or bullets
+    const playerKeys = Object.keys(players);
+    if (playerKeys.length === 0 && bullets.length === 0) {
+      continue;
+    }
+
     // Only manage bots in bot rooms
     manageBots(room);
+
+    // Build 10x10 Spatial Grid for Neutral Soldiers (1000px cell size)
+    const neutralGrid = room._neutralGrid || (room._neutralGrid = Array.from({ length: 100 }, () => []));
+    for (let c = 0; c < 100; c++) neutralGrid[c].length = 0;
+    const neutralCount = neutralSoldiers.length;
+    for (let j = 0; j < neutralCount; j++) {
+      const ns = neutralSoldiers[j];
+      const gx = Math.min(9, Math.max(0, Math.floor(ns.x / 1000)));
+      const gy = Math.min(9, Math.max(0, Math.floor(ns.y / 1000)));
+      neutralGrid[gx + gy * 10].push(ns);
+    }
 
     // --- Update Players ---
     for (const id in players) {
@@ -940,8 +968,8 @@ function gameLoop() {
       const curCount = p.soldiers.length + 1;
       if (curCount > p.maxSoldiers) p.maxSoldiers = curCount;
 
-      // Formation - USE CACHED VERSION
-      const formation = getCachedFormation(id, p.soldiers.length, p.stretch, p.angle);
+      // Formation - USE CACHED VERSION (NO STRING ALLOCATION)
+      const formation = getCachedFormation(p, p.soldiers.length, p.stretch, p.angle);
       for (let i = 0; i < p.soldiers.length; i++) {
         const s = p.soldiers[i];
         const tx = p.x + formation[i].ox;
@@ -965,38 +993,44 @@ function gameLoop() {
         s.y = clamp(s.y, SOLDIER_RADIUS, MAP_SIZE - SOLDIER_RADIUS);
       }
 
-      // Recruit neutrals - VIEWPORT CULLING: Only check visible area
+      // Recruit neutrals - SPATIAL GRID OPTIMIZED
       const recruitRadSq = RECRUIT_RADIUS * RECRUIT_RADIUS;
       const armyBoundRadN = Math.ceil(Math.sqrt((p.soldiers.length || 1) / 3)) * 30 + 80 + RECRUIT_RADIUS;
       const armyBoundSqN = armyBoundRadN * armyBoundRadN;
       
-      // Viewport culling: Calculate player's view area (based on scale)
       const scaleLevel = calculateScaleLevel(p.soldiers.length + 1);
-      const viewRadius = (1000 * Math.pow(1.1, scaleLevel)) + armyBoundRadN; // Player's view range
+      const viewRadius = (1000 * Math.pow(1.1, scaleLevel)) + armyBoundRadN;
       const viewRadiusSq = viewRadius * viewRadius;
 
-      for (let j = neutralSoldiers.length - 1; j >= 0; j--) {
-        const ns = neutralSoldiers[j];
-        
-        // OPTIMIZE: Skip if outside viewport
-        const dSqView = distSq(p, ns);
-        if (dSqView > viewRadiusSq) continue;
-        
-        const dSqP = distSq(p, ns);
-        if (dSqP > armyBoundSqN) continue;
+      const minCX = Math.max(0, Math.floor((p.x - viewRadius) / 1000));
+      const maxCX = Math.min(9, Math.floor((p.x + viewRadius) / 1000));
+      const minCY = Math.max(0, Math.floor((p.y - viewRadius) / 1000));
+      const maxCY = Math.min(9, Math.floor((p.y + viewRadius) / 1000));
 
-        let recruited = false;
-        if (dSqP < recruitRadSq) recruited = true;
-        else {
-          for (const s of p.soldiers) {
-            if (distSq(s, ns) < recruitRadSq) { recruited = true; break; }
+      for (let cx = minCX; cx <= maxCX; cx++) {
+        for (let cy = minCY; cy <= maxCY; cy++) {
+          const cellNeutrals = neutralGrid[cx + cy * 10];
+          for (let j = cellNeutrals.length - 1; j >= 0; j--) {
+            const ns = cellNeutrals[j];
+            const dSqP = distSq(p, ns);
+            if (dSqP > armyBoundSqN) continue;
+
+            let recruited = false;
+            if (dSqP < recruitRadSq) recruited = true;
+            else {
+              for (const s of p.soldiers) {
+                if (distSq(s, ns) < recruitRadSq) { recruited = true; break; }
+              }
+            }
+            if (recruited) {
+              p.soldiers.push({ id: uid(), x: ns.x, y: ns.y, canShoot: ns.canShoot, hp: 1, fireTimer: 0 });
+              const nIdx = neutralSoldiers.indexOf(ns);
+              if (nIdx !== -1) neutralSoldiers.splice(nIdx, 1);
+              cellNeutrals.splice(j, 1);
+              const c = p.soldiers.length + 1;
+              if (c > p.maxSoldiers) p.maxSoldiers = c;
+            }
           }
-        }
-        if (recruited) {
-          p.soldiers.push({ id: uid(), x: ns.x, y: ns.y, canShoot: ns.canShoot, hp: 1, fireTimer: 0 });
-          neutralSoldiers.splice(j, 1);
-          const c = p.soldiers.length + 1;
-          if (c > p.maxSoldiers) p.maxSoldiers = c;
         }
       }
 
@@ -1136,12 +1170,17 @@ function gameLoop() {
       }
     }
 
-    // --- Bullet Collisions (Spatial Grid Optimized) ---
+    // --- Bullet Collisions (Spatial Grid Object Pool Optimized) ---
     const bulletRadSq = (SOLDIER_RADIUS + BULLET_RADIUS) * (SOLDIER_RADIUS + BULLET_RADIUS);
     const shieldRadSq = (SOLDIER_RADIUS + BULLET_RADIUS + 5) * (SOLDIER_RADIUS + BULLET_RADIUS + 5);
     const GRID_SIZE_SPATIAL = 300;
 
-    const spatialGrid = new Map();
+    for (const arr of globalSpatialGrid.values()) {
+      arr.length = 0;
+      spatialGridPool.push(arr);
+    }
+    globalSpatialGrid.clear();
+
     function getGridKey(gx, gy) {
       return (gx & 0xFFFF) | ((gy & 0xFFFF) << 16);
     }
@@ -1154,10 +1193,10 @@ function gameLoop() {
       const egy = Math.floor(enemy.y / GRID_SIZE_SPATIAL);
       const eKey = getGridKey(egx, egy);
 
-      let cellEnemies = spatialGrid.get(eKey);
+      let cellEnemies = globalSpatialGrid.get(eKey);
       if (!cellEnemies) {
-        cellEnemies = [];
-        spatialGrid.set(eKey, cellEnemies);
+        cellEnemies = spatialGridPool.pop() || [];
+        globalSpatialGrid.set(eKey, cellEnemies);
       }
       cellEnemies.push(enemy);
     }
