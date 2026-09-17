@@ -36,7 +36,7 @@
 
   const I18N = {
     tr: {
-      subtitle: "Ordunu kur. Haritaya hükmet!", placeholder: "İsmini gir...", play: "OYNA", playBots: "BOTLARLA OYNA",
+      subtitle: "Ordunu kur. Haritaya hükmet!", placeholder: "İsmini gir...", play: "OYNA",
       mouse: "Fare", moveAim: "Hareket et & Nişan al", click: "Tıkla", shoot: "Ateş et",
       leaderboard: "🏆 SIRALAMA", reloading: "YENİDEN DOLDUR...", eliminated: "ELENDİN!", soldiers: "asker",
       color: "Renk Seç:", drawSkin: "Askerini Boya (8x8):", clear: "Temizle", eraser: "Silgi",
@@ -50,7 +50,7 @@
       disconnectedTitle: "BAĞLANTI KESİLDİ", reconnecting: "Yeniden bağlanılıyor...", sessionExpired: "Oturum süresi doldu.", backToMenuBtn: "Ana Menüye Dön"
     },
     en: {
-      subtitle: "Build your army. Dominate the map!", placeholder: "Enter name...", play: "PLAY", playBots: "PLAY WITH BOTS",
+      subtitle: "Build your army. Dominate the map!", placeholder: "Enter name...", play: "PLAY",
       mouse: "Mouse", moveAim: "Move & Aim", click: "Click", shoot: "Shoot",
       leaderboard: "🏆 LEADERBOARD", reloading: "RELOADING...", eliminated: "ELIMINATED!", soldiers: "soldiers",
       color: "Color:", drawSkin: "Draw Skin (8x8):", clear: "Clear", eraser: "Eraser",
@@ -64,7 +64,7 @@
       disconnectedTitle: "DISCONNECTED", reconnecting: "Reconnecting...", sessionExpired: "Session expired.", backToMenuBtn: "Back to Menu"
     },
     ru: {
-      subtitle: "Создай армию. Доминируй на карте!", placeholder: "Введите имя...", play: "ИГРАТЬ", playBots: "ИГРАТЬ С БОТАМИ",
+      subtitle: "Создай армию. Доминируй на карте!", placeholder: "Введите имя...", play: "ИГРАТЬ",
       mouse: "Мышь", moveAim: "Движение и Прицел", click: "Клик", shoot: "Стрелять",
       leaderboard: "🏆 РЕЙТИНГ", reloading: "ПЕРЕЗАРЯДКА...", eliminated: "ВЫБЫЛ!", soldiers: "солдат",
       color: "Цвет:", drawSkin: "Рисовать скин:", clear: "Очистить", eraser: "Ластик",
@@ -78,7 +78,7 @@
       disconnectedTitle: "СОЕДИНЕНИЕ ПРЕРВАНО", reconnecting: "Переподключение...", sessionExpired: "Сессия истекла.", backToMenuBtn: "В главное меню"
     },
     zh: {
-      subtitle: "建立你的军队。统治地图！", placeholder: "输入名字...", play: "开始游戏", playBots: "与机器人玩",
+      subtitle: "建立你的军队。统治地图！", placeholder: "输入名字...", play: "开始游戏",
       mouse: "鼠标", moveAim: "移动与瞄准", click: "点击", shoot: "射击",
       leaderboard: "🏆 排行榜", reloading: "重新装弹...", eliminated: "被淘汰！", soldiers: "士兵",
       color: "颜色:", drawSkin: "画皮肤(8x8):", clear: "清除", eraser: "橡皮擦",
@@ -92,7 +92,7 @@
       disconnectedTitle: "网络连接中断", reconnecting: "正在重新连接...", sessionExpired: "会话已过期。", backToMenuBtn: "返回主菜单"
     },
     de: {
-      subtitle: "Baue deine Armee auf. Beherrsche die Karte!", placeholder: "Name eingeben...", play: "SPIELEN", playBots: "MIT BOTS SPIELEN",
+      subtitle: "Baue deine Armee auf. Beherrsche die Karte!", placeholder: "Name eingeben...", play: "SPIELEN",
       mouse: "Maus", moveAim: "Bewegen & Zielen", click: "Klick", shoot: "Schießen",
       leaderboard: "🏆 BESTENLISTE", reloading: "NACHLADEN...", eliminated: "ELIMINIERT!", soldiers: "Soldaten",
       color: "Farbe:", drawSkin: "Skin zeichnen:", clear: "Klar", eraser: "Radiergummi",
@@ -106,7 +106,7 @@
       disconnectedTitle: "VERBINDUNG GETRENNT", reconnecting: "Verbindung wird wiederhergestellt...", sessionExpired: "Sitzung abgelaufen.", backToMenuBtn: "Hauptmenü"
     },
     fr: {
-      subtitle: "Construisez votre armée. Dominez la carte!", placeholder: "Entrez votre nom...", play: "JOUER", playBots: "JOUER AVEC BOTS",
+      subtitle: "Construisez votre armée. Dominez la carte!", placeholder: "Entrez votre nom...", play: "JOUER",
       mouse: "Souris", moveAim: "Bouger & Viser", click: "Clic", shoot: "Tirer",
       leaderboard: "🏆 CLASSEMENT", reloading: "RECHARGEMENT...", eliminated: "ÉLIMINÉ!", soldiers: "soldats",
       color: "Couleur:", drawSkin: "Dessiner la peau:", clear: "Effacer", eraser: "Gomme",
@@ -135,7 +135,6 @@
   const startScreen = document.getElementById('startScreen');
   const nameInput = document.getElementById('nameInput');
   const playBtn = document.getElementById('playBtn');
-  const playBotsBtn = document.getElementById('playBotsBtn');
   const leaderboardEl = document.getElementById('leaderboard');
   const lbList = document.getElementById('lbList');
   const weaponHud = document.getElementById('weaponHud');
@@ -406,7 +405,6 @@
   let gameState = null;
   let camera = { x: 5000, y: 5000 };
   let isCameraSnapped = false;
-  let isCurrentGameBotMatch = false;
   let zoom = 1.0;
   
   // Performance: Font cache
@@ -2693,23 +2691,12 @@
   }
 
   function startGame(isRespawn = false) {
-    isCurrentGameBotMatch = false;
     const { name, color, finalSkinData, adBonusUsed } = getPlayerConfig(isRespawn);
     Network.join(name, color, finalSkinData, adBonusUsed);
   }
 
-  function startBotGame(isRespawn = false) {
-    isCurrentGameBotMatch = true;
-    const { name, color, finalSkinData, adBonusUsed } = getPlayerConfig(isRespawn);
-    Network.joinWithBots(name, color, finalSkinData, adBonusUsed);
-  }
-
   playBtn.addEventListener('click', () => startGame(false));
-  playBotsBtn.addEventListener('click', () => startBotGame(false));
-  respawnBtn.addEventListener('click', () => {
-    if (isCurrentGameBotMatch) startBotGame(true);
-    else startGame(true);
-  });
+  respawnBtn.addEventListener('click', () => startGame(true));
   
   backToMenuBtn.addEventListener('click', () => {
     crazyGameplayStop();
@@ -2717,7 +2704,6 @@
     deathScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
     playing = false;
-    isCurrentGameBotMatch = false;
     SoundManager.stopAllWeaponSounds();
     SoundManager.playMainTheme();
     
@@ -2733,10 +2719,7 @@
     if (e.key === 'Enter') startGame(false);
   });
   deathNameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      if (isCurrentGameBotMatch) startBotGame(true);
-      else startGame(true);
-    }
+    if (e.key === 'Enter') startGame(true);
   });
 
   nameInput.addEventListener('input', () => {

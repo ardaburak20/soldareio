@@ -10,9 +10,7 @@ Multiplayer 2D top-down .io game backend with Socket.io
   - Mobile: Touch controls with virtual joystick and action buttons
 - Regional pricing with IP detection
 - Google OAuth login
-- High score persistence
 - Gold & items system
-- Bot AI for offline play
 
 ## Mobile Controls
 

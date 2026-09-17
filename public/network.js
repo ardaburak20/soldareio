@@ -136,10 +136,6 @@ const Network = (() => {
     sendJoinEvent('join', { name, color, skin, hasAdBonus });
   }
 
-  function joinWithBots(name, color, skin, hasAdBonus) {
-    sendJoinEvent('joinWithBots', { name, color, skin, hasAdBonus });
-  }
-
   function joinRoom(roomCode, name, color, skin, hasAdBonus) {
     sendJoinEvent('joinRoom', { roomCode, name, color, skin, hasAdBonus });
   }
@@ -196,7 +192,7 @@ const Network = (() => {
   function onReconnectFailed(cb) { onReconnectFailedCallback = cb; }
 
   return {
-    connect, disconnect, isConnected, join, joinWithBots, joinRoom, sendMouse, 
+    connect, disconnect, isConnected, join, joinRoom, sendMouse, 
     startShooting, stopShooting, clickShoot, manualReload, cancelRevolverReload,
     equipRevolver, measurePing,
     getId, getMapSize,
