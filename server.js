@@ -188,20 +188,14 @@ function weightedRandom() {
   return PICKUP_WEIGHTS[0].type;
 }
 
+let roomCounter = 100000;
 function generateRoomCode() {
-  let num = Math.floor(100000 + Math.random() * 900000);
-  // CPU 1 (Worker 1): Tek Sayılı Odalar (Odd)
-  // CPU 2 (Worker 2): Çift Sayılı Odalar (Even)
-  if (WORKER_INDEX % 2 === 1) {
-    if (num % 2 === 0) num += 1;
-  } else {
-    if (num % 2 !== 0) num += 1;
+  let code = roomCounter.toString();
+  while (rooms[code]) {
+    roomCounter++;
+    code = roomCounter.toString();
   }
-  let str = num.toString();
-  if (str.startsWith('0')) {
-    str = '1' + str.substring(1);
-  }
-  return str;
+  return code;
 }
 
 function calculateScaleLevel(score) {
