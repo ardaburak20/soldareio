@@ -814,6 +814,11 @@ function gameLoop() {
 
   for (const roomCode in rooms) {
     const room = rooms[roomCode];
+    // Only the designated host worker runs physics and spawning for this room
+    const roomNum = parseInt(roomCode, 10);
+    const isHostWorker = isNaN(roomNum) || (roomNum % numCPUs) === (WORKER_INDEX - 1);
+    if (!isHostWorker) continue;
+
     const players = room.players;
     const bullets = room.bullets;
     const neutralSoldiers = room.neutralSoldiers;
