@@ -2466,13 +2466,10 @@
       mobileControls.classList.add('active');
     }
 
-    if (data.roomCode && !isCurrentGameBotMatch) {
+    if (data.roomCode) {
       document.getElementById('roomCodeDisplay').textContent = '#' + data.roomCode;
       document.getElementById('roomCodeHud').classList.remove('hidden');
       startPingMeasurement();
-    } else if (isCurrentGameBotMatch) {
-      document.getElementById('roomCodeHud').classList.add('hidden');
-      stopPingMeasurement();
     } else {
       document.getElementById('roomCodeHud').classList.add('hidden');
       stopPingMeasurement();
@@ -2578,14 +2575,10 @@
 
   function startPingMeasurement() {
     if (pingInterval) clearInterval(pingInterval);
-    if (isCurrentGameBotMatch) {
-      stopPingMeasurement();
-      return;
-    }
     if (pingHud) pingHud.classList.remove('hidden');
     Network.measurePing(updatePingUI);
     pingInterval = setInterval(() => {
-      if (playing && !isCurrentGameBotMatch) {
+      if (playing) {
         Network.measurePing(updatePingUI);
       }
     }, 1500);
