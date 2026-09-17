@@ -62,12 +62,81 @@ Promise.all([redisClient.connect(), subClient.connect()])
     io.adapter(createAdapter(redisClient, subClient));
     console.log('✅ Redis adapter connected - Multi-CPU cluster mode ACTIVE');
     console.log('📊 Rooms will be distributed across 2 CPUs automatically');
+
+    subClient.subscribe('cluster_room_sync', (message) => {
+      try {
+        const data = JSON.parse(message);
+        if (data.workerIndex === WORKER_INDEX) return;
+
+        if (data.type === 'PLAYER_JOIN') {
+          const { roomCode, socketId, player } = data;
+          if (!rooms[roomCode]) {
+            rooms[roomCode] = createRoomObj(roomCode, false);
+          }
+          rooms[roomCode].players[socketId] = player;
+          rooms[roomCode].playerCount = Object.keys(rooms[roomCode].players).length;
+          rooms[roomCode].lastActivity = Date.now();
+        } else if (data.type === 'PLAYER_INPUT') {
+          const { roomCode, socketId, action, inputData } = data;
+          if (rooms[roomCode] && rooms[roomCode].players[socketId]) {
+            const p = rooms[roomCode].players[socketId];
+            if (action === 'mouseMove' && inputData) {
+              p.mouseX = clamp(inputData.x || 0, 0, MAP_SIZE);
+              p.mouseY = clamp(inputData.y || 0, 0, MAP_SIZE);
+            } else if (action === 'startShooting' && p.alive) {
+              p.isHoldingFire = true;
+              if (!p.isReloading) p.isShooting = true;
+            } else if (action === 'stopShooting') {
+              p.isHoldingFire = false;
+              p.isShooting = false;
+            } else if (action === 'clickShoot' && p.alive) {
+              p.clickShoot = true;
+            } else if (action === 'manualReload' && p.alive && !p.isReloading) {
+              if (p.weapon !== 'minigun') {
+                const wDef = WEAPONS[p.weapon];
+                if (wDef && p.ammo < wDef.magSize) {
+                  p.isReloading = true;
+                  p.isShooting = false;
+                  p.clickShoot = false;
+                  if (p.weapon === 'revolver') {
+                    p.revolverReloadStartAmmo = p.ammo;
+                    p.revolverReloadStartTime = Date.now();
+                    p.revolverInterrupting = false;
+                    p.revolverFinalAmmo = 6;
+                    p.reloadTimer = (6 - p.ammo) * 0.4 + 0.5;
+                  } else {
+                    p.reloadTimer = wDef.reloadTime;
+                  }
+                }
+              }
+            } else if (action === 'equipRevolver' && p.alive) {
+              if (p.storedPickup) { activateStoredPickup(p); }
+              else if (p.weapon !== 'revolver') { switchToRevolver(p); }
+            }
+          }
+        } else if (data.type === 'PLAYER_LEAVE') {
+          const { roomCode, socketId } = data;
+          if (rooms[roomCode] && rooms[roomCode].players[socketId]) {
+            delete rooms[roomCode].players[socketId];
+            rooms[roomCode].playerCount = Math.max(0, Object.keys(rooms[roomCode].players).length);
+          }
+        }
+      } catch (err) {
+        console.error('Redis room sync error:', err.message);
+      }
+    });
   })
   .catch((err) => {
     console.error('❌ Redis connection failed:', err.message);
     console.log('⚠️  FALLBACK: Running in single-CPU mode (Redis not required)');
     console.log('💡 To enable cluster mode: Install Redis and restart server');
   });
+
+function publishRoomSync(type, data) {
+  if (redisClient && redisClient.isOpen) {
+    redisClient.publish('cluster_room_sync', JSON.stringify({ workerIndex: WORKER_INDEX, type, ...data }));
+  }
+}
 
 // Redis error handling (non-blocking)
 redisClient.on('error', (err) => {
@@ -461,6 +530,7 @@ function leaveCurrentRoom(socketId) {
       room.playerCount = Math.max(0, room.playerCount - 1);
       room.lastActivity = Date.now();
       console.log(`👋 Player left room ${roomCode} (${room.playerCount} remaining)`);
+      publishRoomSync('PLAYER_LEAVE', { roomCode, socketId });
     }
     
     if (room.playerCount === 0) {
@@ -494,6 +564,8 @@ io.on('connection', (socket) => {
     room.playerCount++;
     room.lastActivity = Date.now();
 
+    publishRoomSync('PLAYER_JOIN', { roomCode: room.code, socketId: socket.id, player: p });
+
     console.log(`👤 Player ${name} joined room ${room.code} (${room.playerCount}/${MAX_PLAYERS})`);
     socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code, token: p.token });
   });
@@ -525,6 +597,8 @@ io.on('connection', (socket) => {
     room.playerCount++;
     room.lastActivity = Date.now();
 
+    publishRoomSync('PLAYER_JOIN', { roomCode: room.code, socketId: socket.id, player: p });
+
     console.log(`👤 Player ${name} joined room ${roomCode} (${room.playerCount}/${MAX_PLAYERS})`);
     socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code, token: p.token });
   });
@@ -538,6 +612,7 @@ io.on('connection', (socket) => {
     if (p && data) {
       p.mouseX = clamp(data.x || 0, 0, MAP_SIZE);
       p.mouseY = clamp(data.y || 0, 0, MAP_SIZE);
+      publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'mouseMove', inputData: { x: p.mouseX, y: p.mouseY } });
     }
   });
 
@@ -548,6 +623,7 @@ io.on('connection', (socket) => {
     if (p && p.alive) {
       p.isHoldingFire = true;
       if (!p.isReloading) p.isShooting = true;
+      publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'startShooting' });
     }
   });
 
@@ -558,6 +634,7 @@ io.on('connection', (socket) => {
     if (p) {
       p.isHoldingFire = false;
       p.isShooting = false;
+      publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'stopShooting' });
     }
   });
 
@@ -565,7 +642,10 @@ io.on('connection', (socket) => {
     const roomCode = socketToRoom[socket.id];
     if (!roomCode || !rooms[roomCode]) return;
     const p = rooms[roomCode].players[socket.id];
-    if (p && p.alive) p.clickShoot = true;
+    if (p && p.alive) {
+      p.clickShoot = true;
+      publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'clickShoot' });
+    }
   });
 
   socket.on('manualReload', () => {
@@ -589,6 +669,7 @@ io.on('connection', (socket) => {
         } else {
           p.reloadTimer = wDef.reloadTime;
         }
+        publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'manualReload' });
       }
     }
   });
@@ -624,8 +705,9 @@ io.on('connection', (socket) => {
     if (!roomCode || !rooms[roomCode]) return;
     const p = rooms[roomCode].players[socket.id];
     if (!p || !p.alive) return;
-    if (p.storedPickup) { activateStoredPickup(p); return; }
-    if (p.weapon !== 'revolver') switchToRevolver(p);
+    if (p.storedPickup) { activateStoredPickup(p); }
+    else if (p.weapon !== 'revolver') switchToRevolver(p);
+    publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'equipRevolver' });
   });
 
   socket.on('pingCheck', (clientTime, callback) => {
