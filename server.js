@@ -156,13 +156,13 @@ subClient.on('connect', () => {
   console.log('✅ Redis sub client reconnected');
 });
 
-// CORS middleware + iframe headers for CrazyGames
+// CORS middleware + iframe embedding headers
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
-  // Allow iframe embedding (for CrazyGames and other platforms)
+  // Allow iframe embedding
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', "frame-ancestors *");
   

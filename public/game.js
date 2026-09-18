@@ -2276,60 +2276,17 @@
   // === Connect and Setup ===
   Network.connect();
 
-  // === CrazyGames SDK v3 Integration ===
-  let crazySDK = null;
-  let isCrazySDKActive = false;
-
-  async function initCrazyGamesSDK() {
-    try {
-      const host = window.location.hostname;
-      const isAllowedHost = host.includes('crazygames.com') || host.includes('localhost') || host === '127.0.0.1';
-      
-      if (isAllowedHost && window.CrazyGames && window.CrazyGames.SDK) {
-        crazySDK = window.CrazyGames.SDK;
-        await crazySDK.init();
-        isCrazySDKActive = true;
-        console.log("🎮 CrazyGames SDK v3 initialized successfully");
-      } else {
-        isCrazySDKActive = false;
-        console.log("ℹ️ CrazyGames SDK disabled on this domain (running standalone)");
-      }
-    } catch (e) {
-      isCrazySDKActive = false;
-      crazySDK = null;
-      console.log("ℹ️ CrazyGames SDK notice: Running standalone on custom domain");
-    }
-  }
-  initCrazyGamesSDK();
-
-  function crazyGameplayStart() {
-    if (isCrazySDKActive && crazySDK && crazySDK.game) {
-      try { crazySDK.game.gameplayStart(); } catch(e){}
-    }
+  // === Ad Integration Hooks (Ready for Google Ads / AdSense) ===
+  function gameplayStart() {
+    // Hook for gameplay start event
   }
 
-  function crazyGameplayStop() {
-    if (isCrazySDKActive && crazySDK && crazySDK.game) {
-      try { crazySDK.game.gameplayStop(); } catch(e){}
-    }
+  function gameplayStop() {
+    // Hook for gameplay stop event
   }
 
-  let deathAdCounter = 0;
   function requestMidrollAd(onComplete) {
-    deathAdCounter++;
-    if (isCrazySDKActive && deathAdCounter % 2 === 0 && crazySDK && crazySDK.ad) {
-      try {
-        crazySDK.ad.requestAd('midroll', {
-          adStarted: () => { SoundManager.stopAllWeaponSounds(); },
-          adFinished: () => { if (onComplete) onComplete(); },
-          adError: (error) => { console.log('Midroll ad info:', error); if (onComplete) onComplete(); }
-        });
-      } catch(e) {
-        if (onComplete) onComplete();
-      }
-    } else {
-      if (onComplete) onComplete();
-    }
+    if (onComplete) onComplete();
   }
 
   let hasAdBonus = false;
@@ -2350,32 +2307,10 @@
   if (rewardedAdBtn) {
     rewardedAdBtn.addEventListener('click', () => {
       if (hasAdBonus) return;
-      if (isCrazySDKActive && crazySDK && crazySDK.ad) {
-        try {
-          crazySDK.ad.requestAd('rewarded', {
-            adStarted: () => { SoundManager.stopAllWeaponSounds(); },
-            adFinished: () => {
-              hasAdBonus = true;
-              rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
-              const dict = I18N[currentLang] || I18N.tr;
-              if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
-            },
-            adError: (error) => {
-              alert('Reklam şu an gösterilemiyor. Lütfen tekrar deneyin.');
-            }
-          });
-        } catch(e) {
-          hasAdBonus = true;
-          rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
-          const dict = I18N[currentLang] || I18N.tr;
-          if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
-        }
-      } else {
-        hasAdBonus = true;
-        rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
-        const dict = I18N[currentLang] || I18N.tr;
-        if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
-      }
+      hasAdBonus = true;
+      rewardedAdBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+      const dict = I18N[currentLang] || I18N.tr;
+      if (rewardedAdText) rewardedAdText.textContent = dict.adBonusActive || '⚡ REKLAM ÖDÜLÜ AKTİF!';
     });
   }
 
@@ -2445,7 +2380,7 @@
 
   // === Game Events ===
   Network.onJoined((data) => {
-    crazyGameplayStart();
+    gameplayStart();
     hideDisconnectOverlay();
     gameState = null;
     smoothPositions = {};
@@ -2492,7 +2427,7 @@
   });
 
   Network.onEliminated((data) => {
-    crazyGameplayStop();
+    gameplayStop();
     requestMidrollAd();
     SoundManager.stopAllWeaponSounds();
     deathScreen.classList.remove('hidden');
@@ -2692,7 +2627,7 @@
   respawnBtn.addEventListener('click', () => startGame(true));
   
   backToMenuBtn.addEventListener('click', () => {
-    crazyGameplayStop();
+    gameplayStop();
     stopPingMeasurement();
     deathScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');

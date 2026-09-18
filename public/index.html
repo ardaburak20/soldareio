@@ -9,6 +9,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
   <title>soldare.io</title>
   
+  <!-- Analytics -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="20b519b9-90d4-4b59-b348-4c495bf255a5"></script>
+  
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
@@ -23,20 +26,8 @@
   
   <!-- Backend URL Configuration -->
   <script>
-    // Backend URL detection for CrazyGames iframe support
-    const hostname = window.location.hostname;
-    const isCrazyGames = hostname.includes('crazygames.com');
-    
-    // CrazyGames iframe'den soldare.io backend'ine bağlan
-    const BACKEND_URL = isCrazyGames 
-      ? 'https://soldare.io'  // CrazyGames iframe için soldare.io backend
-      : window.location.origin; // Kendi domain için kendi backend
-    
-    console.log('🌐 Backend URL:', BACKEND_URL, '| Hostname:', hostname, '| isCrazyGames:', isCrazyGames);
+    const BACKEND_URL = window.location.origin;
   </script>
-  
-  <!-- CrazyGames SDK v3 -->
-  <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
   
   <!-- Firebase Configuration -->
   <script type="module">
