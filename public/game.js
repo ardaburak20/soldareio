@@ -1145,6 +1145,9 @@
       stopMinigunFire(false);
       clearRevolverReloadSequence();
       stopSpatialAudio();
+      lastReloadState = false;
+      lastPlayerAmmo = undefined;
+      lastPlayerWeapon = undefined;
     }
 
     window.addEventListener('click', initInteraction);
@@ -2214,13 +2217,15 @@
     });
     
     // Reload button
-    reloadButton.addEventListener('touchstart', (e) => {
-      e.preventDefault();
+    function handleReloadButtonClick(e) {
+      if (e) e.preventDefault();
       if (!playing) return;
       reloadButton.classList.add('active');
       Network.manualReload();
       setTimeout(() => reloadButton.classList.remove('active'), 200);
-    });
+    }
+    reloadButton.addEventListener('touchstart', handleReloadButtonClick, { passive: false });
+    reloadButton.addEventListener('click', handleReloadButtonClick);
   }
 
   // === Input Handling ===
@@ -2250,7 +2255,11 @@
   });
 
   window.addEventListener('keydown', (e) => {
-    if (!isMobile && playing && (e.key === 'r' || e.key === 'R')) {
+    if (playing && (e.code === 'KeyR' || e.key === 'r' || e.key === 'R' || e.key === 'ı' || e.key === 'İ')) {
+      // Avoid triggering reload if user is typing in an input element (e.g. name or room code)
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
       Network.manualReload();
     }
   });
@@ -2385,6 +2394,9 @@
     gameState = null;
     smoothPositions = {};
     isCameraSnapped = false;
+    lastFirePressTime = 0;
+    isMouseDown = false;
+    isMobileFireActive = false;
     SoundManager.stopMainTheme();
     SoundManager.stopAllWeaponSounds();
     startScreen.classList.add('hidden');

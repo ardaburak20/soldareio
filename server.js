@@ -594,6 +594,20 @@ function leaveCurrentRoom(socketId) {
   delete socketToRoom[socketId];
 }
 
+function getPlayerAndRoom(socketId) {
+  let roomCode = socketToRoom[socketId];
+  if (roomCode && rooms[roomCode] && rooms[roomCode].players[socketId]) {
+    return { roomCode, room: rooms[roomCode], player: rooms[roomCode].players[socketId] };
+  }
+  for (const code in rooms) {
+    if (rooms[code] && rooms[code].players && rooms[code].players[socketId]) {
+      socketToRoom[socketId] = code;
+      return { roomCode: code, room: rooms[code], player: rooms[code].players[socketId] };
+    }
+  }
+  return null;
+}
+
 // ==========================================
 //  SOCKET HANDLERS
 // ==========================================
@@ -653,11 +667,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('mouseMove', (data) => {
-    const roomCode = socketToRoom[socket.id];
-    if (!roomCode) return;
-    const room = rooms[roomCode];
-    if (!room) return;
-    const p = room.players[socket.id];
+    const pr = getPlayerAndRoom(socket.id);
+    if (!pr) return;
+    const { roomCode, player: p } = pr;
     if (p && data) {
       p.mouseX = clamp(data.x || 0, 0, MAP_SIZE);
       p.mouseY = clamp(data.y || 0, 0, MAP_SIZE);
@@ -666,9 +678,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('startShooting', () => {
-    const roomCode = socketToRoom[socket.id];
-    if (!roomCode || !rooms[roomCode]) return;
-    const p = rooms[roomCode].players[socket.id];
+    const pr = getPlayerAndRoom(socket.id);
+    if (!pr) return;
+    const { roomCode, player: p } = pr;
     if (p && p.alive) {
       p.isHoldingFire = true;
       if (p.isReloading && p.reloadEndTime && Date.now() >= p.reloadEndTime) p.isReloading = false;
@@ -678,9 +690,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('stopShooting', () => {
-    const roomCode = socketToRoom[socket.id];
-    if (!roomCode || !rooms[roomCode]) return;
-    const p = rooms[roomCode].players[socket.id];
+    const pr = getPlayerAndRoom(socket.id);
+    if (!pr) return;
+    const { roomCode, player: p } = pr;
     if (p) {
       p.isHoldingFire = false;
       p.isShooting = false;
@@ -689,9 +701,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('clickShoot', () => {
-    const roomCode = socketToRoom[socket.id];
-    if (!roomCode || !rooms[roomCode]) return;
-    const p = rooms[roomCode].players[socket.id];
+    const pr = getPlayerAndRoom(socket.id);
+    if (!pr) return;
+    const { roomCode, player: p } = pr;
     if (p && p.alive) {
       p.clickShoot = true;
       publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'clickShoot' });
@@ -699,22 +711,23 @@ io.on('connection', (socket) => {
   });
 
   socket.on('manualReload', () => {
-    const roomCode = socketToRoom[socket.id];
-    if (!roomCode || !rooms[roomCode]) return;
-    const p = rooms[roomCode].players[socket.id];
+    const pr = getPlayerAndRoom(socket.id);
+    if (!pr) return;
+    const { roomCode, player: p } = pr;
     if (p && p.alive) {
       const now = Date.now();
       if (p.isReloading && (p.reloadEndTime ? now >= p.reloadEndTime : p.reloadTimer <= 0)) p.isReloading = false;
       if (!p.isReloading) {
         if (p.weapon === 'minigun') return; // Minigun has no reload
         const wDef = WEAPONS[p.weapon];
-        if (p.ammo < wDef.magSize) {
+        if (wDef && p.ammo < wDef.magSize) {
           p.isReloading = true;
           p.isShooting = false;
+          p.isHoldingFire = false;
           p.clickShoot = false;
           let duration = 0;
           if (p.weapon === 'revolver') {
-            const missing = 6 - p.ammo; // Calculate exact missing bullets (no Math.max!)
+            const missing = Math.max(1, 6 - p.ammo);
             p.revolverReloadStartAmmo = p.ammo;
             p.revolverReloadStartTime = now;
             p.revolverInterrupting = false;
@@ -732,9 +745,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('cancelRevolverReload', () => {
-    const roomCode = socketToRoom[socket.id];
-    if (!roomCode || !rooms[roomCode]) return;
-    const p = rooms[roomCode].players[socket.id];
+    const pr = getPlayerAndRoom(socket.id);
+    if (!pr) return;
+    const { roomCode, player: p } = pr;
     if (p && p.alive && p.isReloading && p.weapon === 'revolver' && !p.revolverInterrupting) {
       const now = Date.now();
       const timeSinceLastPress = (now - (p.lastFirePressTime || 0)) / 1000;
@@ -744,6 +757,7 @@ io.on('connection', (socket) => {
       }
       p.revolverInterrupting = true;
       p.isShooting = false;
+      p.isHoldingFire = false;
       p.clickShoot = false;
       const elapsed = (now - (p.revolverReloadStartTime || now)) / 1000;
       const startAmmo = p.revolverReloadStartAmmo !== undefined ? p.revolverReloadStartAmmo : 0;
