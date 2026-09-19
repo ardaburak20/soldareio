@@ -16,6 +16,8 @@ const Network = (() => {
   let currentRoomCode = null;
   let isPlayingMatch = false;
 
+  let pendingReload = false; // Queue reload if socket disconnected
+
   function connect() {
     if (socket) return;
     const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
@@ -31,6 +33,13 @@ const Network = (() => {
 
     socket.on('connect', () => {
       console.log('⚡ Socket connected to backend!');
+      
+      // Send pending reload if queued
+      if (pendingReload) {
+        console.log('📤 Sending queued reload request');
+        socket.emit('manualReload');
+        pendingReload = false;
+      }
       
       if (sessionToken && isPlayingMatch) {
         console.log('🔄 Reconnecting player session with token:', sessionToken);
