@@ -2192,6 +2192,40 @@
     return false;
   }
 
+  function triggerManualReload() {
+    if (!playing) return;
+    lastReloadState = false;
+    if (gameState && gameState.players) {
+      const myId = Network.getId();
+      const me = gameState.players[myId];
+      if (me && me.weapon === 'revolver') {
+        clearRevolverReloadSequence();
+      }
+    }
+    Network.manualReload();
+  }
+
+  // Reload button handling (PC & Mobile)
+  const reloadBtnEl = document.getElementById('reloadButton');
+  if (reloadBtnEl) {
+    let lastReloadTapTime = 0;
+    function handleReloadButtonClick(e) {
+      if (e) {
+        try { e.preventDefault(); } catch (err) {}
+      }
+      const now = Date.now();
+      if (now - lastReloadTapTime < 150) return; // Deduplicate rapid touchstart/click
+      lastReloadTapTime = now;
+      if (!playing) return;
+      reloadBtnEl.classList.add('active');
+      triggerManualReload();
+      setTimeout(() => reloadBtnEl.classList.remove('active'), 200);
+    }
+    reloadBtnEl.addEventListener('pointerdown', handleReloadButtonClick);
+    reloadBtnEl.addEventListener('touchstart', handleReloadButtonClick, { passive: false });
+    reloadBtnEl.addEventListener('click', handleReloadButtonClick);
+  }
+
   if (isMobile) {
     // Listen for touches on canvas (left half) for joystick
     canvas.addEventListener('touchstart', handleJoystickStart, { passive: false });
@@ -2215,30 +2249,6 @@
       fireButton.classList.remove('active');
       Network.stopShooting();
     });
-    
-    // Reload button
-    function triggerManualReload() {
-      if (!playing) return;
-      lastReloadState = false;
-      if (gameState && gameState.players) {
-        const myId = Network.getId();
-        const me = gameState.players[myId];
-        if (me && me.weapon === 'revolver') {
-          clearRevolverReloadSequence();
-        }
-      }
-      Network.manualReload();
-    }
-
-    function handleReloadButtonClick(e) {
-      if (e) e.preventDefault();
-      if (!playing) return;
-      reloadButton.classList.add('active');
-      triggerManualReload();
-      setTimeout(() => reloadButton.classList.remove('active'), 200);
-    }
-    reloadButton.addEventListener('touchstart', handleReloadButtonClick, { passive: false });
-    reloadButton.addEventListener('click', handleReloadButtonClick);
   }
 
   // === Input Handling ===
@@ -2268,7 +2278,9 @@
   });
 
   window.addEventListener('keydown', (e) => {
-    if (playing && (e.code === 'KeyR' || e.key === 'r' || e.key === 'R' || e.key === 'ı' || e.key === 'İ')) {
+    if (!playing) return;
+    const isR = e.code === 'KeyR' || e.key === 'r' || e.key === 'R' || e.key === 'ı' || e.key === 'İ' || e.keyCode === 82;
+    if (isR) {
       // Avoid triggering reload if user is typing in an input element (e.g. name or room code)
       if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
         return;
