@@ -717,11 +717,9 @@ io.on('connection', (socket) => {
     if (!pr) return;
     const { roomCode, player: p } = pr;
     if (p && p.alive) {
-      console.log(`[RELOAD] Player ${p.name} weapon=${p.weapon} ammo=${p.ammo} isReloading=${p.isReloading}`);
       const now = Date.now();
       if (p.weapon !== 'minigun') {
         const wDef = WEAPONS[p.weapon];
-        console.log(`[RELOAD] wDef exists? ${!!wDef}, magSize=${wDef?.magSize}, ammo < magSize? ${p.ammo < wDef?.magSize}`);
         if (wDef && p.ammo < wDef.magSize) {
           p.isReloading = true;
           p.isShooting = false;
