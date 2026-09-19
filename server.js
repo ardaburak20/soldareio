@@ -94,20 +94,21 @@ Promise.all([redisClient.connect(), subClient.connect()])
               p.clickShoot = true;
             } else if (action === 'manualReload' && p.alive) {
               const now = Date.now();
-              if (p.isReloading && (p.reloadEndTime ? now >= p.reloadEndTime : p.reloadTimer <= 0)) p.isReloading = false;
-              if (!p.isReloading && p.weapon !== 'minigun') {
+              if (p.weapon !== 'minigun') {
                 const wDef = WEAPONS[p.weapon];
                 if (wDef && p.ammo < wDef.magSize) {
                   p.isReloading = true;
                   p.isShooting = false;
+                  p.isHoldingFire = false;
                   p.clickShoot = false;
+                  p.revolverInterrupting = false;
                   let duration = 0;
                   if (p.weapon === 'revolver') {
+                    const missing = Math.max(1, 6 - p.ammo);
                     p.revolverReloadStartAmmo = p.ammo;
                     p.revolverReloadStartTime = now;
-                    p.revolverInterrupting = false;
                     p.revolverFinalAmmo = 6;
-                    duration = (6 - p.ammo) * 0.4 + 0.5;
+                    duration = missing * 0.4 + 0.5;
                   } else {
                     duration = wDef.reloadTime;
                   }
@@ -120,6 +121,7 @@ Promise.all([redisClient.connect(), subClient.connect()])
                 const wDef = WEAPONS[p.weapon];
                 p.isReloading = true;
                 p.isShooting = false;
+                p.isHoldingFire = false;
                 p.clickShoot = false;
                 let duration = 0;
                 if (p.weapon === 'revolver') {
@@ -716,21 +718,19 @@ io.on('connection', (socket) => {
     const { roomCode, player: p } = pr;
     if (p && p.alive) {
       const now = Date.now();
-      if (p.isReloading && (p.reloadEndTime ? now >= p.reloadEndTime : p.reloadTimer <= 0)) p.isReloading = false;
-      if (!p.isReloading) {
-        if (p.weapon === 'minigun') return; // Minigun has no reload
+      if (p.weapon !== 'minigun') {
         const wDef = WEAPONS[p.weapon];
         if (wDef && p.ammo < wDef.magSize) {
           p.isReloading = true;
           p.isShooting = false;
           p.isHoldingFire = false;
           p.clickShoot = false;
+          p.revolverInterrupting = false;
           let duration = 0;
           if (p.weapon === 'revolver') {
             const missing = Math.max(1, 6 - p.ammo);
             p.revolverReloadStartAmmo = p.ammo;
             p.revolverReloadStartTime = now;
-            p.revolverInterrupting = false;
             p.revolverFinalAmmo = 6;
             duration = missing * 0.4 + 0.5;
           } else {

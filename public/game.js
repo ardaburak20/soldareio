@@ -2217,11 +2217,24 @@
     });
     
     // Reload button
+    function triggerManualReload() {
+      if (!playing) return;
+      lastReloadState = false;
+      if (gameState && gameState.players) {
+        const myId = Network.getId();
+        const me = gameState.players[myId];
+        if (me && me.weapon === 'revolver') {
+          clearRevolverReloadSequence();
+        }
+      }
+      Network.manualReload();
+    }
+
     function handleReloadButtonClick(e) {
       if (e) e.preventDefault();
       if (!playing) return;
       reloadButton.classList.add('active');
-      Network.manualReload();
+      triggerManualReload();
       setTimeout(() => reloadButton.classList.remove('active'), 200);
     }
     reloadButton.addEventListener('touchstart', handleReloadButtonClick, { passive: false });
@@ -2260,7 +2273,7 @@
       if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
         return;
       }
-      Network.manualReload();
+      triggerManualReload();
     }
   });
 
