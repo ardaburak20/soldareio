@@ -314,5 +314,16 @@
 
   <script src="network.js?v=9f6fb98"></script>
   <script src="game.js?v=9f6fb98"></script>
+  <script>
+    // Force reload on version mismatch
+    const CURRENT_VERSION = '9f6fb98';
+    const stored = localStorage.getItem('gameVersion');
+    if (stored && stored !== CURRENT_VERSION) {
+      localStorage.setItem('gameVersion', CURRENT_VERSION);
+      window.location.reload(true);
+    } else {
+      localStorage.setItem('gameVersion', CURRENT_VERSION);
+    }
+  </script>
 </body>
 </html>
