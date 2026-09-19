@@ -161,11 +161,11 @@ const Network = (() => {
   }
 
   function manualReload() {
-    if (socket) socket.emit('manualReload');
+    if (socket && socket.connected) socket.emit('manualReload');
   }
 
   function cancelRevolverReload() {
-    if (socket) socket.emit('cancelRevolverReload');
+    if (socket && socket.connected) socket.emit('cancelRevolverReload');
   }
 
   function measurePing(callback) {
