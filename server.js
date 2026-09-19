@@ -85,30 +85,79 @@ Promise.all([redisClient.connect(), subClient.connect()])
               p.mouseY = clamp(inputData.y || 0, 0, MAP_SIZE);
             } else if (action === 'startShooting' && p.alive) {
               p.isHoldingFire = true;
+              if (p.isReloading && p.reloadEndTime && Date.now() >= p.reloadEndTime) p.isReloading = false;
               if (!p.isReloading) p.isShooting = true;
             } else if (action === 'stopShooting') {
               p.isHoldingFire = false;
               p.isShooting = false;
             } else if (action === 'clickShoot' && p.alive) {
               p.clickShoot = true;
-            } else if (action === 'manualReload' && p.alive && !p.isReloading) {
-              if (p.weapon !== 'minigun') {
+            } else if (action === 'manualReload' && p.alive) {
+              const now = Date.now();
+              if (p.isReloading && (p.reloadEndTime ? now >= p.reloadEndTime : p.reloadTimer <= 0)) p.isReloading = false;
+              if (!p.isReloading && p.weapon !== 'minigun') {
                 const wDef = WEAPONS[p.weapon];
                 if (wDef && p.ammo < wDef.magSize) {
                   p.isReloading = true;
                   p.isShooting = false;
                   p.clickShoot = false;
+                  let duration = 0;
                   if (p.weapon === 'revolver') {
                     p.revolverReloadStartAmmo = p.ammo;
-                    p.revolverReloadStartTime = Date.now();
+                    p.revolverReloadStartTime = now;
                     p.revolverInterrupting = false;
                     p.revolverFinalAmmo = 6;
-                    p.reloadTimer = (6 - p.ammo) * 0.4 + 0.5;
+                    duration = (6 - p.ammo) * 0.4 + 0.5;
                   } else {
-                    p.reloadTimer = wDef.reloadTime;
+                    duration = wDef.reloadTime;
                   }
+                  p.reloadTimer = duration;
+                  p.reloadEndTime = now + duration * 1000;
                 }
               }
+            } else if (action === 'autoReload' && p.alive) {
+              if (p.weapon !== 'minigun') {
+                const wDef = WEAPONS[p.weapon];
+                p.isReloading = true;
+                p.isShooting = false;
+                p.clickShoot = false;
+                let duration = 0;
+                if (p.weapon === 'revolver') {
+                  p.revolverReloadStartAmmo = p.ammo;
+                  p.revolverReloadStartTime = Date.now();
+                  p.revolverInterrupting = false;
+                  p.revolverFinalAmmo = 6;
+                  duration = 6 * 0.4 + 0.5;
+                } else {
+                  duration = wDef ? wDef.reloadTime : 2.27;
+                }
+                p.reloadTimer = duration;
+                p.reloadEndTime = Date.now() + duration * 1000;
+              }
+            } else if (action === 'cancelRevolverReload' && p.alive) {
+              if (p.isReloading && p.weapon === 'revolver' && !p.revolverInterrupting) {
+                const now = Date.now();
+                p.revolverInterrupting = true;
+                p.isShooting = false;
+                p.clickShoot = false;
+                const elapsed = (now - (p.revolverReloadStartTime || now)) / 1000;
+                const startAmmo = p.revolverReloadStartAmmo !== undefined ? p.revolverReloadStartAmmo : 0;
+                const missingTotal = Math.max(1, 6 - startAmmo);
+                const bulletsDone = Math.min(missingTotal, Math.floor(elapsed / 0.4));
+                const currentBulletFinishTime = (bulletsDone + 1) * 0.4;
+                const timeUntilCurrentDone = Math.max(0, currentBulletFinishTime - elapsed);
+                const finalAmmo = Math.min(6, startAmmo + bulletsDone + 1);
+                p.revolverFinalAmmo = finalAmmo;
+                const duration = timeUntilCurrentDone + 0.5;
+                p.reloadTimer = duration;
+                p.reloadEndTime = now + duration * 1000;
+              }
+            } else if (action === 'reloadFinished') {
+              p.isReloading = false;
+              p.reloadTimer = 0;
+              p.reloadEndTime = 0;
+              p.revolverInterrupting = false;
+              if (data.ammo !== undefined) p.ammo = data.ammo;
             } else if (action === 'equipRevolver' && p.alive) {
               if (p.storedPickup) { activateStoredPickup(p); }
               else if (p.weapon !== 'revolver') { switchToRevolver(p); }
@@ -468,7 +517,7 @@ function createPlayer(id, name, color, skin, hasAdBonus, token) {
     soldiers: [], weapon: 'revolver', ammo: w.magSize,
     storedRevolverAmmo: undefined,
     isShooting: false, clickShoot: false,
-    isReloading: false, reloadTimer: 0, fireTimer: 0,
+    isReloading: false, reloadTimer: 0, reloadEndTime: 0, fireTimer: 0,
     shieldActive: !!hasAdBonus, shieldTimer: hasAdBonus ? 15 : 0, weaponTimer: 0,
     alive: true, kills: 0, storedPickup: null,
     maxSoldiers: 1, stretch: 1.0
@@ -498,7 +547,7 @@ function respawnPlayer(player) {
   player.ammo = WEAPONS.revolver.magSize;
   player.storedRevolverAmmo = undefined;
   player.isShooting = false; player.clickShoot = false;
-  player.isReloading = false; player.reloadTimer = 0; player.fireTimer = 0;
+  player.isReloading = false; player.reloadTimer = 0; player.reloadEndTime = 0; player.fireTimer = 0;
   player.shieldActive = false; player.shieldTimer = 0; player.weaponTimer = 0;
   player.alive = true; player.maxSoldiers = 1; player.stretch = 1.0;
 }
@@ -507,7 +556,7 @@ function switchToRevolver(player) {
   if (player.weapon === 'revolver') player.storedRevolverAmmo = player.ammo;
   player.weapon = 'revolver';
   player.ammo = player.storedRevolverAmmo !== undefined ? player.storedRevolverAmmo : WEAPONS.revolver.magSize;
-  player.weaponTimer = 0; player.isReloading = false; player.fireTimer = 0;
+  player.weaponTimer = 0; player.isReloading = false; player.reloadTimer = 0; player.reloadEndTime = 0; player.fireTimer = 0;
 }
 
 function activateStoredPickup(player) {
@@ -517,7 +566,7 @@ function activateStoredPickup(player) {
   if (player.weapon === 'revolver') player.storedRevolverAmmo = player.ammo;
   player.weapon = type; player.ammo = ammo;
   player.weaponTimer = WEAPONS[type].duration;
-  player.isReloading = false; player.fireTimer = 0;
+  player.isReloading = false; player.reloadTimer = 0; player.reloadEndTime = 0; player.fireTimer = 0;
   return true;
 }
 
@@ -622,6 +671,7 @@ io.on('connection', (socket) => {
     const p = rooms[roomCode].players[socket.id];
     if (p && p.alive) {
       p.isHoldingFire = true;
+      if (p.isReloading && p.reloadEndTime && Date.now() >= p.reloadEndTime) p.isReloading = false;
       if (!p.isReloading) p.isShooting = true;
       publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'startShooting' });
     }
@@ -652,24 +702,31 @@ io.on('connection', (socket) => {
     const roomCode = socketToRoom[socket.id];
     if (!roomCode || !rooms[roomCode]) return;
     const p = rooms[roomCode].players[socket.id];
-    if (p && p.alive && !p.isReloading) {
-      if (p.weapon === 'minigun') return; // Minigun has no reload
-      const wDef = WEAPONS[p.weapon];
-      if (p.ammo < wDef.magSize) {
-        p.isReloading = true;
-        p.isShooting = false;
-        p.clickShoot = false;
-        if (p.weapon === 'revolver') {
-          const missing = 6 - p.ammo; // Calculate exact missing bullets (no Math.max!)
-          p.revolverReloadStartAmmo = p.ammo;
-          p.revolverReloadStartTime = Date.now();
-          p.revolverInterrupting = false;
-          p.revolverFinalAmmo = 6;
-          p.reloadTimer = missing * 0.4 + 0.5;
-        } else {
-          p.reloadTimer = wDef.reloadTime;
+    if (p && p.alive) {
+      const now = Date.now();
+      if (p.isReloading && (p.reloadEndTime ? now >= p.reloadEndTime : p.reloadTimer <= 0)) p.isReloading = false;
+      if (!p.isReloading) {
+        if (p.weapon === 'minigun') return; // Minigun has no reload
+        const wDef = WEAPONS[p.weapon];
+        if (p.ammo < wDef.magSize) {
+          p.isReloading = true;
+          p.isShooting = false;
+          p.clickShoot = false;
+          let duration = 0;
+          if (p.weapon === 'revolver') {
+            const missing = 6 - p.ammo; // Calculate exact missing bullets (no Math.max!)
+            p.revolverReloadStartAmmo = p.ammo;
+            p.revolverReloadStartTime = now;
+            p.revolverInterrupting = false;
+            p.revolverFinalAmmo = 6;
+            duration = missing * 0.4 + 0.5;
+          } else {
+            duration = wDef.reloadTime;
+          }
+          p.reloadTimer = duration;
+          p.reloadEndTime = now + duration * 1000;
+          publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'manualReload' });
         }
-        publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'manualReload' });
       }
     }
   });
@@ -696,7 +753,10 @@ io.on('connection', (socket) => {
       const timeUntilCurrentDone = Math.max(0, currentBulletFinishTime - elapsed);
       const finalAmmo = Math.min(6, startAmmo + bulletsDone + 1);
       p.revolverFinalAmmo = finalAmmo;
-      p.reloadTimer = timeUntilCurrentDone + 0.5;
+      const duration = timeUntilCurrentDone + 0.5;
+      p.reloadTimer = duration;
+      p.reloadEndTime = now + duration * 1000;
+      publishRoomSync('PLAYER_INPUT', { roomCode, socketId: socket.id, action: 'cancelRevolverReload' });
     }
   });
 
@@ -938,11 +998,14 @@ function gameLoop() {
           const bulletsLoaded = Math.min(missingTotal, Math.floor(elapsed / 0.4));
           p.ammo = Math.min(6, startAmmo + bulletsLoaded);
         }
-        if (p.reloadTimer <= 0) {
+        if (p.reloadTimer <= 0 || (p.reloadEndTime && Date.now() >= p.reloadEndTime)) {
           p.isReloading = false;
           p.ammo = (p.weapon === 'revolver' && p.revolverInterrupting) ? (p.revolverFinalAmmo || 6) : (p.weapon === 'revolver' ? 6 : WEAPONS[p.weapon].magSize);
           p.reloadTimer = 0;
+          p.reloadEndTime = 0;
           p.revolverInterrupting = false;
+
+          publishRoomSync('PLAYER_INPUT', { roomCode, socketId: p.id, action: 'reloadFinished', ammo: p.ammo });
 
           // Resume auto firing immediately if player is holding fire button when reload finishes
           const wDef = WEAPONS[p.weapon];
@@ -998,15 +1061,19 @@ function gameLoop() {
           p.isShooting = false; p.clickShoot = false;
           if (p.weapon !== 'minigun') {
             p.isReloading = true;
+            let duration = 0;
             if (p.weapon === 'revolver') {
-              p.revolverReloadStartAmmo = p.ammo; // Fixed: use actual ammo (0) instead of hardcoded
+              p.revolverReloadStartAmmo = p.ammo;
               p.revolverReloadStartTime = Date.now();
               p.revolverInterrupting = false;
               p.revolverFinalAmmo = 6;
-              p.reloadTimer = 6 * 0.4 + 0.5; // 2.9s full reload
+              duration = 6 * 0.4 + 0.5; // 2.9s full reload
             } else {
-              p.reloadTimer = wDef.reloadTime;
+              duration = wDef.reloadTime;
             }
+            p.reloadTimer = duration;
+            p.reloadEndTime = Date.now() + duration * 1000;
+            publishRoomSync('PLAYER_INPUT', { roomCode, socketId: p.id, action: 'autoReload' });
           }
         }
       }
