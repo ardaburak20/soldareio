@@ -2280,13 +2280,10 @@
   });
 
   window.addEventListener('keydown', (e) => {
-    if (!playing) return;
     const isR = e.code === 'KeyR' || e.key === 'r' || e.key === 'R' || e.key === 'ı' || e.key === 'İ' || e.keyCode === 82;
-    if (isR) {
-      // Avoid triggering reload if user is typing in an input element (e.g. name or room code)
-      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
-        return;
-      }
+    if (isR && playing) {
+      // Always trigger reload, even if input focused
+      e.preventDefault();
       triggerManualReload();
     }
   });
