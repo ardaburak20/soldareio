@@ -2195,15 +2195,19 @@
   }
 
   function triggerManualReload() {
+    console.log('[CLIENT] triggerManualReload called, playing=', playing);
     if (!playing) return;
+    console.log('[CLIENT] Calling SoundManager.resetReloadState()');
     SoundManager.resetReloadState();
     if (gameState && gameState.players) {
       const myId = Network.getId();
       const me = gameState.players[myId];
+      console.log('[CLIENT] My player:', me?.name, 'weapon=', me?.weapon, 'ammo=', me?.ammo);
       if (me && me.weapon === 'revolver') {
         SoundManager.clearRevolverReloadSequence();
       }
     }
+    console.log('[CLIENT] Calling Network.manualReload()');
     Network.manualReload();
   }
 
