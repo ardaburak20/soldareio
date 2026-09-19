@@ -1161,6 +1161,8 @@
       updateWeaponSounds,
       stopAllWeaponSounds,
       interruptRevolverReload,
+      clearRevolverReloadSequence,
+      resetReloadState() { lastReloadState = false; },
       initInteraction,
       toggleMute,
       updateMuteButtonUI
@@ -2194,12 +2196,12 @@
 
   function triggerManualReload() {
     if (!playing) return;
-    lastReloadState = false;
+    SoundManager.resetReloadState();
     if (gameState && gameState.players) {
       const myId = Network.getId();
       const me = gameState.players[myId];
       if (me && me.weapon === 'revolver') {
-        clearRevolverReloadSequence();
+        SoundManager.clearRevolverReloadSequence();
       }
     }
     Network.manualReload();
