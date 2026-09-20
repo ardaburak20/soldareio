@@ -2225,11 +2225,13 @@
   function triggerManualReload() {
     if (!playing) return;
     
-    // Don't reload if already reloading
     const myId = Network.getId();
     const me = gameState?.players?.[myId];
+    // Don't reload if already reloading or ammo is full
     if (me && me.isReloading) return;
+    if (me && me.maxAmmo && me.ammo >= me.maxAmmo) return;
     
+    console.log('🔄 Manual reload triggered');
     SoundManager.resetReloadState();
     if (gameState && gameState.players) {
       const myId = Network.getId();
@@ -2298,6 +2300,9 @@
   });
 
   canvas.addEventListener('mousedown', (e) => {
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
     if (!isMobile && e.button === 0 && playing) {
       if (handleShootTrigger()) return;
       isMouseDown = true;
@@ -2317,9 +2322,13 @@
     if (!playing) return;
     const isR = e.code === 'KeyR' || e.key === 'r' || e.key === 'R' || e.key === 'ı' || e.key === 'İ' || e.keyCode === 82;
     if (isR) {
-      // Avoid triggering reload if user is typing in an input element (e.g. name or room code)
+      const startVisible = !startScreen.classList.contains('hidden');
+      const modalVisible = roomModal && !roomModal.classList.contains('hidden');
+      const deathVisible = !deathScreen.classList.contains('hidden');
+      if (startVisible || modalVisible || deathVisible) return;
+
       if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
-        return;
+        document.activeElement.blur();
       }
       triggerManualReload();
     }
@@ -2450,6 +2459,9 @@
 
   // === Game Events ===
   Network.onJoined((data) => {
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
     gameplayStart();
     hideDisconnectOverlay();
     gameState = null;
