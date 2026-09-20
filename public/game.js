@@ -2224,6 +2224,12 @@
 
   function triggerManualReload() {
     if (!playing) return;
+    
+    // Don't reload if already reloading
+    const myId = Network.getId();
+    const me = gameState?.players?.[myId];
+    if (me && me.isReloading) return;
+    
     SoundManager.resetReloadState();
     if (gameState && gameState.players) {
       const myId = Network.getId();
