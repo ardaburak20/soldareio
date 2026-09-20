@@ -170,7 +170,12 @@ const Network = (() => {
   }
 
   function manualReload() {
-    if (socket && socket.connected) socket.emit('manualReload');
+    if (socket && socket.connected) {
+      socket.emit('manualReload');
+    } else {
+      console.log('⏳ Socket not connected, queuing reload request');
+      pendingReload = true;
+    }
   }
 
   function cancelRevolverReload() {
