@@ -2,20 +2,36 @@
 //  SOLDARE.IO - Game Server (v5.0 - Multi-CPU Cluster Mode)
 // ==========================================
 const cluster = require('cluster');
-const numCPUs = 2; // 2 CPU Cores (DigitalOcean Droplet)
+const numCPUs = 2; // 2 CPU Cores (CPU 1 = Tek Sayılı Odalar, CPU 2 = Çift Sayılı Odalar)
 
 if (cluster.isPrimary || cluster.isMaster) {
   console.log(`🚀 Primary Process ${process.pid} is running.`);
   console.log(`⚡ Forking ${numCPUs} CPU Workers (CPU 1 = Tek Sayılı Odalar, CPU 2 = Çift Sayılı Odalar)...`);
 
+  function setupWorkerIPC(worker) {
+    worker.on('message', (msg) => {
+      if (msg && msg.type === 'cluster_room_sync') {
+        for (const id in cluster.workers) {
+          if (cluster.workers[id] && cluster.workers[id].id !== worker.id) {
+            try {
+              cluster.workers[id].send(msg);
+            } catch (e) {}
+          }
+        }
+      }
+    });
+  }
+
   for (let i = 0; i < numCPUs; i++) {
-    cluster.fork({ WORKER_INDEX: i + 1 });
+    const worker = cluster.fork({ WORKER_INDEX: i + 1 });
+    setupWorkerIPC(worker);
   }
 
   cluster.on('exit', (worker, code, signal) => {
-    console.log(`⚠️ Worker process ${worker.process.pid} exited. Restarting worker...`);
+    console.log(`⚠️ Worker process ${worker.process ? worker.process.pid : worker.pid} exited. Restarting worker...`);
     const workerIndex = worker.id || 1;
-    cluster.fork({ WORKER_INDEX: workerIndex });
+    const newWorker = cluster.fork({ WORKER_INDEX: workerIndex });
+    setupWorkerIPC(newWorker);
   });
 } else {
   const WORKER_INDEX = parseInt(process.env.WORKER_INDEX || 1, 10);
@@ -25,8 +41,14 @@ if (cluster.isPrimary || cluster.isMaster) {
   const http = require('http');
   const { Server } = require('socket.io');
   const path = require('path');
-  const { createAdapter } = require("@socket.io/redis-adapter");
-  const { createClient } = require("redis");
+  let createAdapter = null;
+  let createClient = null;
+  try {
+    createAdapter = require("@socket.io/redis-adapter").createAdapter;
+    createClient = require("redis").createClient;
+  } catch (e) {
+    // Redis packages optional; native Node IPC handles 2 CPU sync
+  }
 
   const app = express();
   const server = http.createServer(app);
@@ -41,171 +63,81 @@ if (cluster.isPrimary || cluster.isMaster) {
   });
 
 // ==========================================
-//  REDIS ADAPTER - Multi-CPU Cluster Support
+//  REDIS ADAPTER / IPC - Multi-CPU Cluster Support
 // ==========================================
-const redisClient = createClient({ 
-  url: 'redis://localhost:6379',
-  socket: {
-    reconnectStrategy: (retries) => {
-      const delay = Math.min(retries * 50, 500);
-      console.log(`🔄 Redis reconnection attempt ${retries}, delay: ${delay}ms`);
-      return delay;
-    }
-  }
-});
+let redisClient = null;
+let subClient = null;
 
-const subClient = redisClient.duplicate();
-
-// Redis bağlantısı kur
-Promise.all([redisClient.connect(), subClient.connect()])
-  .then(() => {
-    io.adapter(createAdapter(redisClient, subClient));
-    console.log('✅ Redis adapter connected - Multi-CPU cluster mode ACTIVE');
-    console.log('📊 Rooms will be distributed across 2 CPUs automatically');
-
-    subClient.subscribe('cluster_room_sync', (message) => {
-      try {
-        const data = JSON.parse(message);
-        if (data.workerIndex === WORKER_INDEX) return;
-
-        if (data.type === 'PLAYER_JOIN') {
-          const { roomCode, socketId, player } = data;
-          if (!rooms[roomCode]) {
-            rooms[roomCode] = createRoomObj(roomCode, false);
-          }
-          rooms[roomCode].players[socketId] = player;
-          rooms[roomCode].playerCount = Object.keys(rooms[roomCode].players).length;
-          rooms[roomCode].lastActivity = Date.now();
-        } else if (data.type === 'PLAYER_INPUT') {
-          const { roomCode, socketId, action, inputData } = data;
-          if (rooms[roomCode] && rooms[roomCode].players[socketId]) {
-            const p = rooms[roomCode].players[socketId];
-            if (action === 'mouseMove' && inputData) {
-              p.mouseX = clamp(inputData.x || 0, 0, MAP_SIZE);
-              p.mouseY = clamp(inputData.y || 0, 0, MAP_SIZE);
-            } else if (action === 'startShooting' && p.alive) {
-              p.isHoldingFire = true;
-              if (p.isReloading && p.reloadEndTime && Date.now() >= p.reloadEndTime) p.isReloading = false;
-              if (!p.isReloading) p.isShooting = true;
-            } else if (action === 'stopShooting') {
-              p.isHoldingFire = false;
-              p.isShooting = false;
-            } else if (action === 'clickShoot' && p.alive) {
-              p.clickShoot = true;
-            } else if (action === 'manualReload' && p.alive) {
-              const now = Date.now();
-              if (p.weapon !== 'minigun') {
-                const wDef = WEAPONS[p.weapon];
-                if (wDef && p.ammo < wDef.magSize) {
-                  p.isReloading = true;
-                  p.isShooting = false;
-                  p.isHoldingFire = false;
-                  p.clickShoot = false;
-                  p.revolverInterrupting = false;
-                  let duration = 0;
-                  if (p.weapon === 'revolver') {
-                    const missing = Math.max(1, 6 - p.ammo);
-                    p.revolverReloadStartAmmo = p.ammo;
-                    p.revolverReloadStartTime = now;
-                    p.revolverFinalAmmo = 6;
-                    duration = missing * 0.4 + 0.5;
-                  } else {
-                    duration = wDef.reloadTime;
-                  }
-                  p.reloadTimer = duration;
-                  p.reloadEndTime = now + duration * 1000;
-                }
-              }
-            } else if (action === 'autoReload' && p.alive) {
-              if (p.weapon !== 'minigun') {
-                const wDef = WEAPONS[p.weapon];
-                p.isReloading = true;
-                p.isShooting = false;
-                p.isHoldingFire = false;
-                p.clickShoot = false;
-                let duration = 0;
-                if (p.weapon === 'revolver') {
-                  p.revolverReloadStartAmmo = p.ammo;
-                  p.revolverReloadStartTime = Date.now();
-                  p.revolverInterrupting = false;
-                  p.revolverFinalAmmo = 6;
-                  duration = 6 * 0.4 + 0.5;
-                } else {
-                  duration = wDef ? wDef.reloadTime : 2.27;
-                }
-                p.reloadTimer = duration;
-                p.reloadEndTime = Date.now() + duration * 1000;
-              }
-            } else if (action === 'cancelRevolverReload' && p.alive) {
-              if (p.isReloading && p.weapon === 'revolver' && !p.revolverInterrupting) {
-                const now = Date.now();
-                p.revolverInterrupting = true;
-                p.isShooting = false;
-                p.clickShoot = false;
-                const elapsed = (now - (p.revolverReloadStartTime || now)) / 1000;
-                const startAmmo = p.revolverReloadStartAmmo !== undefined ? p.revolverReloadStartAmmo : 0;
-                const missingTotal = Math.max(1, 6 - startAmmo);
-                const bulletsDone = Math.min(missingTotal, Math.floor(elapsed / 0.4));
-                const currentBulletFinishTime = (bulletsDone + 1) * 0.4;
-                const timeUntilCurrentDone = Math.max(0, currentBulletFinishTime - elapsed);
-                const finalAmmo = Math.min(6, startAmmo + bulletsDone + 1);
-                p.revolverFinalAmmo = finalAmmo;
-                const duration = timeUntilCurrentDone + 0.5;
-                p.reloadTimer = duration;
-                p.reloadEndTime = now + duration * 1000;
-              }
-            } else if (action === 'reloadFinished') {
-              p.isReloading = false;
-              p.reloadTimer = 0;
-              p.reloadEndTime = 0;
-              p.revolverInterrupting = false;
-              if (data.ammo !== undefined) p.ammo = data.ammo;
-            } else if (action === 'equipRevolver' && p.alive) {
-              if (p.storedPickup) { activateStoredPickup(p); }
-              else if (p.weapon !== 'revolver') { switchToRevolver(p); }
-            }
-          }
-        } else if (data.type === 'PLAYER_LEAVE') {
-          const { roomCode, socketId } = data;
-          if (rooms[roomCode] && rooms[roomCode].players[socketId]) {
-            delete rooms[roomCode].players[socketId];
-            rooms[roomCode].playerCount = Math.max(0, Object.keys(rooms[roomCode].players).length);
-          }
+if (createClient && createAdapter) {
+  try {
+    redisClient = createClient({ 
+      url: 'redis://localhost:6379',
+      socket: {
+        reconnectStrategy: (retries) => {
+          const delay = Math.min(retries * 50, 500);
+          return delay;
         }
-      } catch (err) {
-        console.error('Redis room sync error:', err.message);
       }
     });
-  })
-  .catch((err) => {
-    console.error('❌ Redis connection failed:', err.message);
-    console.log('⚠️  FALLBACK: Running in single-CPU mode (Redis not required)');
-    console.log('💡 To enable cluster mode: Install Redis and restart server');
-  });
+
+    redisClient.on('error', () => {});
+    subClient = redisClient.duplicate();
+    subClient.on('error', () => {});
+
+    Promise.all([redisClient.connect(), subClient.connect()])
+      .then(() => {
+        io.adapter(createAdapter(redisClient, subClient));
+        console.log('✅ Redis adapter connected - Multi-CPU cluster mode ACTIVE');
+        console.log('📊 Rooms will be distributed across 2 CPUs automatically');
+
+        subClient.subscribe('cluster_room_sync', (message) => {
+          try {
+            const data = JSON.parse(message);
+            handleClusterSyncMessage(data);
+          } catch (err) {}
+        });
+      })
+      .catch(() => {
+        console.log('⚡ Native Node IPC 2-CPU cluster sync ACTIVE (Redis not required)');
+      });
+  } catch (err) {
+    console.log('⚡ Native Node IPC 2-CPU cluster sync ACTIVE (Redis not available)');
+  }
+} else {
+  console.log('⚡ Native Node IPC 2-CPU cluster sync ACTIVE (No Redis dependency)');
+}
 
 function publishRoomSync(type, data) {
+  const payload = { workerIndex: WORKER_INDEX, type, ...data };
   if (redisClient && redisClient.isOpen) {
-    redisClient.publish('cluster_room_sync', JSON.stringify({ workerIndex: WORKER_INDEX, type, ...data }));
+    try {
+      redisClient.publish('cluster_room_sync', JSON.stringify(payload));
+    } catch (e) {}
+  }
+  if (process.send) {
+    try {
+      process.send({ type: 'cluster_room_sync', data: payload });
+    } catch (e) {}
   }
 }
 
-// Redis error handling (non-blocking)
-redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err.message);
-});
+if (redisClient && subClient) {
+  redisClient.on('error', (err) => {
+    console.error('Redis Client Error:', err.message);
+  });
 
-subClient.on('error', (err) => {
-  console.error('Redis Sub Client Error:', err.message);
-});
+  subClient.on('error', (err) => {
+    console.error('Redis Sub Client Error:', err.message);
+  });
 
-// Redis reconnection success
-redisClient.on('connect', () => {
-  console.log('✅ Redis client reconnected');
-});
+  redisClient.on('connect', () => {
+    console.log('✅ Redis client reconnected');
+  });
 
-subClient.on('connect', () => {
-  console.log('✅ Redis sub client reconnected');
-});
+  subClient.on('connect', () => {
+    console.log('✅ Redis sub client reconnected');
+  });
+}
 
 // CORS middleware + iframe embedding headers
 app.use((req, res, next) => {
