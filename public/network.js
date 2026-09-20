@@ -76,6 +76,8 @@ const Network = (() => {
       if (onReconnectFailedCallback) onReconnectFailedCallback();
     });
 
+    let stateWatchdogTimer = null;
+
     socket.on('joined', (data) => {
       myId = data.id;
       mapSize = data.mapSize;
@@ -83,9 +85,21 @@ const Network = (() => {
       if (data.roomCode !== undefined) currentRoomCode = data.roomCode;
       isPlayingMatch = true;
       if (onJoinedCallback) onJoinedCallback(data);
+
+      if (stateWatchdogTimer) clearTimeout(stateWatchdogTimer);
+      stateWatchdogTimer = setTimeout(() => {
+        if (isPlayingMatch && socket && socket.connected) {
+          console.log('⚠️ GameState delayed, requesting sync...');
+          socket.emit('mouseMove', { x: 5000, y: 5000 });
+        }
+      }, 3000);
     });
 
     socket.on('gameState', (state) => {
+      if (stateWatchdogTimer) {
+        clearTimeout(stateWatchdogTimer);
+        stateWatchdogTimer = null;
+      }
       if (onStateCallback) onStateCallback(state);
     });
 

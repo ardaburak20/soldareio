@@ -107,6 +107,72 @@ if (createClient && createAdapter) {
   console.log('⚡ Native Node IPC 2-CPU cluster sync ACTIVE (No Redis dependency)');
 }
 
+if (process.send) {
+  process.on('message', (msg) => {
+    if (msg && msg.type === 'cluster_room_sync' && msg.data) {
+      handleClusterSyncMessage(msg.data);
+    }
+  });
+}
+
+function handleClusterSyncMessage(data) {
+  if (!data || data.workerIndex === WORKER_INDEX) return;
+
+  const { type, roomCode, socketId, player, action, inputData } = data;
+  
+  if (type === 'PLAYER_JOIN') {
+    if (!rooms[roomCode]) {
+      rooms[roomCode] = createRoomObj(roomCode, false);
+    }
+    const room = rooms[roomCode];
+    if (player && !room.players[socketId]) {
+      room.players[socketId] = player;
+      room.playerCount++;
+      room.lastActivity = Date.now();
+      socketToRoom[socketId] = roomCode;
+    }
+  } else if (type === 'PLAYER_LEAVE') {
+    if (rooms[roomCode]) {
+      const room = rooms[roomCode];
+      if (room.players[socketId]) {
+        delete room.players[socketId];
+        room.playerCount = Math.max(0, room.playerCount - 1);
+        room.lastActivity = Date.now();
+      }
+    }
+    delete socketToRoom[socketId];
+  } else if (type === 'PLAYER_INPUT') {
+    if (rooms[roomCode] && rooms[roomCode].players[socketId]) {
+      const p = rooms[roomCode].players[socketId];
+      if (action === 'mouseMove' && inputData) {
+        p.mouseX = clamp(inputData.x || 0, 0, MAP_SIZE);
+        p.mouseY = clamp(inputData.y || 0, 0, MAP_SIZE);
+      } else if (action === 'startShooting' && p.alive) {
+        p.isHoldingFire = true;
+        if (!p.isReloading) p.isShooting = true;
+      } else if (action === 'stopShooting') {
+        p.isHoldingFire = false;
+        p.isShooting = false;
+      } else if (action === 'clickShoot' && p.alive) {
+        p.clickShoot = true;
+      } else if (action === 'manualReload' && p.alive) {
+        p.isReloading = true;
+        p.isShooting = false;
+      } else if (action === 'equipRevolver' && p.alive) {
+        if (p.storedPickup) activateStoredPickup(p);
+        else if (p.weapon !== 'revolver') switchToRevolver(p);
+      }
+    }
+  } else if (type === 'GAME_STATE_BROADCAST') {
+    if (data.targetSocketId && data.gameState) {
+      const targetSocket = io.sockets.sockets.get(data.targetSocketId);
+      if (targetSocket) {
+        targetSocket.volatile.emit('gameState', data.gameState);
+      }
+    }
+  }
+}
+
 function publishRoomSync(type, data) {
   const payload = { workerIndex: WORKER_INDEX, type, ...data };
   if (redisClient && redisClient.isOpen) {
@@ -381,9 +447,14 @@ function createRoomObj(code, isPrivate) {
 }
 
 function getOrCreateRoom() {
-  // Find oldest PUBLIC room with space (fill current room completely before opening a new room)
+  // Find oldest PUBLIC room hosted by THIS worker CPU with space
   const availablePublicRooms = Object.values(rooms)
-    .filter(r => !r.isPrivate && r.playerCount < MAX_PLAYERS)
+    .filter(r => {
+      if (r.isPrivate || r.playerCount >= MAX_PLAYERS) return false;
+      const roomNum = parseInt(r.code, 10);
+      const isHostWorker = isNaN(roomNum) || (roomNum % numCPUs) === (WORKER_INDEX - 1);
+      return isHostWorker;
+    })
     .sort((a, b) => a.createdAt - b.createdAt);
 
   if (availablePublicRooms.length > 0) {
@@ -394,14 +465,19 @@ function getOrCreateRoom() {
   
   let code = generateRoomCode();
   let attempts = 0;
-  while ((rooms[code] || code.startsWith('0')) && attempts < 100) { 
+  while (attempts < 200) {
+    const roomNum = parseInt(code, 10);
+    const isHostWorker = isNaN(roomNum) || (roomNum % numCPUs) === (WORKER_INDEX - 1);
+    if (!rooms[code] && !code.startsWith('0') && isHostWorker) {
+      break;
+    }
     code = generateRoomCode(); 
     attempts++; 
   }
-  if (attempts >= 100) return null;
+  if (attempts >= 200) return null;
   
   rooms[code] = createRoomObj(code, false);
-  console.log(`🏠 New public room: ${code} (Total: ${Object.keys(rooms).length})`);
+  console.log(`🏠 [CPU ${WORKER_INDEX}] New public room: ${code} (Total: ${Object.keys(rooms).length})`);
   return rooms[code];
 }
 
@@ -1322,7 +1398,12 @@ function gameLoop() {
         roomCode: room.isPrivate ? null : roomCode
       };
 
-      io.to(id).volatile.emit('gameState', state);
+      const localSocket = io.sockets.sockets.get(id);
+      if (localSocket) {
+        localSocket.volatile.emit('gameState', state);
+      } else {
+        publishRoomSync('GAME_STATE_BROADCAST', { targetSocketId: id, gameState: state });
+      }
     }
   } // End room loop
 }
