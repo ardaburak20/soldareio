@@ -315,13 +315,30 @@ function weightedRandom() {
 }
 
 let roomCounter = 100000;
-function generateRoomCode() {
-  let code = roomCounter.toString();
-  while (rooms[code]) {
-    roomCounter++;
-    code = roomCounter.toString();
+function generateRoomCode(workerIndex) {
+  const targetWorker = workerIndex || WORKER_INDEX;
+  const targetParity = (targetWorker - 1) % numCPUs;
+  let candidate = roomCounter;
+  
+  let remainder = candidate % numCPUs;
+  if (remainder < 0) remainder += numCPUs;
+  if (remainder !== targetParity) {
+    let diff = targetParity - remainder;
+    if (diff < 0) diff += numCPUs;
+    candidate += diff;
   }
-  return code;
+  
+  let attempts = 0;
+  while (attempts < 5000) {
+    const codeStr = candidate.toString();
+    if (!rooms[codeStr] && !codeStr.startsWith('0')) {
+      roomCounter = candidate + 1;
+      return codeStr;
+    }
+    candidate += numCPUs;
+    attempts++;
+  }
+  return null;
 }
 
 function calculateScaleLevel(score) {
@@ -447,7 +464,7 @@ function createRoomObj(code, isPrivate) {
 }
 
 function getOrCreateRoom() {
-  // Find oldest PUBLIC room hosted by THIS worker CPU with space
+  // Find oldest PUBLIC room hosted by THIS worker CPU with space (< MAX_PLAYERS)
   const availablePublicRooms = Object.values(rooms)
     .filter(r => {
       if (r.isPrivate || r.playerCount >= MAX_PLAYERS) return false;
@@ -463,18 +480,8 @@ function getOrCreateRoom() {
   
   if (Object.keys(rooms).length >= MAX_ROOMS) return null;
   
-  let code = generateRoomCode();
-  let attempts = 0;
-  while (attempts < 200) {
-    const roomNum = parseInt(code, 10);
-    const isHostWorker = isNaN(roomNum) || (roomNum % numCPUs) === (WORKER_INDEX - 1);
-    if (!rooms[code] && !code.startsWith('0') && isHostWorker) {
-      break;
-    }
-    code = generateRoomCode(); 
-    attempts++; 
-  }
-  if (attempts >= 200) return null;
+  const code = generateRoomCode(WORKER_INDEX);
+  if (!code) return null;
   
   rooms[code] = createRoomObj(code, false);
   console.log(`🏠 [CPU ${WORKER_INDEX}] New public room: ${code} (Total: ${Object.keys(rooms).length})`);
