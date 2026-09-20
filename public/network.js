@@ -171,7 +171,12 @@ const Network = (() => {
 
   function manualReload() {
     if (socket && socket.connected) {
-      socket.emit('manualReload');
+      try {
+        socket.emit('manualReload');
+      } catch (err) {
+        console.log('⏳ Failed to emit reload, queuing request');
+        pendingReload = true;
+      }
     } else {
       console.log('⏳ Socket not connected, queuing reload request');
       pendingReload = true;
