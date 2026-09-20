@@ -1303,24 +1303,29 @@
   resize();
 
   let smoothPositionsCount = 0;
-  let smoothCleanupCounter = 0;
   
   function smooth(key, tx, ty, factor) {
     let p = smoothPositions[key];
     if (!p) {
       smoothPositionsCount++;
-      p = smoothPositions[key] = { x: tx, y: ty };
-      
-      // OPTIMIZE: Memory cap - max 5000 positions
-      if (smoothPositionsCount > 5000) {
-        // Reset all (çok nadir olur)
-        smoothPositions = {};
-        smoothPositionsCount = 0;
-      }
+      p = smoothPositions[key] = { x: tx, y: ty, lastFrame: frameCounter };
+    } else {
+      p.lastFrame = frameCounter;
     }
     
     p.x += (tx - p.x) * (factor * 1.5);
     p.y += (ty - p.y) * (factor * 1.5);
+    
+    // Smooth LRU cleanup: Remove inactive position keys every 300 frames
+    if (frameCounter % 300 === 0 && smoothPositionsCount > 100) {
+      for (const k in smoothPositions) {
+        if (frameCounter - smoothPositions[k].lastFrame > 120) {
+          delete smoothPositions[k];
+          smoothPositionsCount--;
+        }
+      }
+    }
+    
     return p;
   }
 
@@ -1464,10 +1469,19 @@
 
   // === Soldier Unit Canvas Cache ===
   const soldierCanvasCache = {};
+  let soldierCanvasCacheSize = 0;
   
   function getSoldierCanvas(color, hasGun, isMain, skinCanvas, skinKey) {
     const key = `${color}_${hasGun}_${isMain}_${skinKey || 'none'}`;
     if (soldierCanvasCache[key]) return soldierCanvasCache[key];
+    
+    if (soldierCanvasCacheSize >= 60) {
+      const oldestKey = Object.keys(soldierCanvasCache)[0];
+      if (oldestKey) {
+        delete soldierCanvasCache[oldestKey];
+        soldierCanvasCacheSize--;
+      }
+    }
     
     const size = SOLDIER_RADIUS * 3;
     const c = document.createElement('canvas');
@@ -1519,6 +1533,7 @@
     }
     
     soldierCanvasCache[key] = c;
+    soldierCanvasCacheSize++;
     return c;
   }
 
@@ -1728,42 +1743,55 @@
     const me = gameState.players[myId];
     if (!me) return;
 
-    // Leaderboard update with fast hash and safety checks
+    // Leaderboard update with fast hash and safety checks (DOM node reuse)
     if (gameState.leaderboard && Array.isArray(gameState.leaderboard) && gameState.leaderboard.length > 0) {
       const lbHash = hashLeaderboard(gameState.leaderboard, me.name);
       if (lbHash !== lastLbHash) {
         lastLbHash = lbHash;
-        lbList.innerHTML = '';
-        for (let i = 0; i < gameState.leaderboard.length; i++) {
-          const entry = gameState.leaderboard[i];
-          if (!entry || !entry.name) continue; // Safety check
-          
-          const row = document.createElement('div');
+        const entries = gameState.leaderboard;
+        const existingRows = lbList.children;
+        const targetLen = entries.length;
+
+        // Remove excess rows
+        while (existingRows.length > targetLen) {
+          lbList.removeChild(lbList.lastChild);
+        }
+
+        for (let i = 0; i < targetLen; i++) {
+          const entry = entries[i];
+          if (!entry || !entry.name) continue;
+
+          let row = existingRows[i];
+          let rankSpan, colorSpan, nameSpan, scoreSpan;
+
+          if (!row) {
+            row = document.createElement('div');
+            rankSpan = document.createElement('span');
+            rankSpan.className = 'lb-rank';
+            colorSpan = document.createElement('span');
+            colorSpan.className = 'lb-color';
+            nameSpan = document.createElement('span');
+            nameSpan.className = 'lb-name';
+            scoreSpan = document.createElement('span');
+            scoreSpan.className = 'lb-score';
+
+            row.appendChild(rankSpan);
+            row.appendChild(colorSpan);
+            row.appendChild(nameSpan);
+            row.appendChild(scoreSpan);
+            lbList.appendChild(row);
+          } else {
+            rankSpan = row.children[0];
+            colorSpan = row.children[1];
+            nameSpan = row.children[2];
+            scoreSpan = row.children[3];
+          }
+
           row.className = 'lb-row' + (entry.name === me.name ? ' me' : '');
-          
-          // Optimized DOM creation - avoid innerHTML template literals
-          const rankSpan = document.createElement('span');
-          rankSpan.className = 'lb-rank';
           rankSpan.textContent = (i + 1) + '.';
-          
-          const colorSpan = document.createElement('span');
-          colorSpan.className = 'lb-color';
           colorSpan.style.background = entry.color || '#ffffff';
-          
-          const nameSpan = document.createElement('span');
-          nameSpan.className = 'lb-name';
           nameSpan.textContent = entry.name;
-          
-          const scoreSpan = document.createElement('span');
-          scoreSpan.className = 'lb-score';
           scoreSpan.textContent = entry.score || 0;
-          
-          row.appendChild(rankSpan);
-          row.appendChild(colorSpan);
-          row.appendChild(nameSpan);
-          row.appendChild(scoreSpan);
-          
-          lbList.appendChild(row);
         }
       }
     }
