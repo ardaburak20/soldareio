@@ -1336,20 +1336,74 @@
     if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineW || 1.5; ctx.stroke(); }
   }
 
+  const rgbaCache = new Map();
   function hexToRgba(hex, a) {
-    if(!hex) return 'rgba(255,255,255,1)';
-    if (hex.startsWith('hsl')) return hex.replace(')', `,${a})`).replace('hsl', 'hsla');
-    const r = parseInt(hex.slice(1, 3), 16) || 255;
-    const g = parseInt(hex.slice(3, 5), 16) || 255;
-    const b = parseInt(hex.slice(5, 7), 16) || 255;
-    return `rgba(${r},${g},${b},${a})`;
+    if (!hex) return 'rgba(255,255,255,1)';
+    const key = hex + '_' + a;
+    let cached = rgbaCache.get(key);
+    if (cached) return cached;
+    if (hex.startsWith('hsl')) {
+      cached = hex.replace(')', `,${a})`).replace('hsl', 'hsla');
+    } else {
+      const r = parseInt(hex.slice(1, 3), 16) || 255;
+      const g = parseInt(hex.slice(3, 5), 16) || 255;
+      const b = parseInt(hex.slice(5, 7), 16) || 255;
+      cached = `rgba(${r},${g},${b},${a})`;
+    }
+    if (rgbaCache.size > 300) {
+      const firstKey = rgbaCache.keys().next().value;
+      rgbaCache.delete(firstKey);
+    }
+    rgbaCache.set(key, cached);
+    return cached;
   }
 
-  // === Draw Grid === (OPTIMIZED: Update every 20 frames or big camera move)
-  let gridCache = null;
-  let lastGridCameraX = 0;
-  let lastGridCameraY = 0;
-  let gridFrameCounter = 0;
+  const neutralKeyCache = new Map();
+  function getNeutralKey(id) {
+    let key = neutralKeyCache.get(id);
+    if (!key) {
+      key = `n_${id}`;
+      neutralKeyCache.set(id, key);
+      if (neutralKeyCache.size > 1000) {
+        const firstKey = neutralKeyCache.keys().next().value;
+        neutralKeyCache.delete(firstKey);
+      }
+    }
+    return key;
+  }
+
+  const soldierKeyCache = new Map();
+  function getSoldierKey(id, idx) {
+    const rawKey = id + '_' + idx;
+    let key = soldierKeyCache.get(rawKey);
+    if (!key) {
+      key = `s_${rawKey}`;
+      soldierKeyCache.set(rawKey, key);
+      if (soldierKeyCache.size > 2000) {
+        const firstKey = soldierKeyCache.keys().next().value;
+        soldierKeyCache.delete(firstKey);
+      }
+    }
+    return key;
+  }
+
+  // === Draw Grid === (GPU Pattern Cached)
+  let gridPattern = null;
+  function getGridPattern() {
+    if (!gridPattern) {
+      const pCanvas = document.createElement('canvas');
+      pCanvas.width = GRID_SIZE;
+      pCanvas.height = GRID_SIZE;
+      const pCtx = pCanvas.getContext('2d');
+      pCtx.fillStyle = BG_COLOR;
+      pCtx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
+      pCtx.strokeStyle = GRID_COLOR;
+      pCtx.lineWidth = 2;
+      pCtx.strokeRect(0, 0, GRID_SIZE, GRID_SIZE);
+      gridPattern = ctx.createPattern(pCanvas, 'repeat');
+    }
+    return gridPattern;
+  }
   
   function drawGrid() {
     ctx.fillStyle = BG_COLOR;
@@ -1361,8 +1415,6 @@
     ctx.translate(-camera.x, -camera.y);
 
     const mapSize = Network.getMapSize();
-    
-    // Grid her frame çiz (geri getirildi)
     const viewW = canvas.width / zoom;
     const viewH = canvas.height / zoom;
     const left = camera.x - viewW / 2;
@@ -1370,29 +1422,17 @@
     const right = left + viewW;
     const bottom = top + viewH;
 
-    const startX = Math.floor(left / GRID_SIZE) * GRID_SIZE;
-    const startY = Math.floor(top / GRID_SIZE) * GRID_SIZE;
-
-    ctx.strokeStyle = GRID_COLOR;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    
-    // Tüm grid çizgileri (eski hali)
-    for (let x = startX; x <= right + GRID_SIZE; x += GRID_SIZE) {
-      ctx.moveTo(x, top - 100);
-      ctx.lineTo(x, bottom + 100);
+    const pattern = getGridPattern();
+    if (pattern) {
+      ctx.fillStyle = pattern;
+      ctx.fillRect(left - 100, top - 100, viewW + 200, viewH + 200);
     }
-    for (let y = startY; y <= bottom + GRID_SIZE; y += GRID_SIZE) {
-      ctx.moveTo(left - 100, y);
-      ctx.lineTo(right + 100, y);
-    }
-    ctx.stroke();
 
     ctx.strokeStyle = '#2a2a50';
     ctx.lineWidth = 6;
     ctx.strokeRect(0, 0, mapSize, mapSize);
 
-    // Out of bounds shading - use existing viewW, viewH, left, top, right, bottom
+    // Out of bounds shading
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     if (left < 0) ctx.fillRect(left-100, top-100, -left+100, viewH+200);
     if (top < 0) ctx.fillRect(left-100, top-100, viewW+200, -top+100);
@@ -1454,7 +1494,7 @@
     for (const ns of gameState.neutrals) {
       if (!isInViewport(ns.x, ns.y)) continue;
       
-      const pos = smooth(`n_${ns.id}`, ns.x, ns.y, 0.3);
+      const pos = smooth(getNeutralKey(ns.id), ns.x, ns.y, 0.3);
       drawCircle(pos.x, pos.y, SOLDIER_RADIUS, '#d0d0d0', '#aaa', 1.5);
       if (ns.cs) {
         ctx.strokeStyle = '#ffd740';
@@ -1612,7 +1652,7 @@
         const sol = p.soldiers[i];
         if (!isInViewport(sol.x, sol.y)) continue;
 
-        const solPos = smooth(`s_${id}_${i}`, sol.x, sol.y, 0.15);
+        const solPos = smooth(getSoldierKey(id, i), sol.x, sol.y, 0.15);
         const solAngle = angle;
         const useSkin = i < maxSkinnedSoldiers ? skinCnv : null;
         const useSkinKey = useSkin ? skinKey : 'none';
