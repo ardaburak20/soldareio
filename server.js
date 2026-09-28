@@ -120,9 +120,13 @@ function handleClusterSyncMessage(data) {
 
   const { type, roomCode, socketId, player, action, inputData } = data;
   
-  if (type === 'PLAYER_JOIN') {
+  if (type === 'ROOM_CREATED') {
     if (!rooms[roomCode]) {
-      rooms[roomCode] = createRoomObj(roomCode, false);
+      rooms[roomCode] = createRoomObj(roomCode, data.isPrivate || false);
+    }
+  } else if (type === 'PLAYER_JOIN') {
+    if (!rooms[roomCode]) {
+      rooms[roomCode] = createRoomObj(roomCode, data.isPrivate || false);
     }
     const room = rooms[roomCode];
     if (player && !room.players[socketId]) {
@@ -158,9 +162,37 @@ function handleClusterSyncMessage(data) {
       } else if (action === 'manualReload' && p.alive) {
         p.isReloading = true;
         p.isShooting = false;
+      } else if (action === 'cancelRevolverReload' && p.alive) {
+        p.revolverInterrupting = true;
+        p.isShooting = false;
+        p.isHoldingFire = false;
+        p.clickShoot = false;
       } else if (action === 'equipRevolver' && p.alive) {
         if (p.storedPickup) activateStoredPickup(p);
         else if (p.weapon !== 'revolver') switchToRevolver(p);
+      }
+    }
+  } else if (type === 'PLAYER_RECONNECT') {
+    const { roomCode, oldSocketId, newSocketId, token } = data;
+    if (rooms[roomCode]) {
+      const room = rooms[roomCode];
+      let p = room.players[oldSocketId];
+      if (!p) {
+        for (const pid in room.players) {
+          if (room.players[pid].token === token) {
+            p = room.players[pid];
+            break;
+          }
+        }
+      }
+      if (p) {
+        if (p.id !== newSocketId) {
+          delete room.players[p.id];
+          delete socketToRoom[p.id];
+          p.id = newSocketId;
+        }
+        room.players[newSocketId] = p;
+        socketToRoom[newSocketId] = roomCode;
       }
     }
   } else if (type === 'GAME_STATE_BROADCAST') {
@@ -484,6 +516,7 @@ function getOrCreateRoom() {
   if (!code) return null;
   
   rooms[code] = createRoomObj(code, false);
+  publishRoomSync('ROOM_CREATED', { roomCode: code, isPrivate: false });
   console.log(`🏠 [CPU ${WORKER_INDEX}] New public room: ${code} (Total: ${Object.keys(rooms).length})`);
   return rooms[code];
 }
@@ -652,7 +685,7 @@ io.on('connection', (socket) => {
     room.playerCount++;
     room.lastActivity = Date.now();
 
-    publishRoomSync('PLAYER_JOIN', { roomCode: room.code, socketId: socket.id, player: p });
+    publishRoomSync('PLAYER_JOIN', { roomCode: room.code, socketId: socket.id, player: p, isPrivate: room.isPrivate });
 
     console.log(`👤 Player ${name} joined room ${room.code} (${room.playerCount}/${MAX_PLAYERS})`);
     socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code, token: p.token });
@@ -672,6 +705,7 @@ io.on('connection', (socket) => {
       if (Object.keys(rooms).length >= MAX_ROOMS) { socket.emit('roomNotFound'); return; }
       rooms[roomCode] = createRoomObj(roomCode, true); // Private room
       room = rooms[roomCode];
+      publishRoomSync('ROOM_CREATED', { roomCode, isPrivate: true });
       console.log(`🏠 New private room: ${roomCode}`);
     }
     
@@ -685,7 +719,7 @@ io.on('connection', (socket) => {
     room.playerCount++;
     room.lastActivity = Date.now();
 
-    publishRoomSync('PLAYER_JOIN', { roomCode: room.code, socketId: socket.id, player: p });
+    publishRoomSync('PLAYER_JOIN', { roomCode: room.code, socketId: socket.id, player: p, isPrivate: room.isPrivate });
 
     console.log(`👤 Player ${name} joined room ${roomCode} (${room.playerCount}/${MAX_PLAYERS})`);
     socket.emit('joined', { id: socket.id, mapSize: MAP_SIZE, roomCode: room.code, token: p.token });
@@ -885,6 +919,13 @@ io.on('connection', (socket) => {
         socket.join(dData.roomCode);
 
         disconnectedPlayers.delete(token);
+
+        publishRoomSync('PLAYER_RECONNECT', {
+          roomCode: dData.roomCode,
+          oldSocketId: oldId,
+          newSocketId: socket.id,
+          token: token
+        });
 
         console.log(`✅ Player ${player.name} reconnected successfully! (New socket: ${socket.id})`);
 
